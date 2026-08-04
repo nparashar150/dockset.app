@@ -1,0 +1,56 @@
+name: Plinth
+options:
+  bundleIdPrefix: com.namanparashar
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEAD_CODE_STRIPPING: YES
+    ENABLE_HARDENED_RUNTIME: YES
+    # Manual, and a real identity rather than ad-hoc. macOS will not offer
+    # location consent to an ad-hoc signed app — the request returns with the
+    # status unchanged and no prompt at all — because there is no stable
+    # identity for the grant to be attached to. Automatic signing needs an
+    # Xcode account configured; manual only needs the certificate.
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "Apple Development: nparashar150@gmail.com (WTSX2PXS5C)"
+    DEVELOPMENT_TEAM: DAK6X938S3
+
+targets:
+  Plinth:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources
+    settings:
+      base:
+        PRODUCT_NAME: Plinth
+        PRODUCT_BUNDLE_IDENTIFIER: com.namanparashar.plinth
+        INFOPLIST_FILE: Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Resources/Plinth.entitlements
+        ENABLE_APP_SANDBOX: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+
+  PlinthTests:
+    type: bundle.unit-test
+    platform: macOS
+    # Compiles the pure core directly instead of hosting the app: these are
+    # maths and catalog invariants, and a test host would only add launch cost.
+    sources:
+      - path: Tests
+      - path: Sources/Core
+      - path: Sources/Widgets/WidgetCatalog.swift
+      - path: Sources/DockPanel/DockLayout.swift
+      - path: Sources/Services/PollGate.swift
+      - path: Sources/DockPanel/ScrollRelay.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.namanparashar.plinth.tests
+        GENERATE_INFOPLIST_FILE: YES
