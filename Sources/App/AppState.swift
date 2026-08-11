@@ -1,0 +1,428 @@
+import SwiftUI
+import AppKit
+import Observation
+
+/// The single source of truth.
+///
+/// Owns the persisted state, the 1s tick that drives time-based widgets, and
+/// the one path through which Apple's Dock is ever written.
+@MainActor
+@Observable
+public final class AppState {
+
+    public var state: PersistedState {
+        didSet { scheduleSave() }
+    }
+
+    /// Ticks once a second. Widgets read this rather than each starting a
+    /// timer of their own — one timer for the whole shelf.
+    public private(set) var now: Date = .now
+
+    /// Set when applying a macOS Dock layout fails, for the menu bar to surface.
+    public private(set) var lastError: String?
+    public private(set) var isApplying = false
+
+    private let store = Store()
+    private let nativeDock = NativeDockAdapter()
+    private var saveTask: Task<Void, Never>?
+    /// Holds `self` weakly and exits on its own once AppState goes away, so
+    /// there is nothing for a deinit to tear down (and Swift 6 would not let
+    /// a deinit touch these anyway).
+    private var tickTask: Task<Void, Never>?
+
+    public init() {
+        self.state = Store().load()
+        startTicking()
+    }
+
+    // MARK: Lifecycle
+
+    private func startTicking() {
+        tickTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard let self else { return }
+                self.now = .now
+            }
+        }
+    }
+
+    /// Coalesces the writes that a slider drag would otherwise produce sixty
+    /// times a second.
+    private func scheduleSave() {
+        saveTask?.cancel()
+        // Snapshotted *after* the wait, not before it. Copying the whole model
+        // up front costs a deep copy of every profile, item and config on each
+        // mutation — and a grip drag mutates dozens of times a second, so the
+        // resize paid for a full copy per event and dropped frames for it.
+        saveTask = Task { [store, weak self] in
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled, let self else { return }
+            try? store.save(self.state)
+        }
+    }
+
+    public func saveNow() {
+        saveTask?.cancel()
+        try? store.save(state)
+    }
+
+    // MARK: Profiles
+
+    public var customProfile: DockProfile? { state.activeCustomProfile }
+    public var macOSProfile: DockProfile? { state.activeMacOSProfile }
+
+    public func profiles(of kind: ProfileKind) -> [DockProfile] { state.profiles(of: kind) }
+
+    @discardableResult
+    public func addProfile(kind: ProfileKind, name: String, color: PaletteColor = .blue) -> DockProfile {
+        let profile = DockProfile(kind: kind, name: name, color: color)
+        state.profiles.append(profile)
+        if kind == .customDock, state.customDock.profileID == nil {
+            select(profile)
+        }
+        return profile
+    }
+
+    public func rename(_ id: UUID, to name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let index = index(of: id) else { return }
+        state.profiles[index].name = trimmed
+    }
+
+    public func delete(_ id: UUID) {
+        state.profiles.removeAll { $0.id == id }
+        if state.customDock.profileID == id { state.customDock.profileID = nil }
+        if state.macOSDock.profileID == id { state.macOSDock.profileID = nil }
+    }
+
+    public func duplicate(_ id: UUID) {
+        guard let source = state.profile(id) else { return }
+        var copy = source
+        copy.id = UUID()
+        copy.name = "\(source.name) copy"
+        copy.shortcut = nil          // two profiles must never claim one hotkey
+        state.profiles.append(copy)
+    }
+
+    /// Selecting a Custom Dock profile adopts its scale — size travels with
+    /// the profile, which is what makes a "big shelf for work, small for
+    /// everything else" setup possible.
+    public func select(_ profile: DockProfile) {
+        switch profile.kind {
+        case .customDock:
+            state.customDock.profileID = profile.id
+            state.customDock.scale = profile.scale
+        case .macOSDock:
+            state.macOSDock.profileID = profile.id
+        }
+    }
+
+    private func index(of id: UUID) -> Int? {
+        state.profiles.firstIndex { $0.id == id }
+    }
+
+    // MARK: Items
+
+    /// Editing the list takes ownership of it first.
+    ///
+    /// While mirroring, `effectiveItems` drops every app the profile holds and
+    /// substitutes the real Dock's — so appending an app to the profile was
+    /// filtered straight back out and removing one touched an array the shelf
+    /// was not reading. Both looked like the buttons did nothing.
+    public func addItem(_ item: DockItem, to profileID: UUID? = nil) {
+        if profileID == nil, mirroringApps { adoptSystemApps() }
+        let target = profileID ?? state.customDock.profileID
+        guard let target, let index = index(of: target) else { return }
+        state.profiles[index].items.append(item)
+    }
+
+    /// Replaces an item in place, keeping its position on the shelf.
+    public func replaceItem(_ itemID: UUID, with item: DockItem) {
+        if mirroringApps { adoptSystemApps() }
+        guard let target = state.customDock.profileID, let index = index(of: target),
+              let slot = state.profiles[index].items.firstIndex(where: { $0.id == itemID })
+        else { return }
+        state.profiles[index].items[slot] = item
+    }
+
+    /// Drops one item onto another. See `ShelfItems.combining`.
+    public func combine(_ itemID: UUID, into targetID: UUID, named name: String) {
+        mutateItems { ShelfItems.combining(itemID, into: targetID, named: name, in: $0) }
+    }
+
+    /// Takes an item out of a group. See `ShelfItems.removingFromGroup`.
+    public func removeFromGroup(_ itemID: UUID, group groupID: UUID, at destination: Int? = nil) {
+        mutateItems {
+            ShelfItems.removingFromGroup(itemID, group: groupID, in: $0, at: destination)
+        }
+    }
+
+    /// Editing the shelf's own list always takes ownership of it first.
+    private func mutateItems(_ transform: ([DockItem]) -> [DockItem]) {
+        if mirroringApps { adoptSystemApps() }
+        guard let profile = state.customDock.profileID, let index = index(of: profile)
+        else { return }
+        state.profiles[index].items = transform(state.profiles[index].items)
+    }
+
+    /// Spills a group's contents back onto the shelf, in its place.
+    public func ungroup(_ groupID: UUID) {
+        if mirroringApps { adoptSystemApps() }
+        guard let target = state.customDock.profileID, let index = index(of: target),
+              let slot = state.profiles[index].items.firstIndex(where: { $0.id == groupID }),
+              let group = state.profiles[index].items[slot].group
+        else { return }
+        state.profiles[index].items.replaceSubrange(slot...slot, with: group.items)
+    }
+
+    /// Every group on the shelf, for "Add to Group".
+    public var groups: [DockGroup] { effectiveItems.compactMap(\.group) }
+
+    public func removeItem(_ itemID: UUID, from profileID: UUID? = nil) {
+        if profileID == nil, mirroringApps { adoptSystemApps() }
+        let target = profileID ?? state.customDock.profileID
+        guard let target, let index = index(of: target) else { return }
+        state.profiles[index].items.removeAll { $0.id == itemID }
+    }
+
+    public func moveItem(from source: Int, to destination: Int, in profileID: UUID? = nil) {
+        let target = profileID ?? state.customDock.profileID
+        guard let target, let index = index(of: target) else { return }
+        var items = state.profiles[index].items
+        guard items.indices.contains(source) else { return }
+        let clamped = min(max(destination, 0), items.count - 1)
+        guard clamped != source else { return }
+        let moved = items.remove(at: source)
+        items.insert(moved, at: clamped)
+        state.profiles[index].items = items
+    }
+
+    public func updateWidget(_ instance: WidgetInstance, in profileID: UUID? = nil) {
+        let target = profileID ?? state.customDock.profileID
+        guard let target, let pIndex = index(of: target),
+              let iIndex = state.profiles[pIndex].items.firstIndex(where: { $0.id == instance.id })
+        else { return }
+        state.profiles[pIndex].items[iIndex] = .widget(instance)
+    }
+
+    // MARK: Effective appearance
+
+    /// These read through to the real Dock while `followSystemDock` is on,
+    /// rather than copying its values into our state. One source of truth
+    /// means there is no sync to get wrong when the user drags the Dock size
+    /// slider in System Settings.
+    private var system: SystemDockSettings { .shared }
+    private var following: Bool { state.customDock.followSystemDock }
+    /// Whether the shelf's *apps* come from the real Dock. Settings can keep
+    /// following after the user has taken the list over.
+    private var mirroringApps: Bool { following && (state.customDock.mirrorSystemApps ?? true) }
+
+    public var isFollowingDock: Bool { following }
+    public var isMirroringApps: Bool { mirroringApps }
+
+    /// Which edge the shelf sits on.
+    ///
+    /// While following, it takes a *free* edge rather than the Dock's own.
+    /// Two shelves on one edge share a reveal trigger and an auto-hide timer,
+    /// so they uncover each other and stack — the shelf is far more useful
+    /// beside the Dock than on top of it. Everything else about the look
+    /// (size, magnification, material, apps) is still mirrored.
+    public var effectivePosition: DockPosition {
+        guard following else { return state.customDock.position }
+        return system.position == .bottom ? .left : .bottom
+    }
+
+    public var effectiveScale: Double {
+        DockFollowing.scale(overridden: state.customDock.scaleOverridden == true,
+                            custom: state.customDock.scale,
+                            system: system.matchedScale,
+                            following: following)
+    }
+
+    public var effectiveAutoHide: Bool {
+        following ? system.autoHide : state.customDock.autoHide
+    }
+
+    public var magnificationEnabled: Bool {
+        following ? system.magnification : state.customDock.magnification
+    }
+
+    public var magnificationPeak: Double {
+        following ? system.magnificationPeak : Geometry.magnificationPeak
+    }
+
+    public var magnificationRadius: Double {
+        following ? system.magnificationRadius : Geometry.magnificationRadius
+    }
+
+    /// What the shelf actually shows.
+    ///
+    /// While following, the apps come straight from the real Dock and the
+    /// profile contributes everything the Dock cannot hold — widgets, folders,
+    /// files and links. That way the shelf is the user's Dock *plus* the
+    /// things they came to Plinth for, with nothing to keep in sync by hand.
+    public var effectiveItems: [DockItem] {
+        guard mirroringApps, let profile = customProfile else {
+            return customProfile?.items ?? []
+        }
+        return ShelfItems.displayed(profile: profile.items,
+                                    mirrored: system.pinnedApps,
+                                    mirroring: true)
+    }
+
+    /// Whether the shelf holds any widget.
+    ///
+    /// Asked once per tile per render, through `iconGeometry` — so it must not
+    /// build `effectiveItems`, which allocates two fresh arrays every call and
+    /// turned the layout solve into O(n²) on every pointer move. Widgets only
+    /// ever come from the profile; the mirrored list is apps by construction.
+    public var hasWidgets: Bool {
+        customProfile?.items.contains(where: \.isWidget) ?? false
+    }
+
+    /// True when this item came from the real Dock rather than the profile.
+    public func isMirrored(_ item: DockItem) -> Bool {
+        guard mirroringApps, case .app = item else { return false }
+        return system.pinnedApps.contains { $0.id == item.id }
+    }
+
+    /// Take ownership of the mirrored Dock apps so they can be rearranged.
+    ///
+    /// Freezes exactly what is on screen rather than rebuilding the order, so
+    /// nothing jumps at the moment the user starts dragging.
+    public func adoptSystemApps() {
+        guard let id = state.customDock.profileID, let index = self.index(of: id) else { return }
+        let displayed = effectiveItems          // must be read while still mirroring
+        state.customDock.mirrorSystemApps = false
+        state.profiles[index].items = displayed
+    }
+
+    /// Applies a displayed ordering back to the active profile.
+    ///
+    /// Reordering has to work by identity, not by index: while mirroring, the
+    /// shelf shows the profile's own items *plus* the Dock's apps, so a
+    /// position on screen has no relationship to a position in the profile's
+    /// array. Indexing into it moved the wrong item.
+    public func reorder(_ displayed: [UUID]) {
+        guard let id = state.customDock.profileID, let index = self.index(of: id) else { return }
+        state.profiles[index].items = Reorder.apply(order: displayed,
+                                                    to: state.profiles[index].items)
+    }
+
+    // MARK: Size
+
+    /// Writes through to the active profile so the size sticks to it, not to
+    /// the app.
+    public func setScale(_ scale: Double) {
+        // An override of the size alone. Everything else — edge, hiding,
+        // magnification — keeps following the real Dock.
+        state.customDock.scaleOverridden = true
+        let clamped = Geometry.clamp(scale, Geometry.scaleRange)
+        state.customDock.scale = clamped
+        if let id = state.customDock.profileID, let index = index(of: id) {
+            state.profiles[index].scale = clamped
+        }
+    }
+
+    // MARK: Apple's Dock
+
+    /// Captures the live Dock into a new profile without changing anything.
+    @discardableResult
+    public func captureCurrentDock(named name: String = "Current Dock") async -> DockProfile? {
+        do {
+            let tiles = try await nativeDock.capture()
+            // Remember the very first capture as the user's original layout,
+            // so there is always a way back to what they had before Plinth.
+            if state.originalMacOSDock == nil { state.originalMacOSDock = tiles }
+            var profile = DockProfile(kind: .macOSDock, name: name)
+            profile.items = tiles.compactMap(Self.item(from:))
+            state.profiles.append(profile)
+            state.macOSDock.profileID = profile.id
+            return profile
+        } catch {
+            lastError = error.localizedDescription
+            return nil
+        }
+    }
+
+    /// The only place Apple's Dock is ever written.
+    public func applyMacOSProfile() async {
+        guard let profile = state.activeMacOSProfile, !isApplying else { return }
+        isApplying = true
+        defer { isApplying = false }
+        let tiles = profile.applicableItems.compactMap(Self.tile(from:))
+        do {
+            try await nativeDock.apply(tiles)
+            lastError = nil
+        } catch {
+            lastError = error.localizedDescription
+        }
+    }
+
+    /// Puts back whatever the user had before Plinth first wrote to the Dock.
+    public func restoreOriginalDock() async {
+        guard let original = state.originalMacOSDock else { return }
+        isApplying = true
+        defer { isApplying = false }
+        do {
+            try await nativeDock.apply(original)
+            lastError = nil
+        } catch {
+            lastError = error.localizedDescription
+        }
+    }
+
+    // MARK: Tile <-> item bridging
+
+    private static func item(from tile: MacOSDockTile) -> DockItem? {
+        if tile.isSpacer {
+            return .spacer(id: UUID(), size: tile.tileType == SpacerSize.small.dockTileType ? .small : .regular)
+        }
+        guard let urlString = tile.urlString, let url = URL(string: urlString) else { return nil }
+        return .app(id: UUID(), bundleID: tile.bundleID ?? "", ref: .capture(url))
+    }
+
+    private static func tile(from item: DockItem) -> MacOSDockTile? {
+        switch item {
+        // Apple's Dock has no group tile, so there is nothing to mirror back.
+        case .group:
+            return nil
+        case .spacer(_, let size):
+            return .spacer(size)
+        case .app(_, let bundleID, let ref):
+            guard let url = ref.resolve() else { return nil }   // dead path: skip, never invent
+            let label = url.deletingPathExtension().lastPathComponent
+            return .app(url: url, bundleID: bundleID.isEmpty ? nil : bundleID, label: label)
+        case .folder, .file, .link, .widget:
+            return nil                                           // not representable in Apple's Dock
+        }
+    }
+
+    public func clearError() { lastError = nil }
+
+    // MARK: First run
+
+    /// A brand-new install gets a shelf with something on it.
+    ///
+    /// An empty shelf reads as broken, and "add your first widget" is a worse
+    /// introduction than simply showing what the thing does. Everything here
+    /// is removable.
+    public func installDefaultProfile() {
+        guard state.profiles.isEmpty else { return }
+        var profile = DockProfile(kind: .customDock, name: "Everyday", color: .blue)
+
+        for bundleID in ["com.apple.finder", "com.apple.Safari", "com.apple.mail"] {
+            guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { continue }
+            profile.items.append(.app(id: UUID(), bundleID: bundleID, ref: .capture(url)))
+        }
+        profile.items.append(.spacer(id: UUID(), size: .small))
+        for kind in [WidgetKind.clock, .system, .battery] {
+            if let widget = WidgetCatalog.make(kind) { profile.items.append(.widget(widget)) }
+        }
+
+        state.profiles.append(profile)
+        state.customDock.profileID = profile.id
+        state.customDock.scale = profile.scale
+    }
+}
