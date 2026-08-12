@@ -1,0 +1,373 @@
+import AppKit
+import SwiftUI
+
+/// Owns the floating shelf window: where it sits, what level it floats at, and
+/// hiding it against the screen edge.
+///
+/// An `NSPanel` rather than an `NSWindow` so it never takes key status —
+/// clicking the shelf must not deactivate whatever the user was working in.
+@MainActor
+final class DockPanelController: NSObject, NSWindowDelegate {
+    private var panel: NSPanel?
+    private let app: AppState
+
+    private var revealed = true
+    private var hideWorkItem: DispatchWorkItem?
+    private var groupCloseItem: DispatchWorkItem?
+    /// True while any menu of ours is open.
+    ///
+    /// A context menu draws *above* the shelf, so reaching for an item takes
+    /// the pointer outside the shelf's own frame — which is exactly what the
+    /// hide timer watches for. The shelf then slid away and took the menu
+    /// with it, which reads as a menu that will not let you pick anything.
+    private var menuIsOpen = false
+    private var menuObservers: [any NSObjectProtocol] = []
+    private var pollTimer: Timer?
+
+    /// How close to the screen edge the pointer must get to bring the shelf back.
+    private let revealZoneDepth: CGFloat = 3
+    /// Grace before hiding again, so brushing past the edge of the shelf on the
+    /// way somewhere else does not make it flicker.
+    private let hideDelay: TimeInterval = 0.35
+
+    init(app: AppState) {
+        self.app = app
+        super.init()
+        for (name, opening) in [(NSMenu.didBeginTrackingNotification, true),
+                                (NSMenu.didEndTrackingNotification, false)] {
+            menuObservers.append(
+                NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) {
+                    [weak self] _ in
+                    MainActor.assumeIsolated {
+                        guard let self else { return }
+                        self.menuIsOpen = opening
+                        MenuTracking.isOpen = opening
+                        if opening {
+                            self.hideWorkItem?.cancel()
+                            self.hideWorkItem = nil
+                        }
+                    }
+                })
+        }
+    }
+
+    // MARK: Lifecycle
+
+    func show() {
+        guard panel == nil else { return refresh() }
+
+        // The view rather than a controller, so it can handle the scroll
+        // wheel; it resizes the panel itself in `layout()`.
+        let host = ScrollingHostingView(rootView: DockShelfView().environment(app))
+        host.sizingOptions = [.intrinsicContentSize]
+        host.onWantedSize = { [weak self] size in self?.resize(to: size) }
+
+        let panel = NSPanel(contentRect: .zero,
+                            styleMask: [.borderless, .nonactivatingPanel],
+                            backing: .buffered, defer: false)
+        panel.contentView = host
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = false                 // the SwiftUI surface draws its own
+        panel.isMovable = false
+        panel.hidesOnDeactivate = false
+        panel.becomesKeyOnlyIfNeeded = true
+        // Borderless panels get no mouse-moved events by default, which means
+        // no hover, which means no magnification and no tooltips.
+        panel.acceptsMouseMovedEvents = true
+        panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
+        panel.delegate = self
+        panel.level = level
+
+        self.panel = panel
+        panel.orderFrontRegardless()
+        refresh()
+    }
+
+    func hide() {
+        GroupWindow.shared.close()
+        panel?.orderOut(nil)
+    }
+
+    func close() {
+        stopPolling()
+        panel?.close()
+        panel = nil
+    }
+
+    /// Re-read everything that can change: level, placement, auto-hide.
+    func refresh() {
+        panel?.level = level
+        if app.effectiveAutoHide {
+            startPolling()
+        } else {
+            stopPolling()
+            revealed = true
+        }
+        applyPlacement(animated: false)
+    }
+
+    func reposition() { applyPlacement(animated: false) }
+
+    /// Above Apple's Dock normally; behind everything when acting as a desktop
+    /// widget, where the point is for windows to cover it.
+    private var level: NSWindow.Level {
+        app.state.customDock.useAsDesktopWidget
+            ? NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
+            : NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.dockWindow)) + 1)
+    }
+
+    // MARK: Placement
+
+    private var targetScreen: NSScreen {
+        if let id = app.state.customDock.displayID,
+           let match = NSScreen.screens.first(where: { $0.displayID == id }) {
+            return match
+        }
+        return NSScreen.main ?? NSScreen.screens[0]
+    }
+
+    /// Where the shelf sits when visible.
+    private var revealedOrigin: CGPoint { revealedOrigin(for: panel?.frame.size ?? .zero) }
+
+    private func revealedOrigin(for size: CGSize) -> CGPoint {
+        let visible = targetScreen.visibleFrame
+        let inset: CGFloat = 6 + systemDockClearance
+
+        let origin: CGPoint = switch app.effectivePosition {
+        case .bottom: CGPoint(x: visible.midX - size.width / 2, y: visible.minY + inset)
+        case .left: CGPoint(x: visible.minX + inset, y: visible.midY - size.height / 2)
+        case .right: CGPoint(x: visible.maxX - size.width - inset, y: visible.midY - size.height / 2)
+        }
+
+        // Never let the shelf hang off-screen at large scales on small displays.
+        return CGPoint(
+            x: min(max(origin.x, visible.minX), max(visible.minX, visible.maxX - size.width)),
+            y: min(max(origin.y, visible.minY), max(visible.minY, visible.maxY - size.height))
+        )
+    }
+
+    /// Clearance for Apple's Dock if the user has put us on its edge anyway.
+    ///
+    /// Normally zero: while following we pick a free edge, and a Dock that is
+    /// not auto-hidden has already been excluded from `visibleFrame`.
+    private var systemDockClearance: CGFloat {
+        let system = SystemDockSettings.shared
+        guard app.effectivePosition == system.position, system.autoHide else { return 0 }
+        return system.tileSize + 22
+    }
+
+    /// Fully off the edge it is docked to, like Apple's Dock.
+    private var hiddenOrigin: CGPoint { hiddenOrigin(for: panel?.frame.size ?? .zero) }
+
+    private func hiddenOrigin(for size: CGSize) -> CGPoint {
+        let frame = targetScreen.frame
+        let shown = revealedOrigin(for: size)
+        return switch app.effectivePosition {
+        case .bottom: CGPoint(x: shown.x, y: frame.minY - size.height)
+        case .left: CGPoint(x: frame.minX - size.width, y: shown.y)
+        case .right: CGPoint(x: frame.maxX, y: shown.y)
+        }
+    }
+
+    private func applyPlacement(animated: Bool) {
+        guard let panel, panel.frame.width > 1, panel.frame.height > 1 else { return }
+        let origin = revealed ? revealedOrigin : hiddenOrigin
+        guard panel.frame.origin != origin else { return }
+        if animated {
+            // NSWindow's animator proxy only animates `setFrame(_:display:)`.
+            // `setFrameOrigin` through the proxy silently does nothing, which
+            // left the shelf parked off-screen while it believed it was shown.
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.22
+                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                panel.animator().setFrame(CGRect(origin: origin, size: panel.frame.size),
+                                          display: true)
+            }
+        } else {
+            panel.setFrameOrigin(origin)
+        }
+    }
+
+    /// Takes the shelf to a new size and the position that size belongs at,
+    /// in one move.
+    ///
+    /// The hosting view used to set the window's size itself, which kept the
+    /// old origin — so the shelf stretched out of one corner, and only then
+    /// did `windowDidResize` snap it back to centre. Two instant steps, and
+    /// the jump between them is what made resizing look broken.
+    func resize(to size: CGSize) {
+        guard let panel, size.width > 1, size.height > 1 else { return }
+        let origin = revealed ? revealedOrigin(for: size) : hiddenOrigin(for: size)
+        let frame = CGRect(origin: origin, size: size)
+        guard panel.frame != frame else { return }
+
+        // The very first layout has nothing to animate from, and a grip drag
+        // must not be eased at all — see ShelfResize.
+        guard panel.frame.width > 1, panel.frame.height > 1,
+              !ShelfResize.isDragging else {
+            // `display: false`. Forcing a synchronous redraw on every event of
+            // a grip drag is the largest single cost in the resize — measured
+            // heavier than the layout solve it triggers — and it buys nothing:
+            // the content changed, so the window redraws on the next cycle
+            // regardless. The same mistake the hover label made.
+            return panel.setFrame(frame, display: false)
+        }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.22
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            panel.animator().setFrame(frame, display: false)
+        }
+    }
+
+    // MARK: Auto-hide
+
+    /// Polls the pointer rather than installing a global event monitor.
+    ///
+    /// While hidden the shelf is off-screen, so its own tracking area can never
+    /// fire — something has to watch the screen edge. `NSEvent.mouseLocation`
+    /// is a plain static read needing no permission, and 30Hz of that is far
+    /// cheaper than a global event tap (which users would have to approve).
+    private func startPolling() {
+        guard pollTimer == nil else { return }
+        let timer = Timer(timeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.poll() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        pollTimer = timer
+        revealed = false
+    }
+
+    private func stopPolling() {
+        pollTimer?.invalidate()
+        pollTimer = nil
+        hideWorkItem?.cancel()
+        hideWorkItem = nil
+        groupCloseItem?.cancel()
+        groupCloseItem = nil
+    }
+
+    private func poll() {
+        guard panel != nil else { return }
+        let mouse = NSEvent.mouseLocation
+
+        // Never while a menu of ours is up — see `menuIsOpen`.
+        if menuIsOpen {
+            hideWorkItem?.cancel()
+            hideWorkItem = nil
+            return
+        }
+
+        // An opened group pins the shelf. The sheet is anchored to one of the
+        // tiles, so sliding the shelf out from under it would leave it
+        // floating over the desktop — and the group is exactly when the user
+        // is *using* the shelf. It closes on its own once the pointer has
+        // left both, and hiding resumes from the next tick.
+        if GroupWindow.shared.isOpen {
+            hideWorkItem?.cancel()
+            hideWorkItem = nil
+            if !revealed { setRevealed(true) }
+
+            // An icon being dragged out is *meant* to be outside both. Closing
+            // the sheet under it would cancel the gesture that is carrying it,
+            // which is why dragging one out could not be completed at all.
+            if withinShelf(mouse) || GroupWindow.shared.contains(mouse)
+                || DragOut.shared.item != nil {
+                groupCloseItem?.cancel()
+                groupCloseItem = nil
+            } else if groupCloseItem == nil {
+                scheduleGroupClose()
+            }
+            return
+        }
+        groupCloseItem?.cancel()
+        groupCloseItem = nil
+
+        if revealed {
+            // A generous margin: the shelf must not vanish the instant the
+            // pointer crosses its border on the way to a tile at the far end.
+            if withinShelf(mouse) {
+                hideWorkItem?.cancel()
+                hideWorkItem = nil
+            } else if hideWorkItem == nil {
+                scheduleHide()
+            }
+        } else if revealZone.contains(mouse) {
+            setRevealed(true)
+        }
+    }
+
+    /// A generous margin: the shelf must not vanish the instant the pointer
+    /// crosses its border on the way to a tile at the far end.
+    private func withinShelf(_ point: CGPoint) -> Bool {
+        shelfFrame.insetBy(dx: -12, dy: -12).contains(point)
+    }
+
+    private var shelfFrame: CGRect {
+        guard let panel else { return .zero }
+        return CGRect(origin: revealedOrigin, size: panel.frame.size)
+    }
+
+    /// A thin strip along the docked edge, spanning the shelf's extent.
+    private var revealZone: CGRect {
+        let frame = targetScreen.frame
+        let shelf = shelfFrame
+        return switch app.effectivePosition {
+        case .bottom:
+            CGRect(x: shelf.minX, y: frame.minY, width: shelf.width, height: revealZoneDepth)
+        case .left:
+            CGRect(x: frame.minX, y: shelf.minY, width: revealZoneDepth, height: shelf.height)
+        case .right:
+            CGRect(x: frame.maxX - revealZoneDepth, y: shelf.minY,
+                   width: revealZoneDepth, height: shelf.height)
+        }
+    }
+
+    /// Closes an opened group once the pointer has left both it and the
+    /// shelf. Longer than the hide delay: reaching a sheet that sits above
+    /// the shelf means crossing empty space, and that must not dismiss it.
+    private func scheduleGroupClose() {
+        let work = DispatchWorkItem {
+            MainActor.assumeIsolated { GroupWindow.shared.close() }
+        }
+        groupCloseItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
+    }
+
+    private func scheduleHide() {
+        let work = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.app.effectiveAutoHide else { return }
+                self.setRevealed(false)
+            }
+        }
+        hideWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + hideDelay, execute: work)
+    }
+
+    private func setRevealed(_ value: Bool) {
+        guard revealed != value else { return }
+        // An opened group is anchored to a tile. If the shelf slides away it
+        // would be left floating over the desktop with nothing under it.
+        if !value { GroupWindow.shared.close() }
+        revealed = value
+        hideWorkItem?.cancel()
+        hideWorkItem = nil
+        applyPlacement(animated: true)
+    }
+
+    // MARK: NSWindowDelegate
+
+    func windowDidResize(_ notification: Notification) {
+        // `resize(to:)` already places the frame it animates to. Re-placing on
+        // every intermediate step of that animation would fight it.
+        guard !NSAnimationContext.current.allowsImplicitAnimation else { return }
+        applyPlacement(animated: false)
+    }
+}
+
+extension NSScreen {
+    var displayID: UInt32? {
+        deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? UInt32
+    }
+}
