@@ -1,0 +1,118 @@
+import AppKit
+import SwiftUI
+
+/// A plain window host for a SwiftUI view.
+///
+/// The shelf lives in a non-activating `NSPanel`, which cannot present sheets
+/// — a `.sheet` attached to it silently does nothing. Anything modal-ish
+/// therefore needs a real window of its own.
+@MainActor
+class HostedWindow {
+    var window: NSWindow?
+
+    /// - Parameter chromeless: presents a floating rounded panel with no
+    ///   system title bar, the way the shipped app's widget browser appears.
+    ///   The view must then supply its own header and close control.
+    func present(_ view: some View, title: String, size: NSSize,
+                 resizable: Bool = false, chromeless: Bool = false) {
+        if let window {
+            raise(window)
+            return
+        }
+
+        let corner: CGFloat = 16
+        let root: AnyView = chromeless
+            ? AnyView(view.clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous)))
+            : AnyView(view)
+
+        let controller = NSHostingController(rootView: root)
+        let window = NSWindow(contentViewController: controller)
+        window.title = title
+        window.setContentSize(size)
+
+        if chromeless {
+            // Kept `.titled` rather than `.borderless`: a borderless window
+            // cannot become key, which would leave the search field dead.
+            // The title bar is made invisible instead.
+            window.styleMask = [.titled, .closable, .fullSizeContentView]
+            window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
+            for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
+                window.standardWindowButton(button)?.isHidden = true
+            }
+            window.isOpaque = false
+            window.backgroundColor = .clear
+            window.isMovableByWindowBackground = true
+            window.hasShadow = true
+        } else {
+            window.styleMask = resizable
+                ? [.titled, .closable, .miniaturizable, .resizable]
+                : [.titled, .closable, .miniaturizable]
+        }
+
+        window.isReleasedWhenClosed = false
+        window.center()
+        self.window = window
+        raise(window)
+    }
+
+    /// Brings a window to the front from an accessory app.
+    ///
+    /// `LSUIElement` apps are never "active" in the usual sense, so
+    /// `makeKeyAndOrderFront` plus `activate()` quietly opens the window
+    /// *behind* whatever the user is looking at — it exists, it is just
+    /// invisible. `orderFrontRegardless` is the call that actually raises it,
+    /// and a floating level keeps it from sinking again on the next click.
+    private func raise(_ window: NSWindow) {
+        window.level = .floating
+        window.orderFrontRegardless()
+        NSApp.activate()
+        window.makeKey()
+    }
+
+    func close() {
+        window?.close()
+        window = nil
+    }
+}
+
+@MainActor
+final class LibraryWindow: HostedWindow {
+    static let shared = LibraryWindow()
+
+    func show(app: AppState) {
+        present(
+            WidgetLibraryView(
+                onAdd: { [weak self] widget in
+                    withAnimation(.snappy(duration: 0.25)) { app.addItem(.widget(widget)) }
+                    // Adding is a repeated action — people add three widgets at
+                    // a time — so the library stays open, like Shortcuts' own.
+                    _ = self
+                },
+                onClose: { [weak self] in self?.close() }
+            ),
+            title: "Add Widget",
+            size: NSSize(width: 760, height: 470),
+            chromeless: true
+        )
+    }
+}
+
+@MainActor
+final class SettingsWindow: HostedWindow {
+    static let shared = SettingsWindow()
+
+    func show(app: AppState, tab: String = "General") {
+        @Bindable var bindable = app
+        present(
+            SettingsView(
+                state: $bindable.state,
+                initialTab: tab,
+                onApplyMacOSProfile: { Task { await app.applyMacOSProfile() } },
+                onCaptureCurrentDock: { Task { await app.captureCurrentDock() } }
+            ),
+            title: "Plinth Settings",
+            size: NSSize(width: 520, height: 460)
+        )
+    }
+}
