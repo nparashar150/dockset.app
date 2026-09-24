@@ -757,10 +757,13 @@ struct DockShelfView: View {
     }
 
     private func open(_ entry: Entry) {
-        // Anything other than the open group itself dismisses it: clicking
+        // Anything other than the open group or panel dismisses it: clicking
         // another tile is a decision to do something else.
         if entry.item.group?.id != GroupWindow.shared.openGroupID {
             GroupWindow.shared.close()
+        }
+        if entry.item.widget?.id != WidgetDetailWindow.shared.openWidgetID {
+            WidgetDetailWindow.shared.close()
         }
         if let group = entry.item.group {
             GroupWindow.shared.toggle(
@@ -786,6 +789,19 @@ struct DockShelfView: View {
         if let widget = entry.item.widget {
             // Controls inside the card win this click; only the card itself
             // reaches here. Verified with a hosting-view harness.
+            //
+            // A widget with more to say opens its own panel — the whole day's
+            // events rather than the next one, every battery rather than the
+            // Mac's. The rest open the app they are about.
+            if WidgetDetail.exists(for: widget.kind) {
+                WidgetDetailWindow.shared.toggle(
+                    widget,
+                    context: WidgetContext(position: position, now: app.now),
+                    anchor: hoverAnchor ?? .zero,
+                    edge: position,
+                    openSettings: { SettingsWindow.shared.show(app: app, tab: "Widgets") })
+                return
+            }
             guard let target = WidgetCatalog.openTarget(widget.kind) else { return }
             AppCatalog.shared.open(target)
             return

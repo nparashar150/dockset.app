@@ -14,6 +14,7 @@ final class DockPanelController: NSObject, NSWindowDelegate {
     private var revealed = true
     private var hideWorkItem: DispatchWorkItem?
     private var groupCloseItem: DispatchWorkItem?
+    private var panelCloseItem: DispatchWorkItem?
     /// True while any menu of ours is open.
     ///
     /// A context menu draws *above* the shelf, so reaching for an item takes
@@ -86,6 +87,7 @@ final class DockPanelController: NSObject, NSWindowDelegate {
 
     func hide() {
         GroupWindow.shared.close()
+        WidgetDetailWindow.shared.close()
         panel?.orderOut(nil)
     }
 
@@ -263,6 +265,24 @@ final class DockPanelController: NSObject, NSWindowDelegate {
         // floating over the desktop — and the group is exactly when the user
         // is *using* the shelf. It closes on its own once the pointer has
         // left both, and hiding resumes from the next tick.
+        // An open detail panel pins the shelf for the same reason an open
+        // group does: the panel is anchored to a tile, and it is precisely
+        // when the user is using the shelf.
+        if WidgetDetailWindow.shared.isOpen {
+            hideWorkItem?.cancel()
+            hideWorkItem = nil
+            if !revealed { setRevealed(true) }
+            if !withinShelf(mouse), !WidgetDetailWindow.shared.contains(mouse) {
+                if panelCloseItem == nil { schedulePanelClose() }
+            } else {
+                panelCloseItem?.cancel()
+                panelCloseItem = nil
+            }
+            return
+        }
+        panelCloseItem?.cancel()
+        panelCloseItem = nil
+
         if GroupWindow.shared.isOpen {
             hideWorkItem?.cancel()
             hideWorkItem = nil
@@ -334,6 +354,17 @@ final class DockPanelController: NSObject, NSWindowDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
+    /// Closes an open detail panel once the pointer has left both it and the
+    /// shelf. Longer than the hide delay: the panel floats above the shelf, so
+    /// reaching it means crossing empty space.
+    private func schedulePanelClose() {
+        let work = DispatchWorkItem {
+            MainActor.assumeIsolated { WidgetDetailWindow.shared.close() }
+        }
+        panelCloseItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
+    }
+
     private func scheduleHide() {
         let work = DispatchWorkItem { [weak self] in
             MainActor.assumeIsolated {
@@ -349,7 +380,10 @@ final class DockPanelController: NSObject, NSWindowDelegate {
         guard revealed != value else { return }
         // An opened group is anchored to a tile. If the shelf slides away it
         // would be left floating over the desktop with nothing under it.
-        if !value { GroupWindow.shared.close() }
+        if !value {
+            GroupWindow.shared.close()
+            WidgetDetailWindow.shared.close()
+        }
         revealed = value
         hideWorkItem?.cancel()
         hideWorkItem = nil

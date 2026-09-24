@@ -150,6 +150,31 @@ public enum WidgetCatalog {
 
     public static func entry(_ kind: WidgetKind) -> Entry? { byKind[kind] }
 
+    /// The colour a widget's detail panel is tinted with.
+    ///
+    /// The reference shelf tints an open panel toward whatever the widget is
+    /// *about* — Stripe teal, a sticky note its own paper, activity the
+    /// magenta of its CPU ring — while readouts with no colour of their own
+    /// stay neutral. A tint on everything would be noise; a tint on nothing
+    /// makes eight identical panels.
+    public static func accentHex(_ kind: WidgetKind) -> String? {
+        switch kind {
+        case .stripe: PaletteColor.teal.hex
+        case .paddle, .shopify: PaletteColor.yellow.hex
+        case .notes: PaletteColor.yellow.hex
+        case .calendar, .reminders: PaletteColor.orange.hex
+        case .system: MetricColor.cpu
+        case .network: MetricColor.netUpload
+        case .stock, .watchlist: PaletteColor.green.hex
+        case .aiUsage: PaletteColor.indigo.hex
+        case .hydration: PaletteColor.blue.hex
+        // Neutral: a clock, a battery or a player is not "about" a colour.
+        case .clock, .world, .stopwatch, .timer, .progress, .countdown,
+             .alarm, .music, .battery, .shortcut, .airdrop, .weather:
+            nil
+        }
+    }
+
     /// The keys a widget's settings UI should offer.
     ///
     /// `layout` is excluded: the style picker owns it, and listing it as a
