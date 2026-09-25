@@ -6,7 +6,7 @@ import SwiftUI
 /// The card is a light blue in *both* appearances — matching the shipped
 /// design — so only the ink flips with the colour scheme.
 ///
-/// A click on the card belongs to the shelf, so logging a drink is a "+" under
+/// A click on the card belongs to the shelf, so logging a drink is a "+" beside
 /// the readout rather than the whole glass: the card is what opens the widget,
 /// and a tile-wide tap would take that click before the shelf ever saw it.
 struct HydrationTile: View {
@@ -84,20 +84,27 @@ struct HydrationTile: View {
                             .foregroundStyle(WidgetStyle.primary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.6)
-                        if showsDrink { drinkButton(size: 11) }
+                        drinkButton(size: 11)
                     }
                 } else {
-                    VStack(spacing: 2) {
-                        Text(clock)
-                            .font(.system(size: 21, weight: .bold))
-                            .monospacedDigit()
-                            .foregroundStyle(WidgetStyle.primary)
-                            .lineLimit(1)
-                        Text("Next drink")
-                            .font(WidgetStyle.caption(14))
-                            .foregroundStyle(WidgetStyle.primary.opacity(0.75))
-                            .lineLimit(1)
-                        if showsDrink { drinkButton(size: 13).padding(.top, 4) }
+                    // The readout and the control sit side by side rather than
+                    // stacked: a wide card is 58pt tall, which the clock, its
+                    // caption and a 26pt disc under them overran — the "+" was
+                    // being clipped off the bottom of the glass.
+                    HStack(spacing: 8) {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(clock)
+                                .font(.system(size: 21, weight: .bold))
+                                .monospacedDigit()
+                                .foregroundStyle(WidgetStyle.primary)
+                                .lineLimit(1)
+                            Text("Next drink")
+                                .font(WidgetStyle.caption(14))
+                                .foregroundStyle(WidgetStyle.primary.opacity(0.75))
+                                .lineLimit(1)
+                        }
+                        Spacer(minLength: 0)
+                        drinkButton(size: 13)
                     }
                 }
             }
@@ -108,27 +115,17 @@ struct HydrationTile: View {
         }
     }
 
-    /// The library draws its cards with a tap of their own that adds the
-    /// widget, and a control inside the preview would eat it — so the "+" is
-    /// only rendered where pressing it would actually log something.
-    private var showsDrink: Bool { !context.isPreview }
-
     /// Only ever as big as itself: the card's own click has to reach the shelf,
-    /// so nothing here may spread to fill it.
+    /// so nothing here may spread to fill it. `TileGlyph` is the shelf-wide
+    /// treatment for exactly that — see StopwatchTile. The plain "+" replaces
+    /// `plus.circle.fill`, which would have drawn a disc inside a disc.
     ///
     /// The fill rising is the only confirmation a drink registered, which is
     /// why the write is animated rather than the press.
     private func drinkButton(size: CGFloat) -> some View {
-        Button(action: { withAnimation(.snappy(duration: 0.35)) { drink() } }) {
-            Image(systemName: "plus.circle.fill")
-                .font(.system(size: size, weight: .semibold))
-                .foregroundStyle(WidgetStyle.primary)
-                // Twice the glyph is a target worth aiming at once the shelf's
-                // scale has shrunk it, and still well inside the card.
-                .frame(width: size * 2, height: size * 2)
-                .contentShape(.rect)
-        }
-        .buttonStyle(.plain)
+        TileGlyph(symbol: "plus", size: size, action: context.isPreview ? nil : {
+            withAnimation(.snappy(duration: 0.35)) { drink() }
+        })
         .accessibilityLabel("Log a drink")
     }
 

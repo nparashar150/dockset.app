@@ -315,11 +315,13 @@ enum WidgetDetail {
     /// than the app the widget is about.
     static func exists(for kind: WidgetKind) -> Bool {
         switch kind {
-        case .music, .timer, .calendar, .battery, .system,
-             .notes, .stripe, .paddle, .shopify, .stock, .watchlist, .weather:
-            true
-        default:
+        // Everything with a tile and something to say. `.shortcut` and
+        // `.aiUsage` are the only kinds left out, and both are stubs — no
+        // tile, no service, nothing a panel could honestly show.
+        case .shortcut, .aiUsage:
             false
+        default:
+            true
         }
     }
 
@@ -327,6 +329,11 @@ enum WidgetDetail {
         switch kind {
         case .stripe, .paddle, .shopify: 340
         case .calendar, .reminders: 320
+        // Set by the twelve-column strip of the next hours there.
+        case .world: 320
+        // A big time, a date and two rows: 300 left a gutter wide enough to
+        // read as padding.
+        case .clock: 280
         case .battery: 330
         case .notes: 300
         case .system, .network: 340

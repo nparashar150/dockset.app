@@ -66,19 +66,12 @@ struct CountdownTile: View {
     }
 
     /// Only ever as big as itself: the card's own click has to reach the shelf,
-    /// so nothing here may spread to fill it.
+    /// so nothing here may spread to fill it. `TileGlyph` is the shelf-wide
+    /// treatment for exactly that — see StopwatchTile.
     private func startButton(title: String, size: CGFloat) -> some View {
-        Button(action: { start() }) {
-            Image(systemName: "play.fill")
-                .font(.system(size: size, weight: .semibold))
-                .foregroundStyle(WidgetStyle.primary)
-                // Twice the glyph is a target worth aiming at once the shelf's
-                // scale has shrunk it, and still well inside the card.
-                .frame(width: size * 2, height: size * 2)
-                .contentShape(.rect)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Start \(title)")
+        TileGlyph(symbol: "play.fill", size: size,
+                  action: context.isPreview ? nil : (start as () -> Void))
+            .accessibilityLabel("Start \(title)")
     }
 
     /// A countdown is running only while it carries a deadline; idle it shows

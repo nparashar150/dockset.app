@@ -29,9 +29,30 @@ struct WidgetDetailBody: View {
             StocksDetail(instance: instance, context: context)
         case .weather:
             WeatherDetail(instance: instance, context: context)
+        case .clock:
+            ClockDetail(instance: instance, context: context)
+        case .world:
+            WorldClockDetail(instance: instance, context: context)
+        case .stopwatch:
+            StopwatchDetail(instance: instance, context: context)
+        case .countdown:
+            CountdownDetail(instance: instance, context: context)
+        case .alarm:
+            AlarmDetail(instance: instance, context: context)
+        case .progress:
+            TimeProgressDetail(instance: instance, context: context)
+        case .hydration:
+            HydrationDetail(instance: instance, context: context)
+        case .network:
+            NetworkDetail(instance: instance, context: context)
+        case .airdrop:
+            AirDropDetail(instance: instance, context: context)
+        case .reminders:
+            RemindersDetail(instance: instance, context: context)
         default:
-            // A widget with nothing more to say than its tile already shows.
-            // Better an honest line than a panel padded out with filler.
+            // Only `.shortcut` and `.aiUsage` reach this now, and both are
+            // stubs: no tile, no service, nothing to read. Better an honest
+            // line than a panel that explains its own absence.
             Text("No further detail for this widget.")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)

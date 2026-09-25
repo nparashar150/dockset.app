@@ -104,12 +104,7 @@ struct StockTile: View {
     private func readout(ticker: CGFloat, price: CGFloat, percent: CGFloat,
                          fixed: Bool) -> some View {
         VStack(alignment: .leading, spacing: 1) {
-            HStack(spacing: 3) {
-                Text(symbol)
-                    .font(WidgetStyle.label(ticker))
-                    .foregroundStyle(WidgetStyle.primary)
-                if showsAdvance { nextSymbol(ticker) }
-            }
+            tickerRow(ticker)
             Text(quote?.priceText ?? "—")
                 .font(WidgetStyle.value(price))
                 .foregroundStyle(WidgetStyle.primary)
@@ -125,18 +120,43 @@ struct StockTile: View {
         .fixedSize(horizontal: fixed, vertical: false)
     }
 
+    /// The ticker and its chevron are one control, because the chevron changes
+    /// the ticker: a target of the two together is easier to hit than a 10pt
+    /// arrow, and still nowhere near the whole card, which the shelf needs for
+    /// the panel. This is the same shape the Time Progress tile's period name
+    /// wears.
+    ///
+    /// It wears no disc — that is `TileGlyph`, for a control standing on its
+    /// own somewhere on the card. A chevron sitting inside a line of type is
+    /// already attached to what it acts on, and a disc here would only break
+    /// the readout's first line in half.
+    ///
     /// Sized off the ticker beside it: the readout drops from 11pt to 9pt in
     /// the 76pt column, and a glyph at a fixed size would dominate it there.
-    private func nextSymbol(_ size: CGFloat) -> some View {
-        Button(action: { advance() }) {
-            Image(systemName: "chevron.right")
-                .font(.system(size: size - 1, weight: .semibold))
-                .foregroundStyle(WidgetStyle.secondary)
-                .frame(width: size + 5, height: size + 5)
+    @ViewBuilder
+    private func tickerRow(_ size: CGFloat) -> some View {
+        if showsAdvance {
+            Button(action: { advance() }) {
+                HStack(spacing: 3) {
+                    tickerText(size)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: size - 1, weight: .semibold))
+                        .foregroundStyle(WidgetStyle.secondary)
+                        .frame(width: size + 5, height: size + 5)
+                }
                 .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Show next symbol")
+        } else {
+            tickerText(size)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Show next symbol")
+    }
+
+    private func tickerText(_ size: CGFloat) -> some View {
+        Text(symbol)
+            .font(WidgetStyle.label(size))
+            .foregroundStyle(WidgetStyle.primary)
     }
 }
 

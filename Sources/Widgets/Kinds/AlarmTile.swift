@@ -20,86 +20,90 @@ struct AlarmTile: View {
         WidgetSurface {
             Group {
                 if context.position.isVertical {
-                    // 76x76 column: symbol, time, name. The "in Xh Ym" caption is
-                    // the row that does not fit, so it goes.
+                    // 76x76 column: switch, time, name. The "in Xh Ym" caption
+                    // is the row that does not fit, so it goes. The glyph is
+                    // 14pt rather than 18 so its disc lands on the 28pt the
+                    // bare symbol already reserved and the column keeps its
+                    // two lines.
                     VStack(spacing: 2) {
-                        toggleGlyph(enabled: enabled, size: 18)
-                        Text(next.formatted(.dateTime.hour().minute()))
-                            .font(WidgetStyle.value(18))
-                            .monospacedDigit()
-                            .foregroundStyle(WidgetStyle.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
-                        Text(name.isEmpty ? "Alarm" : name)
-                            .font(WidgetStyle.caption(9))
-                            .foregroundStyle(WidgetStyle.secondary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
+                        toggleGlyph(enabled: enabled, size: 14)
+                        VStack(spacing: 2) {
+                            Text(next.formatted(.dateTime.hour().minute()))
+                                .font(WidgetStyle.value(18))
+                                .monospacedDigit()
+                                .foregroundStyle(WidgetStyle.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                            Text(name.isEmpty ? "Alarm" : name)
+                                .font(WidgetStyle.caption(9))
+                                .foregroundStyle(WidgetStyle.secondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                        .opacity(enabled ? 1 : 0.45)
                     }
                 } else {
-                    VStack(alignment: .leading, spacing: 0) {
-                        HStack(alignment: .top, spacing: 6) {
+                    // The switch sits level with the block it acts on rather
+                    // than in the top corner: a card is 58pt tall, and a glyph
+                    // pinned to the top of it reads as a badge printed on the
+                    // tile instead of something to press.
+                    HStack(spacing: 8) {
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(next.formatted(.dateTime.hour().minute()))
                                 .font(WidgetStyle.value(24))
                                 .monospacedDigit()
                                 .foregroundStyle(WidgetStyle.primary)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
-                            Spacer(minLength: 0)
-                            toggleGlyph(enabled: enabled, size: 20)
+                            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                                Text(name.isEmpty ? "Alarm" : name)
+                                    .font(WidgetStyle.label(14))
+                                    .foregroundStyle(WidgetStyle.primary)
+                                    .lineLimit(1)
+                                    // The countdown is fixed and the switch
+                                    // takes 30, so a long name gives way
+                                    // rather than truncating at "Morning al…".
+                                    .minimumScaleFactor(0.8)
+                                // A countdown to something that will not ring
+                                // is a lie.
+                                Text(enabled ? countdownCaption(to: next) : "Off")
+                                    .font(WidgetStyle.caption(13))
+                                    .monospacedDigit()
+                                    .foregroundStyle(WidgetStyle.secondary)
+                                    .fixedSize()
+                            }
                         }
-                        Spacer(minLength: 4)
-                        HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            Text(name.isEmpty ? "Alarm" : name)
-                                .font(WidgetStyle.label(14))
-                                .foregroundStyle(WidgetStyle.primary)
-                                .lineLimit(1)
-                            Spacer(minLength: 0)
-                            // A countdown to something that will not ring is a lie.
-                            Text(enabled ? countdownCaption(to: next) : "Off")
-                                .font(WidgetStyle.caption(13))
-                                .monospacedDigit()
-                                .foregroundStyle(WidgetStyle.secondary)
-                                .fixedSize()
-                        }
+                        .opacity(enabled ? 1 : 0.45)
+                        Spacer(minLength: 0)
+                        toggleGlyph(enabled: enabled, size: 15)
                     }
-                    .padding(.vertical, 12)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .opacity(enabled ? 1 : 0.45)
         }
     }
 
     /// Only ever as big as itself: the card's own click has to reach the shelf,
     /// which is what opens Clock.app, so nothing here may spread to fill it.
+    /// `TileGlyph` is the shelf-wide treatment for exactly that — see
+    /// StopwatchTile — and it is what turns this from an orange badge in the
+    /// corner into a switch.
     ///
-    /// In the library the card's click adds the widget, and a glyph that took
-    /// it and toggled nothing would be a dead spot on the preview — so there
-    /// the glyph is only a picture.
+    /// The disc carries the alarm's own colour, so an armed alarm sits on
+    /// orange and a silenced one on grey: the state is legible before the
+    /// glyph itself is read. It stays at full strength while the rest of the
+    /// card fades, because the faded thing is what you are being asked to
+    /// press to bring back.
     private func toggleGlyph(enabled: Bool, size: CGFloat) -> some View {
-        let glyph = Image(systemName: enabled ? "alarm.fill" : "alarm.slash.fill")
-            .font(.system(size: size))
-            .foregroundStyle(enabled ? Color(hex: PaletteColor.orange.hex) : WidgetStyle.secondary)
-
-        return Group {
-            if context.isPreview {
-                glyph
-            } else {
-                Button(action: { toggle() }) {
-                    glyph
-                        // A little over the glyph is a target worth aiming at
-                        // once the shelf's scale has shrunk it, and still
-                        // leaves the 76pt column room for its time and name.
-                        .frame(width: size + 10, height: size + 10)
-                        .contentShape(.rect)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(
-                    "\(enabled ? "Turn off" : "Turn on") alarm at \(nextOccurrence.formatted(.dateTime.hour().minute()))"
-                )
-            }
-        }
+        TileGlyph(
+            symbol: enabled ? "alarm.fill" : "alarm.slash.fill",
+            size: size,
+            tint: enabled ? Color(hex: PaletteColor.orange.hex) : WidgetStyle.secondary,
+            action: context.isPreview ? nil : (toggle as () -> Void)
+        )
+        .accessibilityLabel(
+            "\(enabled ? "Turn off" : "Turn on") alarm at \(nextOccurrence.formatted(.dateTime.hour().minute()))"
+        )
     }
 
     private func toggle() {

@@ -62,9 +62,9 @@ struct StopwatchTile: View {
     /// Only ever as big as themselves: the card's own click has to reach the
     /// shelf, which is what opens Clock, so nothing here may spread to fill it.
     private func controls(_ state: State, size: CGFloat) -> some View {
-        HStack(spacing: 2) {
-            glyph(state.running ? "pause.fill" : "play.fill",
-                  size: size, tint: WidgetStyle.primary, action: toggle)
+        HStack(spacing: 4) {
+            TileGlyph(symbol: state.running ? "pause.fill" : "play.fill",
+                      size: size, action: context.isPreview ? nil : (toggle as () -> Void))
                 .accessibilityLabel(state.running ? "Stop stopwatch" : "Start stopwatch")
             // A run can only be cleared once it has stopped — which is also
             // the only moment this pair changes shape, since a reset that
@@ -73,25 +73,12 @@ struct StopwatchTile: View {
             // that did nothing would still swallow the click the card owes
             // the shelf.
             if !state.running, state.elapsed > 0 {
-                glyph("arrow.counterclockwise",
-                      size: size, tint: WidgetStyle.secondary, action: reset)
+                TileGlyph(symbol: "arrow.counterclockwise", size: size,
+                          tint: WidgetStyle.secondary,
+                          action: context.isPreview ? nil : (reset as () -> Void))
                     .accessibilityLabel("Reset stopwatch")
             }
         }
-    }
-
-    private func glyph(_ symbol: String, size: CGFloat, tint: Color,
-                       action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: size, weight: .semibold))
-                .foregroundStyle(tint)
-                // Twice the glyph is a target worth aiming at once the shelf's
-                // scale has shrunk it, and still well inside the card.
-                .frame(width: size * 2, height: size * 2)
-                .contentShape(.rect)
-        }
-        .buttonStyle(.plain)
     }
 
     /// Banks what has run so far when stopping, so restarting continues rather

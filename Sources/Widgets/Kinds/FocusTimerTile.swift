@@ -93,18 +93,16 @@ struct FocusTimerTile: View {
 
     /// Only ever as big as itself: the card's own click has to reach the shelf,
     /// which is what opens the panel, so nothing here may spread to fill it.
+    /// `TileGlyph` is the shelf-wide treatment for exactly that — see
+    /// StopwatchTile.
+    ///
+    /// The disc stays neutral rather than taking the session's colour: the
+    /// ring beside it is already that colour, and two of them read as one
+    /// smeared shape at this size.
     private func toggleButton(running: Bool, size: CGFloat) -> some View {
-        Button(action: { toggle() }) {
-            Image(systemName: running ? "pause.fill" : "play.fill")
-                .font(.system(size: size, weight: .semibold))
-                .foregroundStyle(WidgetStyle.primary)
-                // Twice the glyph is a target worth aiming at once the shelf's
-                // scale has shrunk it, and still well inside the card.
-                .frame(width: size * 2, height: size * 2)
-                .contentShape(.rect)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(running ? "Pause focus timer" : "Start focus timer")
+        TileGlyph(symbol: running ? "pause.fill" : "play.fill", size: size,
+                  action: context.isPreview ? nil : (toggle as () -> Void))
+            .accessibilityLabel(running ? "Pause focus timer" : "Start focus timer")
     }
 
     /// Pausing banks what is left instead of the deadline, so resuming carries

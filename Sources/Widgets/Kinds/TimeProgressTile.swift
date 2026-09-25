@@ -184,6 +184,11 @@ struct TimeProgressTile: View {
     ///
     /// `prominent` is the bars layout, where the name is the tile's headline
     /// rather than a caption under the figure.
+    ///
+    /// No disc behind the chevron: `TileGlyph` (see StopwatchTile) is for a
+    /// control standing on its own on a card, where nothing else says it can
+    /// be pressed. This one is inside a line of type and already reads as part
+    /// of the word it changes — the same shape the Stock tile's ticker wears.
     @ViewBuilder
     private func periodLabel(_ size: CGFloat, prominent: Bool = false) -> some View {
         if context.isPreview {
