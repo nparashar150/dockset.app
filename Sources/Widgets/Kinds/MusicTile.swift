@@ -316,7 +316,7 @@ struct MusicTile: View {
 
 /// One reading, whatever produced it, so the layouts do not care whether they
 /// are drawing Spotify or a YouTube tab.
-private struct Playing {
+struct Playing {
     var title: String
     var artist: String
     var isPlaying: Bool
