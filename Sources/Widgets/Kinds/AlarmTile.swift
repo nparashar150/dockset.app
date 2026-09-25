@@ -2,10 +2,12 @@ import SwiftUI
 
 /// The next time an alarm named in the config will fire.
 ///
-/// Click to arm or silence it. `enabled` lives in the widget's own config, so a
+/// A click on the card opens Clock.app, so the card belongs to the shelf.
+/// Arming and silencing stays on the tile as the alarm's own glyph, sized to
+/// itself: silencing an alarm by a stray click on a card is how you sleep
+/// through something. `enabled` lives in the widget's own config, so a
 /// silenced alarm stays silenced across a relaunch. The time itself is never
-/// hidden while off — the tile is a switch, and you set it by knowing what it
-/// is set to.
+/// hidden while off — you set a switch by knowing what it is set to.
 struct AlarmTile: View {
     var instance: WidgetInstance
     var context: WidgetContext
@@ -21,9 +23,7 @@ struct AlarmTile: View {
                     // 76x76 column: symbol, time, name. The "in Xh Ym" caption is
                     // the row that does not fit, so it goes.
                     VStack(spacing: 2) {
-                        Image(systemName: enabled ? "alarm.fill" : "alarm.slash.fill")
-                            .font(.system(size: 18))
-                            .foregroundStyle(enabled ? Color(hex: PaletteColor.orange.hex) : WidgetStyle.secondary)
+                        toggleGlyph(enabled: enabled, size: 18)
                         Text(next.formatted(.dateTime.hour().minute()))
                             .font(WidgetStyle.value(18))
                             .monospacedDigit()
@@ -46,9 +46,7 @@ struct AlarmTile: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                             Spacer(minLength: 0)
-                            Image(systemName: enabled ? "alarm.fill" : "alarm.slash.fill")
-                                .font(.system(size: 20))
-                                .foregroundStyle(enabled ? Color(hex: PaletteColor.orange.hex) : WidgetStyle.secondary)
+                            toggleGlyph(enabled: enabled, size: 20)
                         }
                         Spacer(minLength: 4)
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -68,16 +66,39 @@ struct AlarmTile: View {
                     .padding(.vertical, 12)
                 }
             }
-            // The surface fills the card only after this closure returns, so the
-            // hit area has to be claimed here or it stops at the text.
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .opacity(enabled ? 1 : 0.45)
-            .contentShape(.rect)
-            .onTapGesture { toggle() }
-            .accessibilityAddTraits(.isButton)
-            .accessibilityLabel(
-                "\(enabled ? "Turn off" : "Turn on") alarm at \(next.formatted(.dateTime.hour().minute()))"
-            )
+        }
+    }
+
+    /// Only ever as big as itself: the card's own click has to reach the shelf,
+    /// which is what opens Clock.app, so nothing here may spread to fill it.
+    ///
+    /// In the library the card's click adds the widget, and a glyph that took
+    /// it and toggled nothing would be a dead spot on the preview — so there
+    /// the glyph is only a picture.
+    private func toggleGlyph(enabled: Bool, size: CGFloat) -> some View {
+        let glyph = Image(systemName: enabled ? "alarm.fill" : "alarm.slash.fill")
+            .font(.system(size: size))
+            .foregroundStyle(enabled ? Color(hex: PaletteColor.orange.hex) : WidgetStyle.secondary)
+
+        return Group {
+            if context.isPreview {
+                glyph
+            } else {
+                Button(action: { toggle() }) {
+                    glyph
+                        // A little over the glyph is a target worth aiming at
+                        // once the shelf's scale has shrunk it, and still
+                        // leaves the 76pt column room for its time and name.
+                        .frame(width: size + 10, height: size + 10)
+                        .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(
+                    "\(enabled ? "Turn off" : "Turn on") alarm at \(nextOccurrence.formatted(.dateTime.hour().minute()))"
+                )
+            }
         }
     }
 

@@ -6,8 +6,10 @@ import SwiftUI
 /// The 76pt column has no room beside anything, so it stacks — ticker, price,
 /// percentage, then the chart across the full width.
 ///
-/// Click to move to the next of the configured `symbols`; the one on show is
-/// `symbol` in the widget's own config, so it survives a relaunch.
+/// A click on the card opens the panel. When more than one of the configured
+/// `symbols` is set, a chevron beside the ticker steps to the next of them —
+/// the one on show is `symbol` in the widget's own config, so it survives a
+/// relaunch.
 struct StockTile: View {
     var instance: WidgetInstance
     var context: WidgetContext
@@ -20,7 +22,7 @@ struct StockTile: View {
     }
 
     /// The symbols the user configured, deduplicated so a repeated entry cannot
-    /// make a click land on the ticker already showing.
+    /// leave the chevron landing on the ticker already showing.
     private var rotation: [String] {
         instance.config.strings("symbols", default: [])
             .map(StockService.normalised)
@@ -49,10 +51,6 @@ struct StockTile: View {
             // fading, rather than blanking or showing a zero.
             .opacity(quote?.stale == true ? 0.55 : 1)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(.rect)
-            .onTapGesture { advance() }
-            .accessibilityAddTraits(.isButton)
-            .accessibilityLabel(rotation.count > 1 ? "\(symbol), show next symbol" : symbol)
         }
         .task(id: symbol) {
             guard !context.isPreview else { return }
@@ -60,13 +58,19 @@ struct StockTile: View {
         }
     }
 
-    /// One symbol is not a rotation, so the click is ignored rather than
-    /// rewriting the value already on show. A symbol that is no longer in the
-    /// list has no successor; the first entry is the way back in.
+    /// One symbol is not a rotation, and a control that did nothing would
+    /// still swallow the click the card owes the panel — so the chevron is
+    /// only rendered when there is somewhere for it to go.
+    private var showsAdvance: Bool {
+        !context.isPreview && rotation.count > 1
+    }
+
+    /// A symbol that is no longer in the list has no successor; the first
+    /// entry is the way back in.
     private func advance() {
-        guard !context.isPreview, rotation.count > 1 else { return }
         let next = rotation.firstIndex(of: symbol)
-            .map { rotation[($0 + 1) % rotation.count] } ?? rotation[0]
+            .map { rotation[($0 + 1) % rotation.count] } ?? rotation.first
+        guard let next else { return }
         withAnimation(.snappy(duration: 0.3)) {
             WidgetWriter.write(instance) { config in
                 config.set("symbol", .string(next))
@@ -100,9 +104,12 @@ struct StockTile: View {
     private func readout(ticker: CGFloat, price: CGFloat, percent: CGFloat,
                          fixed: Bool) -> some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(symbol)
-                .font(WidgetStyle.label(ticker))
-                .foregroundStyle(WidgetStyle.primary)
+            HStack(spacing: 3) {
+                Text(symbol)
+                    .font(WidgetStyle.label(ticker))
+                    .foregroundStyle(WidgetStyle.primary)
+                if showsAdvance { nextSymbol(ticker) }
+            }
             Text(quote?.priceText ?? "—")
                 .font(WidgetStyle.value(price))
                 .foregroundStyle(WidgetStyle.primary)
@@ -116,6 +123,20 @@ struct StockTile: View {
         .minimumScaleFactor(0.6)
         .frame(maxWidth: fixed ? nil : .infinity, alignment: .leading)
         .fixedSize(horizontal: fixed, vertical: false)
+    }
+
+    /// Sized off the ticker beside it: the readout drops from 11pt to 9pt in
+    /// the 76pt column, and a glyph at a fixed size would dominate it there.
+    private func nextSymbol(_ size: CGFloat) -> some View {
+        Button(action: { advance() }) {
+            Image(systemName: "chevron.right")
+                .font(.system(size: size - 1, weight: .semibold))
+                .foregroundStyle(WidgetStyle.secondary)
+                .frame(width: size + 5, height: size + 5)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Show next symbol")
     }
 }
 

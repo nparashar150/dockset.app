@@ -146,6 +146,145 @@ final class InteractionTests: XCTestCase {
         XCTAssertEqual(tally.outer, 1)
     }
 
+    // MARK: Whole-card taps
+
+    /// A card whose descendant claims every point of it.
+    ///
+    /// `wholeCard` is the defect's exact shape: a `Group` carrying
+    /// `.frame(maxWidth: .infinity, maxHeight: .infinity)` with a content
+    /// shape and a tap on top of it, which is how eleven widget tiles used to
+    /// attach their own action.
+    private struct WholeCardTap: View {
+        let tally: Tally
+        var wholeCard: Bool
+        var body: some View {
+            ZStack {
+                Color.gray
+                if wholeCard {
+                    Color.blue.opacity(0.2)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .contentShape(.rect)
+                        .onTapGesture { tally.inner += 1 }
+                }
+            }
+            .frame(width: 200, height: 120)
+            .modifier(TileHitShape(filled: false))
+            .onTapGesture { tally.outer += 1 }
+        }
+    }
+
+    /// The five points a hand actually aims at: the middle, and each corner.
+    private static let cardPoints = [NSPoint(x: 100, y: 60),
+                                     NSPoint(x: 5, y: 5), NSPoint(x: 195, y: 5),
+                                     NSPoint(x: 5, y: 115), NSPoint(x: 195, y: 115)]
+
+    /// A descendant tap that covers the whole card leaves the card's own
+    /// action dead *everywhere*, not merely over a control.
+    ///
+    /// This is the one that hid: the earlier tests only ever clicked the
+    /// middle of a small interior target, so "the interior wins" read as a
+    /// feature. Stretch that interior to the card's bounds and there is no
+    /// remaining pixel for the shelf's own tap — every click on a widget was
+    /// inert, and the only visible symptom was a panel that never opened.
+    func testAWholeCardTapLeavesTheCardsActionDeadEverywhere() {
+        let tally = Tally()
+        let points = Self.cardPoints
+        inPanel(WholeCardTap(tally: tally, wholeCard: true)) { panel in
+            for point in points { click(at: point, in: panel) }
+        }
+        XCTAssertEqual(tally.inner, points.count)
+        XCTAssertEqual(tally.outer, 0, """
+            A tile with a detail panel must not put a tap on its whole card: \
+            a descendant tap beats the shelf's, so the panel can never open \
+            from anywhere on the tile. Whole-card actions belong on a small \
+            control that occupies only the element they are about.
+            """)
+    }
+
+    /// With the whole-card tap gone the same five points all reach the card,
+    /// which is what makes a widget's panel openable at all.
+    func testACardWithoutAWholeCardTapIsClickableEverywhere() {
+        let tally = Tally()
+        let points = Self.cardPoints
+        inPanel(WholeCardTap(tally: tally, wholeCard: false)) { panel in
+            for point in points { click(at: point, in: panel) }
+        }
+        XCTAssertEqual(tally.outer, points.count, "every point on the card must open the panel")
+        XCTAssertEqual(tally.inner, 0)
+    }
+
+    /// A control whose gate sits inside its action versus on its gesture.
+    private struct GatedControl: View {
+        let tally: Tally
+        var gateOnGesture: Bool
+        var wanted: Bool
+
+        var body: some View {
+            ZStack {
+                Color.gray
+                control
+            }
+            .frame(width: 200, height: 120)
+            .modifier(TileHitShape(filled: true))
+            .onTapGesture { tally.outer += 1 }
+        }
+
+        @ViewBuilder private var control: some View {
+            if gateOnGesture {
+                if wanted {
+                    glyph.onTapGesture { tally.inner += 1 }
+                } else {
+                    glyph
+                }
+            } else {
+                glyph.onTapGesture { if wanted { tally.inner += 1 } }
+            }
+        }
+
+        private var glyph: some View {
+            Color.blue.frame(width: 40, height: 40).contentShape(.rect)
+        }
+    }
+
+    /// A tap whose action returns early still eats the click.
+    ///
+    /// This was the stock tile with one symbol in its rotation: the action
+    /// guarded `count > 1` and did nothing, so the click neither advanced
+    /// anything nor reached the card. Nothing at all happened, which reads as
+    /// a dead app rather than a gate doing its job.
+    func testAnEarlyReturningControlStillSwallowsTheClick() {
+        let tally = Tally()
+        inPanel(GatedControl(tally: tally, gateOnGesture: false, wanted: false)) { panel in
+            click(at: NSPoint(x: 100, y: 60), in: panel)
+        }
+        XCTAssertEqual(tally.inner, 0)
+        XCTAssertEqual(tally.outer, 0, """
+            A guard inside a tap's action cannot decline the click. Gate the \
+            gesture — attach it only when it is wanted, the way TapToOpen \
+            does — so an unwanted control leaves the card's tap alone.
+            """)
+    }
+
+    /// Gating the gesture instead of the action hands the click back.
+    func testAGateOnTheGestureLeavesTheClickToTheCard() {
+        let tally = Tally()
+        inPanel(GatedControl(tally: tally, gateOnGesture: true, wanted: false)) { panel in
+            click(at: NSPoint(x: 100, y: 60), in: panel)
+        }
+        XCTAssertEqual(tally.inner, 0)
+        XCTAssertEqual(tally.outer, 1, "with no gesture attached the card must still act")
+    }
+
+    /// And when it is wanted it behaves like any other interior control.
+    func testAWantedGatedControlTakesTheClick() {
+        let tally = Tally()
+        inPanel(GatedControl(tally: tally, gateOnGesture: true, wanted: true)) { panel in
+            click(at: NSPoint(x: 100, y: 60), in: panel)
+        }
+        XCTAssertEqual(tally.inner, 1)
+        XCTAssertEqual(tally.outer, 0)
+    }
+
     // MARK: Key status
 
     /// Keystrokes only reach the key window, so a panel that can never be key

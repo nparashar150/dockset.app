@@ -4,37 +4,94 @@ import SwiftUI
 ///
 /// Already a stack, so the 76pt column is the same thing in smaller type.
 ///
-/// Click to start or stop, double-click to reset. The state is `started` and
-/// `elapsed` in the widget's own config, so it survives a relaunch and follows
-/// the widget between profiles.
+/// A click on the card opens Clock, so the card belongs to the shelf. Starting
+/// and stopping stays on the tile as a glyph the size of itself — a run begun
+/// in one click, without anything opening, is worth the room — and clearing a
+/// stopped run sits beside it, because nothing else can zero the count: the
+/// Stopwatch has no panel and no settings of its own.
+///
+/// The state is `started` and `elapsed` in the widget's own config, so it
+/// survives a relaunch and follows the widget between profiles.
 struct StopwatchTile: View {
     var instance: WidgetInstance
     var context: WidgetContext
 
     var body: some View {
         let state = state
-        let vertical = context.position.isVertical
         WidgetSurface {
-            VStack(spacing: 2) {
-                Text(Self.format(state.elapsed))
-                    .font(WidgetStyle.value(vertical ? 17 : 21))
-                    .foregroundStyle(WidgetStyle.primary)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(vertical ? 0.5 : 0.55)
-                Text(state.caption)
-                    .font(WidgetStyle.caption(vertical ? 9 : 12))
-                    .foregroundStyle(WidgetStyle.secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(vertical ? 0.7 : 1)
+            if context.position.isVertical {
+                // 76x62: a 56pt-wide column has no room beside the readout, so
+                // the glyphs go under it.
+                VStack(spacing: 2) {
+                    readout(state, value: 17, caption: 9, alignment: .center)
+                    controls(state, size: 9)
+                }
+            } else {
+                HStack(spacing: 6) {
+                    // The readout takes the width so the glyphs stay pinned to
+                    // the trailing edge: the count ticks every second and
+                    // widens to h:mm:ss past the hour, and a control that slid
+                    // along with it would be a moving target.
+                    readout(state, value: 21, caption: 12, alignment: .leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    controls(state, size: 11)
+                }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(.rect)
-            .onTapGesture(count: 2) { reset() }
-            .onTapGesture { toggle() }
-            .accessibilityAddTraits(.isButton)
-            .accessibilityLabel(state.caption == "Running" ? "Stop stopwatch" : "Start stopwatch")
         }
+    }
+
+    private func readout(_ state: State, value: CGFloat, caption: CGFloat,
+                         alignment: HorizontalAlignment) -> some View {
+        VStack(alignment: alignment, spacing: 2) {
+            Text(Self.format(state.elapsed))
+                .font(WidgetStyle.value(value))
+                .foregroundStyle(WidgetStyle.primary)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+            Text(state.caption)
+                .font(WidgetStyle.caption(caption))
+                .foregroundStyle(WidgetStyle.secondary)
+                .lineLimit(1)
+                // The glyphs have taken the width the caption used to spread
+                // into, and "Running" is the longest of the three words.
+                .minimumScaleFactor(0.7)
+        }
+    }
+
+    /// Only ever as big as themselves: the card's own click has to reach the
+    /// shelf, which is what opens Clock, so nothing here may spread to fill it.
+    private func controls(_ state: State, size: CGFloat) -> some View {
+        HStack(spacing: 2) {
+            glyph(state.running ? "pause.fill" : "play.fill",
+                  size: size, tint: WidgetStyle.primary, action: toggle)
+                .accessibilityLabel(state.running ? "Stop stopwatch" : "Start stopwatch")
+            // A run can only be cleared once it has stopped — which is also
+            // the only moment this pair changes shape, since a reset that
+            // appeared and vanished under the pointer as the seconds ran would
+            // be a trap. Nothing to clear means no glyph at all: a control
+            // that did nothing would still swallow the click the card owes
+            // the shelf.
+            if !state.running, state.elapsed > 0 {
+                glyph("arrow.counterclockwise",
+                      size: size, tint: WidgetStyle.secondary, action: reset)
+                    .accessibilityLabel("Reset stopwatch")
+            }
+        }
+    }
+
+    private func glyph(_ symbol: String, size: CGFloat, tint: Color,
+                       action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: size, weight: .semibold))
+                .foregroundStyle(tint)
+                // Twice the glyph is a target worth aiming at once the shelf's
+                // scale has shrunk it, and still well inside the card.
+                .frame(width: size * 2, height: size * 2)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
     }
 
     /// Banks what has run so far when stopping, so restarting continues rather
@@ -61,15 +118,20 @@ struct StopwatchTile: View {
         }
     }
 
-    private var state: (elapsed: TimeInterval, caption: String) {
+    /// Carries `running` rather than leaving the glyphs to read it back out of
+    /// `caption`: both of them hang off it, and a displayed word is no place
+    /// to keep state.
+    private typealias State = (elapsed: TimeInterval, caption: String, running: Bool)
+
+    private var state: State {
         let started = instance.config.double("started")
         let banked = instance.config.double("elapsed")
         if started > 0 {
-            return (banked + max(0, context.now.timeIntervalSince1970 - started), "Running")
+            return (banked + max(0, context.now.timeIntervalSince1970 - started), "Running", true)
         }
-        if banked > 0 { return (banked, "Paused") }
+        if banked > 0 { return (banked, "Paused", false) }
         // The library has no running stopwatch, so show a plausible one.
-        return context.isPreview ? (83, "Paused") : (0, "Ready")
+        return context.isPreview ? (83, "Paused", false) : (0, "Ready", false)
     }
 
     static func format(_ elapsed: TimeInterval) -> String {

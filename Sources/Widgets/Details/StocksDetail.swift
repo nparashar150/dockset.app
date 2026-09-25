@@ -42,13 +42,6 @@ struct StocksDetail: View {
         return configured.isEmpty ? ["AAPL", "MSFT", "NVDA"] : configured
     }
 
-    /// The symbol the tile is currently leading with. A stored choice can
-    /// outlive the list it indexed, so an index off the end reads as the start.
-    private var leadIndex: Int {
-        let stored = instance.config.int("lead")
-        return symbols.indices.contains(stored) ? stored : 0
-    }
-
     private func quote(_ symbol: String) -> StockQuote? {
         context.isPreview ? .preview(symbol) : StockService.shared.quote(symbol)
     }
@@ -175,25 +168,24 @@ struct StocksDetail: View {
     private var watchlist: some View {
         let symbols = symbols
         let quotes = symbols.map { quote($0) }
-        let lead = leadIndex
         return VStack(alignment: .leading, spacing: 8) {
-            // Configured order, not the tile's rotation: the tile pages because
-            // it can only fit a few symbols, and the panel showing them all has
-            // no reason to reshuffle itself under the reader. Indexed rather
-            // than keyed on the ticker, because nothing stops a watchlist from
-            // carrying the same symbol twice.
+            // Configured order, and every row weighted the same: the panel
+            // exists to show the whole list at once, so there is no one row it
+            // should be leading with. Indexed rather than keyed on the ticker,
+            // because nothing stops a watchlist from carrying the same symbol
+            // twice.
             ForEach(symbols.indices, id: \.self) { index in
-                row(symbols[index], quote: quotes[index], lead: index == lead)
+                row(symbols[index], quote: quotes[index])
             }
             if quotes.contains(where: { $0?.stale == true }) { staleNote }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func row(_ symbol: String, quote: StockQuote?, lead: Bool) -> some View {
+    private func row(_ symbol: String, quote: StockQuote?) -> some View {
         HStack(spacing: 10) {
             Text(symbol)
-                .font(WidgetStyle.label(lead ? 13 : 12))
+                .font(WidgetStyle.label(13))
                 .foregroundStyle(WidgetStyle.primary)
             Spacer(minLength: 8)
             Text(quote?.priceText ?? "—")
@@ -212,9 +204,8 @@ struct StocksDetail: View {
         }
         .lineLimit(1)
         .minimumScaleFactor(0.75)
-        // The tile's own weighting: a stale row sits back, and the rows behind
-        // the lead sit back further.
-        .opacity((quote?.stale == true ? 0.55 : 1) * (lead ? 1 : 0.6))
+        // The tile's own weighting for a reading that has stopped arriving.
+        .opacity(quote?.stale == true ? 0.55 : 1)
     }
 
     // MARK: Empty states

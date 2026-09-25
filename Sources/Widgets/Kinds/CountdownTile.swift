@@ -2,8 +2,14 @@ import SwiftUI
 
 /// Time left against a deadline, with what it is counting to underneath.
 ///
-/// Click to start it from idle, double-click to restart the full period. The
-/// deadline lives in the widget's own config, so it survives a relaunch and
+/// A click anywhere on the card belongs to the shelf, so starting sits on the
+/// tile as a glyph the size of itself — begun in one click, without anything
+/// opening — and only while the countdown is idle, since a gesture that would
+/// decline the click still swallows it. Restarting a countdown in flight
+/// throws away time already run and is the panel's alone rather than a stray
+/// click on a card.
+///
+/// The deadline lives in the widget's own config, so it survives a relaunch and
 /// follows the widget between profiles.
 struct CountdownTile: View {
     var instance: WidgetInstance
@@ -15,49 +21,64 @@ struct CountdownTile: View {
         let title = name.isEmpty ? "Countdown" : name
 
         WidgetSurface {
-            Group {
-                if context.position.isVertical {
-                    // 76x62 column: no room for the timer symbol, so the clock
-                    // carries the tile and the name captions it.
-                    VStack(spacing: 1) {
+            if context.position.isVertical {
+                // 76x62 column: no room for the timer symbol, so the clock
+                // carries the tile and the name captions it. The glyph goes
+                // under both — the clock already fills the column's width.
+                VStack(spacing: 1) {
+                    Text(plinthClockString(remaining(duration: duration)))
+                        .font(WidgetStyle.value(19))
+                        .monospacedDigit()
+                        .foregroundStyle(WidgetStyle.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                    Text(title)
+                        .font(WidgetStyle.caption(9))
+                        .foregroundStyle(WidgetStyle.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    if !isRunning { startButton(title: title, size: 9) }
+                }
+            } else {
+                HStack(spacing: 10) {
+                    Image(systemName: "timer")
+                        .font(.system(size: 23, weight: .regular))
+                        .foregroundStyle(WidgetStyle.secondary)
+                    VStack(alignment: .leading, spacing: 0) {
                         Text(plinthClockString(remaining(duration: duration)))
-                            .font(WidgetStyle.value(19))
+                            .font(WidgetStyle.value(20))
                             .monospacedDigit()
                             .foregroundStyle(WidgetStyle.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
                         Text(title)
-                            .font(WidgetStyle.caption(9))
+                            .font(WidgetStyle.caption(13))
                             .foregroundStyle(WidgetStyle.secondary)
                             .lineLimit(1)
-                            .minimumScaleFactor(0.7)
+                            // The glyph takes 24 of the card's 140 while the
+                            // countdown is idle, which is where a long name
+                            // would otherwise have run to.
+                            .minimumScaleFactor(0.8)
                     }
-                } else {
-                    HStack(spacing: 10) {
-                        Image(systemName: "timer")
-                            .font(.system(size: 23, weight: .regular))
-                            .foregroundStyle(WidgetStyle.secondary)
-                        VStack(alignment: .leading, spacing: 0) {
-                            Text(plinthClockString(remaining(duration: duration)))
-                                .font(WidgetStyle.value(20))
-                                .monospacedDigit()
-                                .foregroundStyle(WidgetStyle.primary)
-                            Text(title)
-                                .font(WidgetStyle.caption(13))
-                                .foregroundStyle(WidgetStyle.secondary)
-                                .lineLimit(1)
-                        }
-                        Spacer(minLength: 0)
-                    }
+                    Spacer(minLength: 0)
+                    if !isRunning { startButton(title: title, size: 12) }
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(.rect)
-            .onTapGesture(count: 2) { restart() }
-            .onTapGesture { startIfIdle() }
-            .accessibilityAddTraits(.isButton)
-            .accessibilityLabel(isRunning ? "Restart \(title)" : "Start \(title)")
         }
+    }
+
+    /// Only ever as big as itself: the card's own click has to reach the shelf,
+    /// so nothing here may spread to fill it.
+    private func startButton(title: String, size: CGFloat) -> some View {
+        Button(action: { start() }) {
+            Image(systemName: "play.fill")
+                .font(.system(size: size, weight: .semibold))
+                .foregroundStyle(WidgetStyle.primary)
+                // Twice the glyph is a target worth aiming at once the shelf's
+                // scale has shrunk it, and still well inside the card.
+                .frame(width: size * 2, height: size * 2)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Start \(title)")
     }
 
     /// A countdown is running only while it carries a deadline; idle it shows
@@ -74,7 +95,7 @@ struct CountdownTile: View {
 
     /// The deadline is stored rather than a remaining time, so the tile keeps
     /// counting down across a relaunch instead of resuming where it stopped.
-    private func restart() {
+    private func start() {
         guard !context.isPreview else { return }
         let duration = max(0, instance.config.double("duration", default: 300))
         withAnimation(.snappy(duration: 0.3)) {
@@ -82,12 +103,5 @@ struct CountdownTile: View {
                 config.set("deadline", .number(Date.now.timeIntervalSince1970 + duration))
             }
         }
-    }
-
-    /// A single click never shortens a countdown already in flight; cutting one
-    /// short is deliberate enough to be worth the second click.
-    private func startIfIdle() {
-        guard !isRunning else { return }
-        restart()
     }
 }

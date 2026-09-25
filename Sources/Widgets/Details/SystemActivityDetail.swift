@@ -4,9 +4,9 @@ import SwiftUI
 /// System Activity said at length: the tile's gauges at a size that can hold a
 /// number, and under them the figures a 42pt ring has no room for.
 ///
-/// Which metrics appear is the widget's own `metrics` config — a click cycles
-/// that list on the tile, so the panel has to follow it rather than assume the
-/// CPU-and-memory default it happens to ship with.
+/// Which metrics appear is the widget's own `metrics` config, chosen per
+/// metric in Dock Settings, so the panel has to follow it rather than assume
+/// the CPU-and-memory default it happens to ship with.
 struct SystemActivityDetail: View {
     var instance: WidgetInstance
     var context: WidgetContext

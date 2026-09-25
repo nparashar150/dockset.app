@@ -27,6 +27,8 @@ struct WidgetDetailBody: View {
             RevenueDetail(instance: instance, context: context)
         case .stock, .watchlist:
             StocksDetail(instance: instance, context: context)
+        case .weather:
+            WeatherDetail(instance: instance, context: context)
         default:
             // A widget with nothing more to say than its tile already shows.
             // Better an honest line than a panel padded out with filler.

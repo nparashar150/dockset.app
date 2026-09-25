@@ -23,6 +23,10 @@ final class WidgetDetailWindow {
     private var hosting: FirstMouseHostingView<WidgetDetailChrome>?
     /// Changes on every open, to replay the entrance.
     private var session = UUID()
+    /// What the open panel was shown with, so a config change underneath it
+    /// can be redrawn without reopening it.
+    private var shown: (context: WidgetContext, edge: DockPosition,
+                        settings: () -> Void)?
 
     private init() {}
 
@@ -43,9 +47,31 @@ final class WidgetDetailWindow {
              openSettings: openSettings)
     }
 
+    /// Redraws the open panel after its widget's config changed.
+    ///
+    /// The panel is handed a `WidgetInstance` by value, so a tile that edits
+    /// its own config — the stocks chevron stepping to the next symbol, a
+    /// setting changed while the panel is up — left the two disagreeing until
+    /// it was closed and reopened. Every widget write funnels through
+    /// `WidgetWriter`, which is where this is called from.
+    ///
+    /// Deliberately keeps `session`, so the entrance does not replay, and the
+    /// frame, so the panel does not jump: the width is fixed per kind, and a
+    /// config change that made the panel *taller* would keep the old height
+    /// until reopened.
+    func refresh(_ instance: WidgetInstance) {
+        guard openWidgetID == instance.id, let shown else { return }
+        hosting?.rootView = WidgetDetailChrome(
+            instance: instance, context: shown.context, edge: shown.edge,
+            session: session, settings: shown.settings,
+            dismiss: { [weak self] in self?.close() })
+    }
+
     func close() {
-        guard panel?.isVisible == true, openWidgetID != nil else { return }
+        guard openWidgetID != nil else { return }
         openWidgetID = nil
+        shown = nil
+        guard panel?.isVisible == true else { return }
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.14
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
@@ -64,14 +90,19 @@ final class WidgetDetailWindow {
                       openSettings: @escaping () -> Void) {
         let panel = existingOrNew()
         session = UUID()
+        shown = (context, edge, openSettings)
         hosting?.rootView = WidgetDetailChrome(
             instance: instance, context: context, edge: edge, session: session,
             settings: openSettings,
             dismiss: { [weak self] in self?.close() })
-        openWidgetID = instance.id
 
         let size = hosting?.fittingSize ?? .zero
+        // Claimed only once there is something to show. Setting it above the
+        // guard meant a bail here left the widget marked open with no window,
+        // and `toggle` would then answer every later click by closing a panel
+        // that was never up.
         guard size.width > 1, size.height > 1 else { return }
+        openWidgetID = instance.id
 
         // Grows away from the shelf, clear of the tile it came from.
         let gap: CGFloat = 12
@@ -236,7 +267,7 @@ enum WidgetDetail {
     static func exists(for kind: WidgetKind) -> Bool {
         switch kind {
         case .music, .timer, .calendar, .battery, .system,
-             .notes, .stripe, .paddle, .shopify, .stock, .watchlist:
+             .notes, .stripe, .paddle, .shopify, .stock, .watchlist, .weather:
             true
         default:
             false
@@ -250,6 +281,9 @@ enum WidgetDetail {
         case .battery: 330
         case .notes: 300
         case .system, .network: 340
+        // Wide enough for the whole hourly series as a strip; the tile fits
+        // five of those hours and the service publishes twelve.
+        case .weather: 340
         case .music: 330
         default: 300
         }

@@ -211,9 +211,11 @@ public enum WidgetCatalog {
     /// Where a widget sends you when its card is clicked.
     ///
     /// Every tile in the Dock opens something; a widget that reports a number
-    /// and does nothing when you click it reads as broken. Controls inside the
-    /// card still win the click — an interior gesture takes priority over the
-    /// tile's own, so play/pause is unaffected.
+    /// and does nothing when you click it reads as broken. A tile's own
+    /// controls may only take the click where they actually sit — a gesture
+    /// spread over the whole card beats this one everywhere and leaves the
+    /// card dead, which is exactly how every widget panel came to be
+    /// unreachable.
     public static func openTarget(_ kind: WidgetKind) -> WidgetTarget? {
         switch kind {
         case .clock, .world, .alarm, .timer, .stopwatch, .countdown:

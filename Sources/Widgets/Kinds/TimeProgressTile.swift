@@ -7,8 +7,10 @@ import SwiftUI
 /// `percentage` (112×62). The fraction comes from the real calendar interval
 /// around `context.now`, so there is nothing to stub out in the library.
 ///
-/// Click to move the span on: day → month → year. The choice is `period` in
-/// the widget's own config, the same key the catalog seeds, so it survives a
+/// A click on the period name — and only on the name — moves the span on:
+/// day → month → year. The card's own click belongs to the shelf, so the
+/// control is as small as the thing it changes. The choice is `period` in the
+/// widget's own config, the same key the catalog seeds, so it survives a
 /// relaunch and follows the widget between profiles.
 struct TimeProgressTile: View {
     var instance: WidgetInstance
@@ -68,10 +70,6 @@ struct TimeProgressTile: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(.rect)
-            .onTapGesture { cycle() }
-            .accessibilityAddTraits(.isButton)
-            .accessibilityLabel("\(label), \(percent)% elapsed. Click for the next period.")
         }
     }
 
@@ -79,7 +77,6 @@ struct TimeProgressTile: View {
     /// leaves the chosen layout alone. A value from elsewhere that isn't one of
     /// the three lands on the first span rather than sticking.
     private func cycle() {
-        guard !context.isPreview else { return }
         let current = instance.config.string("period", default: "year")
         let index = Self.periods.firstIndex(of: current) ?? Self.periods.count - 1
         let next = Self.periods[(index + 1) % Self.periods.count]
@@ -95,10 +92,7 @@ struct TimeProgressTile: View {
     private var barsLayout: some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 6) {
-                Text(label)
-                    .font(WidgetStyle.label(13))
-                    .foregroundStyle(WidgetStyle.primary)
-                    .lineLimit(1)
+                periodLabel(13, prominent: true)
                 Spacer(minLength: 4)
                 percentText(15)
             }
@@ -133,11 +127,7 @@ struct TimeProgressTile: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 percentText(18)
-                Text(label)
-                    .font(WidgetStyle.caption(11))
-                    .foregroundStyle(WidgetStyle.secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+                periodLabel(11)
             }
             Spacer(minLength: 0)
         }
@@ -146,11 +136,7 @@ struct TimeProgressTile: View {
     private var percentageLayout: some View {
         VStack(spacing: 1) {
             percentText(22)
-            Text(label)
-                .font(WidgetStyle.caption(11))
-                .foregroundStyle(WidgetStyle.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+            periodLabel(11)
         }
     }
 
@@ -186,17 +172,52 @@ struct TimeProgressTile: View {
         }
     }
 
-    /// "September" is wider than 56pt at full size, so it scales rather than
-    /// truncating to "Septem…".
-    private func periodLabel(_ size: CGFloat) -> some View {
-        Text(label)
-            .font(WidgetStyle.caption(size))
-            .foregroundStyle(WidgetStyle.secondary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.75)
+    // MARK: Pieces
+
+    /// The period name, and the tile's one control: clicking it moves the span
+    /// on. Only the name is clickable, because a target that filled the card
+    /// would beat the shelf's own click and the card would stop opening.
+    ///
+    /// The library draws live previews, where an action must never write
+    /// config — and a button that refused to act would still swallow the
+    /// click — so there the name is plain text and wears no chevron.
+    ///
+    /// `prominent` is the bars layout, where the name is the tile's headline
+    /// rather than a caption under the figure.
+    @ViewBuilder
+    private func periodLabel(_ size: CGFloat, prominent: Bool = false) -> some View {
+        if context.isPreview {
+            periodText(size, prominent: prominent)
+        } else {
+            Button(action: cycle) {
+                HStack(spacing: 2) {
+                    periodText(size, prominent: prominent)
+                    // Sized off the name beside it: the caption drops from
+                    // 13pt to 10pt in the 76pt column, where a fixed glyph
+                    // would out-shout the word it belongs to.
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: size - 2, weight: .semibold))
+                        .foregroundStyle(WidgetStyle.secondary)
+                }
+                // Inside the row, so the target is the name and the glyph and
+                // not a pixel more of the card.
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Show the next period")
+        }
     }
 
-    // MARK: Pieces
+    /// "September" is wider than 56pt at full size, and the chevron takes a
+    /// further 9pt of it, so the name scales rather than truncating to
+    /// "Septem…".
+    private func periodText(_ size: CGFloat, prominent: Bool) -> some View {
+        Text(label)
+            .font(prominent ? WidgetStyle.label(size) : WidgetStyle.caption(size))
+            .foregroundStyle(prominent ? WidgetStyle.primary : WidgetStyle.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+    }
 
     /// The figure is bold and primary, the sign is quieter — reads as one
     /// number rather than a number shouting a unit.

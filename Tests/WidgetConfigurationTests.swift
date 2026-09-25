@@ -506,8 +506,9 @@ final class WidgetConfigurationTests: XCTestCase {
     }
 
     /// Adding a widget to the catalog without thinking about its click is the
-    /// mistake this catches: the only entries allowed to report no
-    /// destination are the three whose cards are wholly self-driven.
+    /// mistake this catches. An entry may report no destination only when it
+    /// has somewhere else to send the click: `.music` opens a detail panel,
+    /// and the other two are self-contained readouts.
     func testEveryOtherCatalogEntryHasADestination() {
         let selfDriven: Set<WidgetKind> = [.music, .progress, .hydration]
         for entry in WidgetCatalog.entries where !selfDriven.contains(entry.kind) {

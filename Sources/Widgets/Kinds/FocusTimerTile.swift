@@ -10,9 +10,14 @@ final class TimerStateProvider {
     var state = TimerState()
 }
 
-/// Click to start or pause the countdown, double-click to put it back to a
-/// full session. The click drives the shared state rather than this widget's
-/// config, so both tiles of a two-tile shelf start and stop together.
+/// A click anywhere on the card opens the timer's panel, so the card belongs
+/// to the shelf. Starting and pausing stays on the tile as a glyph the size of
+/// itself — a session begun in one click, without anything opening, is worth
+/// the room — while resetting is the panel's alone: it throws a session away
+/// and does not want to be a stray click on a card.
+///
+/// The glyph drives the shared state rather than this widget's config, so both
+/// tiles of a two-tile shelf start and stop together.
 struct FocusTimerTile: View {
     var instance: WidgetInstance
     var context: WidgetContext
@@ -22,6 +27,9 @@ struct FocusTimerTile: View {
         let total = max(1, state.duration ?? Double(state.minutes * 60))
         let remaining = remaining(in: state, total: total)
         let tint = WidgetStyle.tint(state.color)
+        // A countdown at zero is not running whatever its deadline says: the
+        // glyph offers a fresh start there, which is what pressing it does.
+        let running = remaining > 0 && state.paused == nil && state.deadline != nil
 
         WidgetSurface {
             if context.position.isVertical {
@@ -43,6 +51,10 @@ struct FocusTimerTile: View {
                         .foregroundStyle(WidgetStyle.secondary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
+                    // 44 ring + label + this comes to 86 of the column's 92,
+                    // so the glyph sits under the phase rather than beside a
+                    // ring that already fills the width.
+                    toggleButton(running: running, size: 10)
                 }
             } else if instance.expanded {
                 HStack(spacing: 12) {
@@ -52,14 +64,22 @@ struct FocusTimerTile: View {
                             .font(WidgetStyle.value(23))
                             .monospacedDigit()
                             .foregroundStyle(WidgetStyle.primary)
+                            // A 180-minute session reads 3:00:00, which no
+                            // longer has the glyph's 24pt to spread into.
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
                         Text(state.phase.label)
                             .font(WidgetStyle.caption(14))
                             .foregroundStyle(WidgetStyle.secondary)
                             .lineLimit(1)
                     }
                     Spacer(minLength: 0)
+                    toggleButton(running: running, size: 12)
                 }
             } else {
+                // 88x58 holds the ring and the clock and nothing else, so the
+                // collapsed tile leaves starting to the panel rather than
+                // squeezing a glyph in beside a clock that can read 1:00:00.
                 VStack(spacing: 3) {
                     ring(fraction: remaining / total, tint: tint, diameter: 24, width: 5)
                     Text(plinthClockString(remaining))
@@ -69,12 +89,22 @@ struct FocusTimerTile: View {
                 }
             }
         }
-        .contentShape(.rect)
-        .onTapGesture(count: 2) { reset() }
-        .onTapGesture { toggle() }
-        .accessibilityAddTraits(.isButton)
-        .accessibilityLabel(state.paused == nil && state.deadline != nil
-            ? "Pause focus timer" : "Start focus timer")
+    }
+
+    /// Only ever as big as itself: the card's own click has to reach the shelf,
+    /// which is what opens the panel, so nothing here may spread to fill it.
+    private func toggleButton(running: Bool, size: CGFloat) -> some View {
+        Button(action: { toggle() }) {
+            Image(systemName: running ? "pause.fill" : "play.fill")
+                .font(.system(size: size, weight: .semibold))
+                .foregroundStyle(WidgetStyle.primary)
+                // Twice the glyph is a target worth aiming at once the shelf's
+                // scale has shrunk it, and still well inside the card.
+                .frame(width: size * 2, height: size * 2)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(running ? "Pause focus timer" : "Start focus timer")
     }
 
     /// Pausing banks what is left instead of the deadline, so resuming carries
@@ -99,17 +129,6 @@ struct FocusTimerTile: View {
             state.paused = left
             state.deadline = nil
         }
-        withAnimation(.snappy(duration: 0.3)) { TimerStateProvider.shared.state = state }
-    }
-
-    /// Clearing the pinned duration too, so a reset picks up a session length
-    /// the user has changed since this timer last ran.
-    private func reset() {
-        guard !context.isPreview else { return }
-        var state = TimerStateProvider.shared.state
-        state.deadline = nil
-        state.paused = nil
-        state.duration = nil
         withAnimation(.snappy(duration: 0.3)) { TimerStateProvider.shared.state = state }
     }
 

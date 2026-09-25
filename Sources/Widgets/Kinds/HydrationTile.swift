@@ -5,6 +5,10 @@ import SwiftUI
 ///
 /// The card is a light blue in *both* appearances — matching the shipped
 /// design — so only the ink flips with the colour scheme.
+///
+/// A click on the card belongs to the shelf, so logging a drink is a "+" under
+/// the readout rather than the whole glass: the card is what opens the widget,
+/// and a tile-wide tap would take that click before the shelf ever saw it.
 struct HydrationTile: View {
     var instance: WidgetInstance
     var context: WidgetContext
@@ -71,14 +75,17 @@ struct HydrationTile: View {
             Group {
                 if context.position.isVertical {
                     // 76×88: the water is the widget, so it keeps the whole
-                    // column and the clock floats in the middle of it. No
+                    // column and the readout floats in the middle of it. No
                     // room — and no need — for the caption.
-                    Text(clock)
-                        .font(.system(size: 17, weight: .bold))
-                        .monospacedDigit()
-                        .foregroundStyle(WidgetStyle.primary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
+                    VStack(spacing: 4) {
+                        Text(clock)
+                            .font(.system(size: 17, weight: .bold))
+                            .monospacedDigit()
+                            .foregroundStyle(WidgetStyle.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                        if showsDrink { drinkButton(size: 11) }
+                    }
                 } else {
                     VStack(spacing: 2) {
                         Text(clock)
@@ -90,6 +97,7 @@ struct HydrationTile: View {
                             .font(WidgetStyle.caption(14))
                             .foregroundStyle(WidgetStyle.primary.opacity(0.75))
                             .lineLimit(1)
+                        if showsDrink { drinkButton(size: 13).padding(.top, 4) }
                     }
                 }
             }
@@ -97,11 +105,31 @@ struct HydrationTile: View {
             // The surface insets its content by 10pt; undo that for the water
             // alone so it reaches the rounded edges the surface clips to.
             .background(water.padding(.horizontal, -WidgetStyle.inset))
-            .contentShape(.rect)
-            .onTapGesture { withAnimation(.snappy(duration: 0.35)) { drink() } }
-            .accessibilityAddTraits(.isButton)
-            .accessibilityLabel("Log a drink")
         }
+    }
+
+    /// The library draws its cards with a tap of their own that adds the
+    /// widget, and a control inside the preview would eat it — so the "+" is
+    /// only rendered where pressing it would actually log something.
+    private var showsDrink: Bool { !context.isPreview }
+
+    /// Only ever as big as itself: the card's own click has to reach the shelf,
+    /// so nothing here may spread to fill it.
+    ///
+    /// The fill rising is the only confirmation a drink registered, which is
+    /// why the write is animated rather than the press.
+    private func drinkButton(size: CGFloat) -> some View {
+        Button(action: { withAnimation(.snappy(duration: 0.35)) { drink() } }) {
+            Image(systemName: "plus.circle.fill")
+                .font(.system(size: size, weight: .semibold))
+                .foregroundStyle(WidgetStyle.primary)
+                // Twice the glyph is a target worth aiming at once the shelf's
+                // scale has shrunk it, and still well inside the card.
+                .frame(width: size * 2, height: size * 2)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Log a drink")
     }
 
     private var water: some View {

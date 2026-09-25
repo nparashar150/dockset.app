@@ -70,10 +70,26 @@ struct DockShelfView: View {
         /// that is not on the shelf has no slot to take with it.
         var canBeGrouped: Bool { !isRunningApp && !item.isWidget && item.group == nil }
 
-        /// Whether clicking this tile does anything.
+        /// Whether clicking this tile does anything: unfold a group, open an
+        /// app, or — for a widget — show its detail panel, and failing that
+        /// open the app it is about.
+        ///
+        /// Has to agree with `open(_:)`, which tries the panel first and the
+        /// app only when there is none. Asking `openTarget` alone left the
+        /// tiles that *only* have a panel with no gesture at all.
         var opens: Bool {
-            if let widget = item.widget { WidgetCatalog.openTarget(widget.kind) != nil }
-            else { true }
+            if let widget = item.widget {
+                WidgetDetail.exists(for: widget.kind)
+                    || WidgetCatalog.openTarget(widget.kind) != nil
+            } else { true }
+        }
+
+        /// Names the click for assistive tech, matching what `open(_:)` will
+        /// actually do — a panel for a widget that has one, otherwise the app.
+        var actionLabel: String {
+            if let widget = item.widget, WidgetDetail.exists(for: widget.kind) {
+                "Show Details"
+            } else { "Open" }
         }
         /// Running-but-unpinned apps have no stored position to move.
         var isDraggable: Bool { !isRunningApp }
@@ -735,9 +751,11 @@ struct DockShelfView: View {
                         ? .identity
                         : .scale(scale: 0.32, anchor: magnificationAnchor)
                             .combined(with: .opacity))
-            // Widgets take it too now, but only those with somewhere to go: a
-            // tap gesture whose action is a no-op still *consumes* the tap.
-            .modifier(TapToOpen(enabled: entry.opens) { open(entry) })
+            // Widgets take it too now, but only those with somewhere to go —
+            // a panel to show or an app to open: a tap gesture whose action is
+            // a no-op still *consumes* the tap.
+            .modifier(TapToOpen(enabled: entry.opens,
+                                 label: entry.actionLabel) { open(entry) })
             .gesture(reorderGesture(entry, solved))
             // Collapsing children puts the label on the tile, but it also
             // hides a widget's own controls from assistive tech, so only do it
@@ -853,7 +871,11 @@ struct DockShelfView: View {
     /// What the label should say and where it should point, in shelf
     /// coordinates. Equatable so the window is only touched when it changes.
     private struct HoverTarget: Equatable {
-        var text: String
+        /// Nil for a widget, which shows its own content: a label naming it is
+        /// noise. The rest of the target still applies — a widget needs an
+        /// anchor for its detail panel just as an app tile needs one for its
+        /// group.
+        var text: String?
         var along: CGFloat
         var cross: CGFloat
         /// The icon's centre in shelf coordinates, for the removal poof.
@@ -904,24 +926,39 @@ struct DockShelfView: View {
     private func hoverTarget(_ solved: Solved) -> HoverTarget? {
         guard drag == nil, let pointer else { return nil }
         guard let hit = solved.slots.indices.first(where: { index in
-            guard case .item(let entry) = solved.slots[index], !entry.item.isWidget else { return false }
+            guard case .item = solved.slots[index] else { return false }
             return abs(pointer - plateCentre(of: index, solved))
                 <= solved.lengths[index] * solved.scales[index] / 2
         }), case .item(let entry) = solved.slots[hit] else { return nil }
 
         let along = plateCentre(of: hit, solved) + shelfInset(solved)
         // Point at the far edge of the magnified tile, which is what the Dock
-        // measures its label against.
+        // measures its label against. A widget's icon does not grow out of the
+        // plate, so its own outer edge is the plate's — anything further out
+        // and its panel floats away from the tile it belongs to.
+        let growth = entry.item.isWidget ? 0 : iconGrowth
         let cross: CGFloat = switch position {
-        case .bottom: crossHeadroom - iconGrowth
-        case .left: solved.restCross + iconGrowth
-        case .right: crossHeadroom - iconGrowth
+        case .bottom: crossHeadroom - growth
+        case .left: solved.restCross + growth
+        case .right: crossHeadroom - growth
         }
         // `cross` above points at the far edge of the magnified tile — where
         // a label belongs — which is most of a tile from the icon's middle.
-        let centre = CGPoint(x: along,
-                             y: crossHeadroom + chrome.padding + iconGeometry.height / 2)
-        return HoverTarget(text: entry.label, along: along, cross: cross, centre: centre)
+        //
+        // The middle has to be measured from the plate's own near edge, and
+        // which side that is depends on the position: a left shelf is pinned
+        // to the leading edge with its headroom beyond it, so there is no
+        // headroom to skip past. `iconGeometry` also swaps axes — the cross
+        // extent is `height` lying down and `width` on a side — and using the
+        // wrong one put the removal poof out over the desktop.
+        let crossCentre: CGFloat = switch position {
+        case .bottom: crossHeadroom + chrome.padding + iconGeometry.height / 2
+        case .left: chrome.padding + iconGeometry.width / 2
+        case .right: crossHeadroom + chrome.padding + iconGeometry.width / 2
+        }
+        let centre = CGPoint(x: along, y: crossCentre)
+        return HoverTarget(text: entry.item.isWidget ? nil : entry.label,
+                           along: along, cross: cross, centre: centre)
     }
 
     private func applyHoverLabel(_ target: HoverTarget?) {
@@ -937,9 +974,12 @@ struct DockShelfView: View {
         case .left: CGPoint(x: frame.minX + target.cross, y: frame.maxY - target.along)
         case .right: CGPoint(x: frame.minX + target.cross, y: frame.maxY - target.along)
         }
-        // Kept so an opened group can grow from the tile that was clicked:
-        // you have to be hovering a tile to click it, so this is always the
-        // right anchor by the time `open` runs.
+        // Kept so an opened group or widget panel can grow from the tile that
+        // was clicked: you have to be hovering a tile to click it, so this is
+        // the right anchor by the time `open` runs — which is why every tile
+        // has to yield one. While widgets were excluded from `hoverTarget`
+        // their panels opened from `.zero`, in the corner of the screen, or
+        // from whichever app tile was hovered last.
         hoverAnchor = anchor
         hoverIconCentre = switch position {
         case .bottom: CGPoint(x: frame.minX + target.centre.x,
@@ -947,7 +987,13 @@ struct DockShelfView: View {
         case .left, .right: CGPoint(x: frame.minX + target.centre.y,
                                     y: frame.maxY - target.centre.x)
         }
-        TooltipWindow.shared.show(target.text, anchor: anchor, edge: position)
+        if let text = target.text {
+            TooltipWindow.shared.show(text, anchor: anchor, edge: position)
+        } else {
+            // Moving onto a widget has to take the previous tile's label with
+            // it, the same way moving off the shelf does.
+            TooltipWindow.shared.hide()
+        }
     }
 
     // MARK: Overflow
@@ -1315,11 +1361,20 @@ private struct TileContent<Menu: View>: View, Equatable {
 /// it still swallows the gesture.
 private struct TapToOpen: ViewModifier {
     var enabled: Bool
+    /// What to call the action in assistive tech.
+    var label: String
     var action: () -> Void
 
     func body(content: Content) -> some View {
         if enabled {
-            content.onTapGesture(perform: action)
+            content
+                .onTapGesture(perform: action)
+                // A tap gesture is not an action as far as VoiceOver is
+                // concerned, and a widget tile is a *container* — it keeps its
+                // children so their own controls stay reachable, which rules
+                // out the button trait that carries an app tile's activation.
+                // Without this a widget's panel is reachable by mouse only.
+                .accessibilityAction(named: label, action)
         } else {
             content
         }

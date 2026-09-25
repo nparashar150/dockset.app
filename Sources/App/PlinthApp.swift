@@ -30,8 +30,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // is better than no window at all.
         state.installDefaultProfile()
 
-        // Widgets write their own state through here — see WidgetWriter.
-        WidgetWriter.update = { [state] instance in state.updateWidget(instance) }
+        // Widgets write their own state through here — see WidgetWriter. An
+        // open detail panel holds the instance by value, so it is redrawn from
+        // the same funnel rather than left showing what the tile used to say.
+        WidgetWriter.update = { [state] instance in
+            state.updateWidget(instance)
+            WidgetDetailWindow.shared.refresh(instance)
+        }
 
         shelf = DockPanelController(app: state)
         menuBar = MenuBarController(app: state)

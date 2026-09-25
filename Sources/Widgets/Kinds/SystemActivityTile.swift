@@ -2,9 +2,11 @@ import SwiftUI
 
 /// CPU / memory / disk, as numbers, rings or bars.
 ///
-/// Click to step the shown metrics on — two of them walk all three pairs the
-/// sampler can offer. The choice is `metrics` in the widget's own config, so it
-/// survives a relaunch and follows the widget between profiles.
+/// The card itself belongs to the shelf: a click opens the detail panel, which
+/// draws every configured metric at a size that can hold a number. Which
+/// metrics those are is `metrics` in the widget's own config, picked per metric
+/// in Dock Settings, so it survives a relaunch and follows the widget between
+/// profiles.
 struct SystemActivityTile: View {
     var instance: WidgetInstance
     var context: WidgetContext
@@ -15,10 +17,6 @@ struct SystemActivityTile: View {
                 if context.position.isVertical { vertical } else { horizontal }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(.rect)
-            .onTapGesture { cycleMetrics() }
-            .accessibilityAddTraits(.isButton)
-            .accessibilityLabel("System activity: \(metrics.map(\.label).joined(separator: ", ")). Click for the next metrics.")
         }
         // The sampler is shared; nobody stops it because a single tile went
         // away. ponytail: start-only, add refcounting if idle cost ever shows.
@@ -260,21 +258,6 @@ struct SystemActivityTile: View {
         return parsed.isEmpty ? [.cpu, .memory] : parsed
     }
 
-    /// Steps every shown metric on to the one after it, which walks a two-metric
-    /// tile through every pair in three clicks. The count is held constant on
-    /// purpose: the catalog sizes this tile from `metrics.count`, so dropping or
-    /// gaining one would resize the card under the cursor and shunt the rest of
-    /// the shelf sideways.
-    private func cycleMetrics() {
-        guard !context.isPreview else { return }
-        let next = metrics.map(\.next.rawValue)
-        withAnimation(.snappy(duration: 0.3)) {
-            WidgetWriter.write(instance) { config in
-                config.set("metrics", .list(next.map { .string($0) }))
-            }
-        }
-    }
-
     private func value(_ metric: Metric) -> Double {
         if context.isPreview { return metric.sample }
         let live = SystemMetrics.shared
@@ -318,16 +301,6 @@ struct SystemActivityTile: View {
             case .memory: "Memory"
             case .disk: "Disk"
             case .battery: "Battery"
-            }
-        }
-
-        /// Where a click lands next.
-        var next: Metric {
-            switch self {
-            case .cpu: .memory
-            case .memory: .disk
-            case .disk: .battery
-            case .battery: .cpu
             }
         }
 

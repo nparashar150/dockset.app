@@ -78,9 +78,11 @@ struct MusicTile: View {
     @ViewBuilder
     private var content: some View {
         if isMini {
+            // Artwork only, and deliberately inert: on the chip the artwork
+            // *is* the card, so a control there would swallow the click that
+            // opens the detail panel — where the transport lives in full.
             Artwork(image: playing?.artwork,
-                    side: context.position.isVertical ? 52 : 44, corner: 10,
-                    isPlaying: playing?.isPlaying) { if let playing { toggle(playing) } }
+                    side: context.position.isVertical ? 52 : 44, corner: 10)
         } else if needsPermission, playing == nil {
             connect
         } else if let playing {
@@ -96,6 +98,9 @@ struct MusicTile: View {
     /// pausing a YouTube tab also started Spotify, and the tile then jumped to
     /// a different track.
     private func toggle(_ track: Playing) {
+        // The artwork reaches this without going through `button`, which is
+        // where every other control's preview guard sits.
+        guard !context.isPreview else { return }
         if track.isBrowser { BrowserMedia.shared.playPause() }
         else { MusicService.shared.playPause() }
     }
@@ -111,10 +116,11 @@ struct MusicTile: View {
                         artist(track, size: 12)
                     }
                     Spacer(minLength: 0)
-                    // Only shown when there is genuinely more than play/pause;
-                    // that now lives on the artwork.
+                    // Play/pause is on the artwork in this layout, so the row
+                    // carries only what the artwork cannot — and is dropped
+                    // entirely when there is nothing else to carry.
                     if track.hasSkipControls {
-                        transport(track, size: 14, spacing: 10)
+                        transport(track, size: 14, spacing: 10, playPause: false)
                     }
                 }
                 // A video with no readable duration (a live stream, or a site
@@ -212,8 +218,13 @@ struct MusicTile: View {
     /// Browser video gets play/pause only: seeking, skipping and track changes
     /// mean nothing to a `<video>` element, and a button that does nothing is
     /// worse than one that is not there.
+    ///
+    /// `playPause` is false where the layout already puts it on the artwork —
+    /// the wide strip does, the column does not — because the two rendered it
+    /// side by side otherwise, twice in the same row.
     @ViewBuilder
-    private func transport(_ track: Playing, size: CGFloat, spacing: CGFloat) -> some View {
+    private func transport(_ track: Playing, size: CGFloat, spacing: CGFloat,
+                           playPause: Bool = true) -> some View {
         if track.isBrowser {
             button(track.isPlaying ? "pause.fill" : "play.fill", size) { toggle(track) }
         } else {
@@ -225,7 +236,9 @@ struct MusicTile: View {
                 if config.bool("previous", default: true) {
                     button("backward.end.fill", size) { MusicService.shared.previous() }
                 }
-                button(track.isPlaying ? "pause.fill" : "play.fill", size) { MusicService.shared.playPause() }
+                if playPause {
+                    button(track.isPlaying ? "pause.fill" : "play.fill", size) { toggle(track) }
+                }
                 if config.bool("next", default: true) {
                     button("forward.end.fill", size) { MusicService.shared.next() }
                 }
@@ -258,6 +271,9 @@ struct MusicTile: View {
 
     /// Shown instead of silently failing, and it is the *only* thing that ever
     /// raises the automation consent dialog.
+    ///
+    /// Sized to the glyph and its label, not to the card: the card's own click
+    /// belongs to the detail panel, which offers the same button.
     private var connect: some View {
         Button {
             MusicService.shared.requestAutomationPermission()
@@ -268,9 +284,13 @@ struct MusicTile: View {
                     .font(.system(size: 14, weight: .medium))
                 Text("Connect")
                     .font(WidgetStyle.label(11))
+                    .lineLimit(1)
+                    // A side shelf leaves 56pt inside the card, which the word
+                    // only just fits; truncating it to "Conne…" reads as a bug.
+                    .minimumScaleFactor(0.8)
             }
             .foregroundStyle(WidgetStyle.primary)
-            .frame(maxWidth: .infinity)
+            .padding(.vertical, 3)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -329,7 +349,8 @@ struct Playing {
     /// Whether anything beyond play/pause is meaningful.
     ///
     /// A `<video>` element has nothing to skip to, so browser playback offers
-    /// play/pause only — and that now lives on the artwork.
+    /// play/pause and nothing else. Which view draws that one button is the
+    /// layout's business — see `transport`'s `playPause`.
     var hasSkipControls: Bool { !isBrowser }
 
     init(native: NowPlaying) {
@@ -367,7 +388,25 @@ private struct Artwork: View {
     var isPlaying: Bool?
     var onToggle: (() -> Void)?
 
+    /// Plain album art takes no gesture at all. A tap gesture with nothing to
+    /// do still *consumes* the tap, so an always-attached handler was how the
+    /// column's artwork ate the shelf's click and left the panel unreachable.
     var body: some View {
+        if let onToggle, let isPlaying {
+            square(control: isPlaying)
+                .contentShape(.rect)
+                .onTapGesture(perform: onToggle)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityLabel(isPlaying ? "Pause" : "Play")
+        } else {
+            square(control: nil)
+                .accessibilityLabel("Artwork")
+        }
+    }
+
+    /// `control` carries the play state while the artwork is acting as a
+    /// button, and is nil when it is only showing the album art.
+    private func square(control: Bool?) -> some View {
         RoundedRectangle(cornerRadius: corner, style: .continuous)
             .fill(WidgetStyle.primary.opacity(0.08))
             .overlay {
@@ -375,7 +414,7 @@ private struct Artwork: View {
                     Image(nsImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                } else if onToggle == nil {
+                } else if control == nil {
                     // Only when nothing else occupies the square. With the
                     // play control on top, the note showed through behind it
                     // and read as two overlapping glyphs.
@@ -388,7 +427,7 @@ private struct Artwork: View {
                 // The control lives on the artwork rather than beside it: for
                 // video there is nothing to skip to, so a lone button was
                 // spending width the title badly needed.
-                if let isPlaying, onToggle != nil {
+                if let control {
                     ZStack {
                         // Fixed, not hover-driven: SwiftUI's .onHover never
                         // fires in this non-activating accessory panel (see
@@ -398,7 +437,7 @@ private struct Artwork: View {
                         // 31pt on a default-sized shelf, so a small
                         // semi-transparent glyph over a dark placeholder was
                         // invisible in practice — it read as no control at all.
-                        Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                        Image(systemName: control ? "pause.fill" : "play.fill")
                             .font(.system(size: side * 0.46, weight: .bold))
                             .foregroundStyle(.white)
                             .shadow(color: .black.opacity(0.6), radius: 2)
@@ -408,10 +447,5 @@ private struct Artwork: View {
             .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
             .frame(width: side, height: side)
             .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
-            .contentShape(.rect)
-            .onTapGesture { onToggle?() }
-            .accessibilityAddTraits(onToggle == nil ? [] : .isButton)
-            .accessibilityLabel(onToggle == nil ? "Artwork"
-                                : ((isPlaying ?? false) ? "Pause" : "Play"))
     }
 }
