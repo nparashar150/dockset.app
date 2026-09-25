@@ -94,7 +94,7 @@ struct MaterialBackground: View {
 
 /// `NSVisualEffectView` bridge — SwiftUI's `.ultraThinMaterial` samples only
 /// within the window, and a floating shelf needs what is *behind* it.
-private struct VisualEffectPlate: NSViewRepresentable {
+struct VisualEffectPlate: NSViewRepresentable {
     var material: NSVisualEffectView.Material
     var blending: NSVisualEffectView.BlendingMode
 

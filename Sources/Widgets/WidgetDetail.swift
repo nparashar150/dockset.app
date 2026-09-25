@@ -35,7 +35,8 @@ final class WidgetDetailWindow {
     private var session = UUID()
     /// What the open panel was shown with, so a config change underneath it
     /// can be redrawn without reopening it.
-    private var shown: (context: WidgetContext, edge: DockPosition)?
+    private var shown: (context: WidgetContext, edge: DockPosition,
+                        arrowOffset: CGFloat)?
 
     private init() {}
 
@@ -63,7 +64,7 @@ final class WidgetDetailWindow {
         guard openWidgetID == instance.id, let shown else { return }
         hosting?.rootView = WidgetDetailChrome(
             instance: instance, context: shown.context, edge: shown.edge,
-            session: session)
+            session: session, arrowOffset: shown.arrowOffset)
     }
 
     /// Closes on the next click outside the panel and its own tile.
@@ -122,7 +123,7 @@ final class WidgetDetailWindow {
                       anchor: CGPoint, edge: DockPosition, host: CGRect) {
         let panel = existingOrNew()
         session = UUID()
-        shown = (context, edge)
+        shown = (context, edge, 0)
         self.host = host
         hosting?.rootView = WidgetDetailChrome(
             instance: instance, context: context, edge: edge, session: session)
@@ -135,15 +136,34 @@ final class WidgetDetailWindow {
         guard size.width > 1, size.height > 1 else { return }
         openWidgetID = instance.id
 
-        // Grows away from the shelf, clear of the tile it came from.
-        let gap: CGFloat = 12
+        // Almost touching the tile: the panel's own padding already includes
+        // the tail's depth, so this is the gap between the tail's tip and the
+        // tile, not between the tile and the body.
+        let gap: CGFloat = 2
         let origin: CGPoint = switch edge {
         case .bottom: CGPoint(x: anchor.x - size.width / 2, y: anchor.y + gap)
         case .left: CGPoint(x: anchor.x + gap, y: anchor.y - size.height / 2)
         case .right: CGPoint(x: anchor.x - size.width - gap, y: anchor.y - size.height / 2)
         }
+        let placed = clamped(origin, size: size)
 
-        panel.setFrame(CGRect(origin: clamped(origin, size: size), size: size), display: false)
+        // Only now is the tail's offset knowable: clamping against the end of
+        // the screen moves the panel but not the tile, and a tail still
+        // pointing at the panel's own middle would point at nothing. Assigning
+        // the root view twice is cheap and cannot change the measured size —
+        // the offset moves the tail within the outline, not the frame.
+        let offset: CGFloat = switch edge {
+        case .bottom: anchor.x - (placed.x + size.width / 2)
+        // Screen y counts up and the panel's own coordinates count down, so
+        // the sign flips on a side shelf.
+        case .left, .right: (placed.y + size.height / 2) - anchor.y
+        }
+        shown = (context, edge, offset)
+        hosting?.rootView = WidgetDetailChrome(
+            instance: instance, context: context, edge: edge, session: session,
+            arrowOffset: offset)
+
+        panel.setFrame(CGRect(origin: placed, size: size), display: false)
         panel.alphaValue = 1
         panel.orderFrontRegardless()
         // A panel carrying a text field or a slider needs the keyboard, and a
@@ -192,77 +212,78 @@ final class WidgetDetailWindow {
     }
 }
 
-/// The chrome every detail panel wears: its name, quietly, and a tint
-/// borrowed from the widget itself.
+/// What every detail panel is wrapped in: the surface, its outline, and the
+/// tail pointing back at the tile.
 ///
-/// Deliberately thin. Everything a header row used to carry has somewhere
-/// better to be — dismissal is a click outside, Escape or Command-W, and
-/// per-widget settings are in the tile's context menu.
+/// There is no header at all. It carried the widget's name, a settings button
+/// and a close button, and each has somewhere better to be — the tail says
+/// which tile this belongs to, settings are in that tile's context menu, and
+/// it closes on a click outside, on Escape or on Command-W. A close button is
+/// what you add when you do not trust the dismissal, and it was the first
+/// thing that made this read as a web dialog rather than a Mac window.
 struct WidgetDetailChrome: View {
     var instance: WidgetInstance
     var context: WidgetContext
     var edge: DockPosition
     /// Identifies one opening, so the entrance replays each time.
     var session: UUID
+    /// How far the tile's centre is from the panel's along the shelf. Zero
+    /// until the panel is clamped against the end of the screen, after which
+    /// the tail has to reach back toward the tile.
+    var arrowOffset: CGFloat = 0
 
     @Environment(\.colorScheme) private var scheme
     @State private var appeared = false
 
-    private var name: String {
-        WidgetCatalog.entry(instance.kind)?.name ?? instance.kind.rawValue
-    }
-
-    /// nil for the readouts that are not "about" a colour — see the catalog.
-    private var accent: Color? {
-        WidgetCatalog.accentHex(instance.kind).map { Color(hex: $0) }
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            header
-            WidgetDetailBody(instance: instance, context: context)
-        }
-        .padding(16)
-        .frame(width: WidgetDetail.width(instance.kind), alignment: .leading)
-        .background(surface)
-        .fixedSize()
-        // Rises a little and fades in. It used to scale up out of the tile,
-        // which is an iOS sheet's entrance; a panel on this platform arrives
-        // more or less where it means to stay.
-        .offset(x: rise.width, y: rise.height)
-        .opacity(appeared ? 1 : 0)
-        .onAppear { enter() }
-        .onChange(of: session) { _, _ in
-            appeared = false
-            Task { @MainActor in enter() }
+        WidgetDetailBody(instance: instance, context: context)
+            .padding(16)
+            // Room for the tail on whichever side the shelf is.
+            .padding(tailSide, PanelShape.arrowDepth)
+            .frame(width: WidgetDetail.width(instance.kind), alignment: .leading)
+            .background(surface)
+            .fixedSize()
+            // Rises a little and fades in. It used to scale up out of the
+            // tile, which is an iOS sheet's entrance; a panel on this
+            // platform arrives more or less where it means to stay.
+            .offset(x: rise.width, y: rise.height)
+            .opacity(appeared ? 1 : 0)
+            .onAppear { enter() }
+            .onChange(of: session) { _, _ in
+                appeared = false
+                Task { @MainActor in enter() }
+            }
+    }
+
+    /// Which side the tail sits on, which is the side facing the shelf.
+    private var tailSide: Edge.Set {
+        switch edge {
+        case .bottom: .bottom
+        case .left: .leading
+        case .right: .trailing
         }
     }
 
-    /// Opaque, not glass.
+    private var outline: PanelShape {
+        PanelShape(edge: edge, arrowOffset: arrowOffset)
+    }
+
+    /// The material AppKit gives a popover, not a guess at one.
     ///
-    /// The panel was `.regularMaterial` with the widget's accent flooded over
-    /// the whole surface. Two problems: a vibrant panel this size samples
-    /// whatever is behind it, so it reads as a different colour over every
-    /// window, and a flat wash of brand colour across an entire surface is a
-    /// web card, not a Mac window. An opaque window background with the accent
-    /// only in the corner keeps the widget's identity without staining it.
+    /// This has been wrong twice. First `.regularMaterial` with the widget's
+    /// accent flooded over the whole surface, which reads as a web card and
+    /// defeats vibrancy — the thing that makes native text sit *in* a surface
+    /// rather than on it. Then an opaque window background, which fixed the
+    /// stain and lost the vibrancy with it. `.popover` is documented as
+    /// exactly this material, and a real popover's layer tree carries no tint
+    /// at all, so neither does this.
     private var surface: some View {
-        RoundedRectangle(cornerRadius: 16, style: .continuous)
-            .fill(Color(nsColor: .windowBackgroundColor))
+        VisualEffectPlate(material: .popover, blending: .behindWindow)
+            .clipShape(outline)
             .overlay {
-                if let accent {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(LinearGradient(
-                            colors: [accent.opacity(scheme == .dark ? 0.22 : 0.16), .clear],
-                            startPoint: .topLeading, endPoint: .center))
-                }
-            }
-            .overlay {
-                // A hairline, not a highlight: `.white` at a third was
-                // visible as a drawn outline rather than an edge.
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(.primary.opacity(scheme == .dark ? 0.14 : 0.10),
-                                  lineWidth: 0.5)
+                // A hairline at the edge, not a drawn border.
+                outline.stroke(.primary.opacity(scheme == .dark ? 0.16 : 0.10),
+                               lineWidth: 0.5)
             }
     }
 
@@ -274,23 +295,6 @@ struct WidgetDetailChrome: View {
         case .left: CGSize(width: -3, height: 0)
         case .right: CGSize(width: 3, height: 0)
         }
-    }
-
-    /// Just the name, quietly.
-    ///
-    /// No close button: the panel goes away on a click outside it, on Escape
-    /// and on Command-W, which is what every transient window on this platform
-    /// does. A button to shut it is what you add when you do not trust that,
-    /// and it is the first thing that makes a panel read as a web dialog.
-    ///
-    /// No settings button either — per-widget settings live in the tile's own
-    /// context menu, the way Notification Center keeps "Edit Widget" there
-    /// rather than in a header.
-    private var header: some View {
-        Text(name)
-            .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func enter() {
@@ -332,5 +336,62 @@ enum WidgetDetail {
         case .music: 330
         default: 300
         }
+    }
+}
+
+/// The panel's outline: a rounded rectangle with a tail pointing at the tile
+/// that opened it.
+///
+/// The tail is the thing that was missing. Apple's positioning rules for a
+/// popover are written entirely in terms of it, and without one the panel is
+/// a rectangle that happens to be near a tile rather than something belonging
+/// to it. Measured off a real `NSPopover`: a 20pt continuous corner, and a
+/// tail roughly 26pt across and 10pt deep.
+struct PanelShape: Shape {
+    /// Which edge the shelf is on; the tail goes on the side facing it.
+    var edge: DockPosition
+    /// Distance along the shelf from the panel's middle to the tile's, which
+    /// is zero until the panel is clamped against the end of the screen.
+    var arrowOffset: CGFloat
+
+    static let radius: CGFloat = 20
+    static let arrowBase: CGFloat = 26
+    static let arrowDepth: CGFloat = 10
+
+    func path(in rect: CGRect) -> Path {
+        let depth = Self.arrowDepth
+        var body = rect
+        switch edge {
+        case .bottom: body.size.height -= depth
+        case .left: body.origin.x += depth; body.size.width -= depth
+        case .right: body.size.width -= depth
+        }
+
+        var path = Path(roundedRect: body, cornerRadius: Self.radius,
+                        style: .continuous)
+
+        // Kept clear of the corners: a tail growing out of the curve reads as
+        // a dent in the outline rather than a point at anything.
+        let half = Self.arrowBase / 2
+        let limit = Self.radius + half
+        switch edge {
+        case .bottom:
+            let x = min(max(body.minX + limit, body.midX + arrowOffset), body.maxX - limit)
+            path.move(to: CGPoint(x: x - half, y: body.maxY))
+            path.addLine(to: CGPoint(x: x, y: rect.maxY))
+            path.addLine(to: CGPoint(x: x + half, y: body.maxY))
+        case .left:
+            let y = min(max(body.minY + limit, body.midY + arrowOffset), body.maxY - limit)
+            path.move(to: CGPoint(x: body.minX, y: y - half))
+            path.addLine(to: CGPoint(x: rect.minX, y: y))
+            path.addLine(to: CGPoint(x: body.minX, y: y + half))
+        case .right:
+            let y = min(max(body.minY + limit, body.midY + arrowOffset), body.maxY - limit)
+            path.move(to: CGPoint(x: body.maxX, y: y - half))
+            path.addLine(to: CGPoint(x: rect.maxX, y: y))
+            path.addLine(to: CGPoint(x: body.maxX, y: y + half))
+        }
+        path.closeSubpath()
+        return path
     }
 }
