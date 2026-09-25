@@ -221,6 +221,28 @@ extension GroupDrag {
 /// obvious and the codebase has now hit it twice.
 public final class KeyablePanel: NSPanel {
     public override var canBecomeKey: Bool { true }
+
+    /// Called when the panel should give up, however that was asked for.
+    public var onCancel: (() -> Void)?
+
+    /// Escape closes it. Handled here rather than as a SwiftUI keyboard
+    /// shortcut so it still fires while a text field inside is first
+    /// responder — a note being written is exactly when you want a way out
+    /// that is not aiming for a button.
+    public override func cancelOperation(_ sender: Any?) {
+        onCancel?()
+    }
+
+    /// And Command-W, for the same reason and by the same route: a shortcut
+    /// declared in SwiftUI loses to the focused field, this does not.
+    public override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if event.modifierFlags.contains(.command),
+           event.charactersIgnoringModifiers == "w" {
+            onCancel?()
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
 }
 
 /// Hosting view that takes the first click.

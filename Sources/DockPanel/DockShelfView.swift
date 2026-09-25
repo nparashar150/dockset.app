@@ -817,7 +817,7 @@ struct DockShelfView: View {
                     context: WidgetContext(position: position, now: app.now),
                     anchor: hoverAnchor ?? .zero,
                     edge: position,
-                    openSettings: { SettingsWindow.shared.show(app: app, tab: "Widgets") })
+                    host: shelfWindow?.frame ?? .zero)
                 return
             }
             guard let target = WidgetCatalog.openTarget(widget.kind) else { return }
@@ -1147,6 +1147,11 @@ struct DockShelfView: View {
                 }
                 Button("Ungroup") {
                     withAnimation(.snappy(duration: 0.22)) { app.ungroup(group.id) }
+                }
+            }
+            if entry.item.isWidget {
+                Button("Widget Settings…") {
+                    SettingsWindow.shared.show(app: app, tab: "Widgets")
                 }
             }
             if let widget = entry.item.widget,

@@ -14,7 +14,6 @@ final class DockPanelController: NSObject, NSWindowDelegate {
     private var revealed = true
     private var hideWorkItem: DispatchWorkItem?
     private var groupCloseItem: DispatchWorkItem?
-    private var panelCloseItem: DispatchWorkItem?
     /// True while any menu of ours is open.
     ///
     /// A context menu draws *above* the shelf, so reaching for an item takes
@@ -268,20 +267,16 @@ final class DockPanelController: NSObject, NSWindowDelegate {
         // An open detail panel pins the shelf for the same reason an open
         // group does: the panel is anchored to a tile, and it is precisely
         // when the user is using the shelf.
+        // The panel closes itself on a click outside, on Escape and on
+        // Command-W — it does not close because the pointer wandered off, any
+        // more than a popover does. So there is nothing to schedule here; the
+        // shelf just stays put while the panel is up.
         if WidgetDetailWindow.shared.isOpen {
             hideWorkItem?.cancel()
             hideWorkItem = nil
             if !revealed { setRevealed(true) }
-            if !withinShelf(mouse), !WidgetDetailWindow.shared.contains(mouse) {
-                if panelCloseItem == nil { schedulePanelClose() }
-            } else {
-                panelCloseItem?.cancel()
-                panelCloseItem = nil
-            }
             return
         }
-        panelCloseItem?.cancel()
-        panelCloseItem = nil
 
         if GroupWindow.shared.isOpen {
             hideWorkItem?.cancel()
@@ -351,17 +346,6 @@ final class DockPanelController: NSObject, NSWindowDelegate {
             MainActor.assumeIsolated { GroupWindow.shared.close() }
         }
         groupCloseItem = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
-    }
-
-    /// Closes an open detail panel once the pointer has left both it and the
-    /// shelf. Longer than the hide delay: the panel floats above the shelf, so
-    /// reaching it means crossing empty space.
-    private func schedulePanelClose() {
-        let work = DispatchWorkItem {
-            MainActor.assumeIsolated { WidgetDetailWindow.shared.close() }
-        }
-        panelCloseItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
