@@ -16,6 +16,13 @@ final class SystemMetrics {
     private(set) var memory: Double = 0
     /// Used fraction of the root volume, 0...1.
     private(set) var disk: Double = 0
+    /// Bytes free and total on the root volume.
+    ///
+    /// The fraction alone leaves a panel with nothing to say that the gauge
+    /// has not already said. These come from the same sample at no extra
+    /// cost — they were being computed and thrown away.
+    private(set) var diskFree: Int64 = 0
+    private(set) var diskTotal: Int64 = 0
 
     /// Rolling history so widgets can draw a graph rather than only a number.
     /// Most recent last; grows to `historyLength` then slides.
@@ -148,5 +155,7 @@ final class SystemMetrics {
               let available = values.volumeAvailableCapacityForImportantUsage
         else { return }
         disk = min(max(1 - Double(available) / Double(total), 0), 1)
+        diskFree = Int64(available)
+        diskTotal = Int64(total)
     }
 }

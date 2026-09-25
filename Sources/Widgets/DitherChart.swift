@@ -13,6 +13,12 @@ import SwiftUI
 struct DitherChart: View {
     var samples: [Double]
     var tint: Color
+    /// Fixed bounds to plot against, instead of the series' own extremes.
+    ///
+    /// Auto-scaling is right for a price, which has no natural floor — but
+    /// wrong wherever two series are drawn together, because each would fill
+    /// the full height and a CPU idling at 15% would look like memory at 78%.
+    var range: ClosedRange<Double>?
     var lineWidth: CGFloat = 1.5
     var dotSize: CGFloat = 1
 
@@ -56,17 +62,21 @@ struct DitherChart: View {
 
     private func points(in size: CGSize) -> [CGPoint] {
         let values = finite
-        guard values.count >= 2, let low = values.min(), let high = values.max() else { return [] }
+        guard values.count >= 2, let seriesLow = values.min(), let seriesHigh = values.max()
+        else { return [] }
 
         let top = lineWidth / 2
         let bottom = baseline(size)
+
+        let low = range?.lowerBound ?? seriesLow
+        let high = range?.upperBound ?? seriesHigh
         let span = high - low
 
         // Headroom under the series so the dither has somewhere to live: the
         // low point sits a third of the way up rather than on the floor. An
         // all-equal series has no span at all — centre it instead of dividing
-        // by zero.
-        let floorValue = low - span / 2
+        // by zero. Fixed bounds already carry their own headroom.
+        let floorValue = range == nil ? low - span / 2 : low
         let scale = span > 0 ? (bottom - top) / (high - floorValue) : 0
         let step = size.width / CGFloat(values.count - 1)
 

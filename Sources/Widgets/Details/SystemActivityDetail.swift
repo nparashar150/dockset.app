@@ -12,48 +12,104 @@ struct SystemActivityDetail: View {
     var context: WidgetContext
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: Self.gaugeGap) {
                 ForEach(metrics, id: \.self) { gauge($0) }
             }
             .frame(maxWidth: .infinity)
 
+            // The last minute, for the metrics that move. Disk and battery
+            // keep a history that would be a flat line, so they are not
+            // drawn one.
+            if !charted.isEmpty {
+                Divider()
+                history
+            }
+
             Divider()
 
-            VStack(spacing: 7) {
+            VStack(spacing: 6) {
                 ForEach(metrics, id: \.self) { row($0) }
             }
         }
+    }
+
+    // MARK: History
+
+    private var charted: [Metric] {
+        metrics.filter { !samples($0).isEmpty }
+    }
+
+    /// One line per moving metric, over a shared minute.
+    ///
+    /// The weather panel earns its keep by showing the shape of the next few
+    /// hours rather than one temperature; this is the same idea pointed
+    /// backwards. The rings say where things are, and this says whether they
+    /// are on their way up.
+    private var history: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ZStack {
+                ForEach(charted, id: \.self) { metric in
+                    // Absolute, so a CPU idling low sits low and the lines
+                    // can honestly be read against each other.
+                    DitherChart(samples: samples(metric), tint: metric.color,
+                                range: 0...1)
+                }
+            }
+            .frame(height: 34)
+            .frame(maxWidth: .infinity)
+            Text(span)
+                .font(WidgetStyle.caption(10))
+                .foregroundStyle(WidgetStyle.secondary)
+        }
+    }
+
+    /// Named with the span the buffer actually holds, which is under a minute
+    /// until it fills.
+    private var span: String {
+        let count = charted.map { samples($0).count }.max() ?? 0
+        return count >= SystemMetrics.historyLength ? "Last 60 seconds" : "Last \(count) seconds"
+    }
+
+    private func samples(_ metric: Metric) -> [Double] {
+        guard !context.isPreview else { return [] }
+        return SystemMetrics.shared.history(for: metric.rawValue)
     }
 
     // MARK: Gauges
 
     private static let gaugeGap: CGFloat = 12
 
-    /// The panel is a fixed width, so the gauges are sized from it rather than
-    /// measured: 110pt is the pair the reference draws, and a third or fourth
-    /// configured metric gives width back instead of running off the edge.
+    /// Small enough to be a reading rather than a poster.
+    ///
+    /// These were sized to fill the panel's width — 93pt across for three
+    /// metrics — which put a 24pt figure inside each and left the gauges
+    /// occupying most of the panel while saying one number each. A gauge is
+    /// worth its space at the size the eye can take in at a glance; the width
+    /// it gives back is what lets the figures and the graph below it fit.
     private var diameter: CGFloat {
-        // The chrome pads 18pt on each side of whatever it is handed.
-        let content = WidgetDetail.width(instance.kind) - 36
+        let content = WidgetDetail.width(instance.kind) - 32
         let count = CGFloat(metrics.count)
-        return min(110, (content - Self.gaugeGap * (count - 1)) / count)
+        return min(56, (content - Self.gaugeGap * (count - 1)) / count)
     }
 
     private func gauge(_ metric: Metric) -> some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             MetricProgressRing(progress: value(metric),
                                tint: metric.color,
-                               track: metric.color.opacity(0.16),
+                               // Neutral, not a dim copy of the arc's own
+                               // colour: tinting both made the unfilled part
+                               // read as a second, muddier reading.
+                               track: .primary.opacity(0.10),
                                diameter: diameter,
-                               lineWidth: diameter * 0.12) {
-                percent(value(metric), size: diameter * 0.26)
+                               lineWidth: diameter * 0.11) {
+                percent(value(metric), size: diameter * 0.30)
             }
             // The tile's ring carries a symbol because a 42pt card has nowhere
             // to put a caption. At this size the reading goes back inside and
             // the name underneath, with the arc's colour tying the two.
             Text(metric.label)
-                .font(WidgetStyle.caption(12))
+                .font(WidgetStyle.caption(11))
                 .foregroundStyle(WidgetStyle.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -85,11 +141,11 @@ struct SystemActivityDetail: View {
         let line = detail(metric)
         return HStack(spacing: 12) {
             Text(line.label)
-                .font(WidgetStyle.caption(12))
+                .font(WidgetStyle.caption(11))
                 .foregroundStyle(WidgetStyle.secondary)
             Spacer(minLength: 0)
             Text(line.value)
-                .font(WidgetStyle.label(12))
+                .font(WidgetStyle.label(11))
                 .monospacedDigit()
                 .foregroundStyle(WidgetStyle.primary)
                 .rollingValue(line.value)
@@ -114,15 +170,21 @@ struct SystemActivityDetail: View {
             let series = context.isPreview ? [] : SystemMetrics.shared.cpuHistory
             guard !series.isEmpty else { return ("Average CPU", "—") }
             let average = series.reduce(0, +) / Double(series.count)
-            return ("Average CPU, last \(series.count)s", "\(whole(average))%")
+            return ("Average CPU", "\(whole(average))%")
         case .memory:
             let total = Double(ProcessInfo.processInfo.physicalMemory)
             let gib = 1024.0 * 1024 * 1024
             return ("Memory used",
                     String(format: "%.1f / %.0f GiB", value(metric) * total / gib, total / gib))
         case .disk:
-            // Only the fraction is published, and it is the root volume's.
-            return ("Startup volume used", "\(whole(value(metric)))%")
+            // The percentage is the ring's job. This is the figure you
+            // actually act on, off the same sample.
+            let free = Double(SystemMetrics.shared.diskFree)
+            let total = Double(SystemMetrics.shared.diskTotal)
+            guard !context.isPreview, total > 0 else { return ("Startup volume", "—") }
+            let gib = 1024.0 * 1024 * 1024
+            return ("Startup volume free",
+                    String(format: "%.0f / %.0f GiB", free / gib, total / gib))
         case .battery:
             let mac = context.isPreview ? nil : BatteryMetrics.shared.device(.mac)
             guard let mac, mac.present else { return ("Mac battery", "Not reported") }
