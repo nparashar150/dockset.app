@@ -775,6 +775,10 @@ struct DockShelfView: View {
     }
 
     private func open(_ entry: Entry) {
+        // The Dock drops its label the moment you click, and here it would
+        // otherwise sit over whatever the click just opened.
+        TooltipWindow.shared.hide()
+
         // Anything other than the open group or panel dismisses it: clicking
         // another tile is a decision to do something else.
         if entry.item.group?.id != GroupWindow.shared.openGroupID {

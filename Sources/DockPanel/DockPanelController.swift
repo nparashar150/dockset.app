@@ -87,11 +87,15 @@ final class DockPanelController: NSObject, NSWindowDelegate {
     func hide() {
         GroupWindow.shared.close()
         WidgetDetailWindow.shared.close()
+        TooltipWindow.shared.hide()
         panel?.orderOut(nil)
     }
 
     func close() {
         stopPolling()
+        GroupWindow.shared.close()
+        WidgetDetailWindow.shared.close()
+        TooltipWindow.shared.hide()
         panel?.close()
         panel = nil
     }
@@ -362,11 +366,17 @@ final class DockPanelController: NSObject, NSWindowDelegate {
 
     private func setRevealed(_ value: Bool) {
         guard revealed != value else { return }
-        // An opened group is anchored to a tile. If the shelf slides away it
-        // would be left floating over the desktop with nothing under it.
+        // Everything anchored to a tile has to go with it. Hiding is a window
+        // *move*, not an orderOut — the shelf slides to `hiddenOrigin` and its
+        // view never disappears — so nothing here tears itself down on its
+        // own. The hover label is the one that showed it: the tracking area
+        // only reports an exit when the pointer leaves, and when the shelf
+        // slides out from under a pointer that never moved, it does not. The
+        // label was left sitting over the desktop pointing at nothing.
         if !value {
             GroupWindow.shared.close()
             WidgetDetailWindow.shared.close()
+            TooltipWindow.shared.hide()
         }
         revealed = value
         hideWorkItem?.cancel()
