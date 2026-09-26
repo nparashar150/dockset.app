@@ -110,6 +110,37 @@ final class DockPanelController: NSObject, NSWindowDelegate {
             revealed = true
         }
         applyPlacement(animated: false)
+        syncStrut()
+    }
+
+    /// Takes or gives back Apple's Dock reserved strip as the setup changes.
+    ///
+    /// Restarting the Dock takes the best part of a second, so this runs
+    /// detached and re-places the shelf when the strip is known. Entering is
+    /// also the one place in the app that asks the user a question, which is
+    /// another reason it cannot be on the path of an ordinary settings write.
+    private func syncStrut() {
+        let wanted = StrutMode.wanted(for: app.state.setup)
+        let borrowed = app.state.borrowedDockPrefs != nil
+        guard wanted != borrowed else { return }
+
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            if wanted {
+                let thickness = await StrutMode.enter(
+                    edge: app.effectivePosition,
+                    wanting: panel?.frame.size.thickness(on: app.effectivePosition) ?? 0,
+                    state: app.state,
+                    record: { [weak self] prefs in self?.app.state.borrowedDockPrefs = prefs })
+                // Declined, so the setup goes back rather than leaving a mode
+                // selected that is not in effect.
+                if thickness == nil { app.state.setup = .both }
+            } else {
+                await StrutMode.leave(state: app.state,
+                                      clear: { [weak self] in self?.app.state.borrowedDockPrefs = nil })
+            }
+            applyPlacement(animated: true)
+        }
     }
 
     func reposition() { applyPlacement(animated: false) }
@@ -136,6 +167,14 @@ final class DockPanelController: NSObject, NSWindowDelegate {
     private var revealedOrigin: CGPoint { revealedOrigin(for: panel?.frame.size ?? .zero) }
 
     private func revealedOrigin(for size: CGSize) -> CGPoint {
+        // Borrowing the Dock's strip means sitting *in* it, not above it.
+        // `visibleFrame` already excludes the reservation, so placing against
+        // it would put the shelf beside its own strut and leave the reserved
+        // band showing the Dock underneath.
+        if app.state.borrowedDockPrefs != nil {
+            return borrowedOrigin(for: size)
+        }
+
         let visible = targetScreen.visibleFrame
         let inset: CGFloat = 6 + systemDockClearance
 
@@ -150,6 +189,25 @@ final class DockPanelController: NSObject, NSWindowDelegate {
             x: min(max(origin.x, visible.minX), max(visible.minX, visible.maxX - size.width)),
             y: min(max(origin.y, visible.minY), max(visible.minY, visible.maxY - size.height))
         )
+    }
+
+    /// Centred in the strip Apple's Dock is reserving on the shelf's behalf.
+    ///
+    /// Measured from the screen's own frame rather than `visibleFrame`, since
+    /// the reservation is precisely what was taken out of the latter. Centred
+    /// rather than flush so a shelf thinner than the strip does not leave the
+    /// Dock visible along one edge of it.
+    private func borrowedOrigin(for size: CGSize) -> CGPoint {
+        let frame = targetScreen.frame
+        let strip = DockStrut.thickness(on: app.effectivePosition)
+        let shelf = size.thickness(on: app.effectivePosition)
+        let slack = max(0, strip - shelf) / 2
+
+        return switch app.effectivePosition {
+        case .bottom: CGPoint(x: frame.midX - size.width / 2, y: frame.minY + slack)
+        case .left: CGPoint(x: frame.minX + slack, y: frame.midY - size.height / 2)
+        case .right: CGPoint(x: frame.maxX - size.width - slack, y: frame.midY - size.height / 2)
+        }
     }
 
     /// Clearance for Apple's Dock if the user has put us on its edge anyway.

@@ -219,6 +219,51 @@ extension GroupDrag {
 /// accepts nothing. That is what stopped a group being renamed. It lives here,
 /// rather than beside the one window that needs it, because the rule is not
 /// obvious and the codebase has now hit it twice.
+public extension CGSize {
+    /// The extent across the shelf's short axis, whichever edge it is on.
+    func thickness(on edge: DockPosition) -> CGFloat {
+        edge.isVertical ? width : height
+    }
+}
+
+/// Sizing for the strip Apple's Dock reserves on the shelf's behalf.
+///
+/// See `DockStrut`: the Dock is the only thing that can reserve screen space,
+/// so the shelf asks it for a strip of the right thickness and then sits on
+/// top of it.
+public enum DockStrutMetrics {
+    /// What macOS accepts for `com.apple.dock tilesize`.
+    public static let tileRange: ClosedRange<Double> = 16 ... 128
+
+    /// Measured once: a tile size of 38 produced a 58 point strip.
+    ///
+    /// One point is not a curve, which is why nothing relies on this being
+    /// exactly right. `DockStrut.claim` measures the strip that actually came
+    /// back and the shelf sizes itself from that, so an error here costs a few
+    /// points of strip rather than a wrong layout.
+    public static let padding: Double = 20
+
+    /// The tile size whose reserved strip should land closest to `strip`.
+    ///
+    /// Clamped, because a shelf can want more than the largest tile reserves.
+    /// It gets the largest and overhangs: covering part of a window beats
+    /// covering all of it, and both beat refusing to enter the mode.
+    public static func tileSize(forStrip strip: CGFloat) -> Double {
+        min(max(Double(strip) - padding, tileRange.lowerBound), tileRange.upperBound)
+    }
+
+    /// Height the shelf may draw at, given the strip actually reserved.
+    ///
+    /// Never larger than the strip. The shelf is the thing that has to give:
+    /// drawing past the reservation is exactly the defect this mode exists to
+    /// fix, so a shelf that wants more is simply not granted it.
+    public static func shelfThickness(wanting wanted: CGFloat,
+                                      reserved: CGFloat) -> CGFloat {
+        guard reserved > 0 else { return wanted }
+        return min(wanted, reserved)
+    }
+}
+
 public final class KeyablePanel: NSPanel {
     public override var canBecomeKey: Bool { true }
 
