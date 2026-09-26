@@ -101,9 +101,13 @@ struct WidgetSettingsSections: View {
     private func control(_ key: String, entry: WidgetCatalog.Entry,
                          instance: WidgetInstance) -> some View {
         switch entry.defaults.values[key] {
-        case .bool:
+        // Every read here passes the catalog's default. Without it a widget
+        // saved before a key existed showed false, or empty, rather than what
+        // it is actually running with, so the control disagreed with the tile
+        // until it was touched.
+        case .bool(let fallback):
             Toggle(Self.label(key), isOn: Binding(
-                get: { instance.config.bool(key) },
+                get: { instance.config.bool(key, default: fallback) },
                 set: { on in write(instance) { $0.set(key, .bool(on)) } }))
 
         case .number(let fallback):
@@ -116,22 +120,33 @@ struct WidgetSettingsSections: View {
                     }
                 }
 
-        case .string:
-            TextField(Self.label(key), text: Binding(
-                get: { instance.config.string(key) },
-                set: { text in write(instance) { $0.set(key, .string(text)) } }),
-                prompt: Text(Self.prompt(key)))
+        case .string(let fallback):
+            // A picker where the value is one of a known set. A text field
+            // there let the user type anything, and anything unrecognised fell
+            // through to the default silently, so the setting looked broken
+            // rather than rejected.
+            if let choices = Self.stringChoices(entry.kind, key) {
+                Picker(Self.label(key), selection: Binding(
+                    get: { instance.config.string(key, default: fallback) },
+                    set: { value in write(instance) { $0.set(key, .string(value)) } })) {
+                    ForEach(choices, id: \.value) { Text($0.title).tag($0.value) }
+                }
+            } else {
+                TextField(Self.label(key), text: Binding(
+                    get: { instance.config.string(key, default: fallback) },
+                    set: { text in write(instance) { $0.set(key, .string(text)) } }),
+                    prompt: Text(Self.prompt(key)))
+            }
 
-        case .list:
-            // A list means "which of a fixed set", and the set lives in the
-            // widget, not the catalog. Only the two that matter are offered
-            // rather than a generic editor nobody could use.
+        case .list(let fallback):
             if let choices = Self.choices[key] {
+                // Which of a fixed set: one toggle each.
                 ForEach(choices, id: \.value) { choice in
                     Toggle(choice.title, isOn: Binding(
-                        get: { instance.config.strings(key).contains(choice.value) },
+                        get: { instance.config.strings(key, default: Self.strings(fallback))
+                                .contains(choice.value) },
                         set: { on in
-                            var list = instance.config.strings(key)
+                            var list = instance.config.strings(key, default: Self.strings(fallback))
                             if on { if !list.contains(choice.value) { list.append(choice.value) } }
                             else { list.removeAll { $0 == choice.value } }
                             // Never leave it with nothing to show.
@@ -139,6 +154,25 @@ struct WidgetSettingsSections: View {
                             write(instance) { $0.set(key, .list(list.map { .string($0) })) }
                         }))
                 }
+            } else {
+                // Open-ended, so it is typed rather than chosen. This branch
+                // did not exist, which is why a watchlist could never be
+                // edited: `symbols` is read by three views and was written by
+                // nothing at all.
+                TextField(Self.label(key), text: Binding(
+                    get: { instance.config.strings(key, default: Self.strings(fallback))
+                            .joined(separator: ", ") },
+                    set: { text in
+                        let list = text.split(separator: ",")
+                            .map { $0.trimmingCharacters(in: .whitespaces) }
+                            .filter { !$0.isEmpty }
+                        // An empty field is a half-finished edit, not a
+                        // request for a widget with nothing in it.
+                        guard !list.isEmpty else { return }
+                        write(instance) { $0.set(key, .list(list.map { .string($0) })) }
+                    }),
+                    prompt: Text(Self.prompt(key)))
+                .help("Separate with commas.")
             }
 
         case .none:
@@ -147,6 +181,11 @@ struct WidgetSettingsSections: View {
     }
 
     // MARK: Presentation
+
+    /// The catalog's default for a list key, as plain strings.
+    static func strings(_ values: [WidgetConfig.Value]) -> [String] {
+        values.compactMap { if case .string(let text) = $0 { text } else { nil } }
+    }
 
     private func stringValue(_ value: WidgetConfig.Value) -> String {
         if case .string(let text) = value { return text }
@@ -185,4 +224,43 @@ struct WidgetSettingsSections: View {
         "devices": [("This Mac", "mac"), ("AirPods", "pods"),
                     ("AirPods Case", "case"), ("Keyboard", "keyboard")],
     ]
+
+    /// String options that are really a choice from a fixed set.
+    ///
+    /// Without this every one of them got a free-text field, so the only way
+    /// to discover a valid value was to read the source, and a typo silently
+    /// fell through to the default with nothing said.
+    ///
+    /// Keyed by kind and key together, because the same name means different
+    /// things in different widgets: `period` is day/month/year in Time
+    /// Progress and a chart range in Stocks. The existing list table is keyed
+    /// on the name alone, which works only because no two widgets have yet
+    /// collided there.
+    ///
+    /// Only sets that were read out of the code that consumes them. A key
+    /// missing here keeps its text field, which is the honest fallback.
+    static let stringChoices: [String: [(title: String, value: String)]] = [
+        "network.display": [("Both", "both"), ("Download", "download"), ("Upload", "upload")],
+        "progress.period": [("Day", "day"), ("Month", "month"), ("Year", "year")],
+        "notes.color": PaperColor.picker.map { (optionLabel($0.rawValue), $0.rawValue) },
+    ]
+
+    static func stringChoices(_ kind: WidgetKind, _ key: String)
+        -> [(title: String, value: String)]? {
+        stringChoices["\(kind.rawValue).\(key)"]
+    }
+
+    private static func optionLabel(_ raw: String) -> String {
+        raw.prefix(1).uppercased() + raw.dropFirst()
+    }
+
+    /// Open-ended lists, edited as text rather than chosen from a set.
+    ///
+    /// `symbols` is the reason this exists: it is read by three views and was
+    /// written by nothing, so a watchlist was whatever it shipped as, for
+    /// ever. A fixed set is impossible here because the set is every ticker
+    /// there is.
+    static func isFreeformList(_ key: String) -> Bool {
+        choices[key] == nil
+    }
 }
