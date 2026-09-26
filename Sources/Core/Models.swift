@@ -11,6 +11,24 @@ public enum DockSetup: String, Codable, Sendable, CaseIterable {
     case customReplacement = "custom"
 }
 
+/// What Apple's Dock looked like before Docket borrowed its reserved strip.
+///
+/// Persisted rather than held in memory. Docket promises to put these back,
+/// and a crash between changing them and quitting must not turn that into a
+/// lie: whatever is recorded here is what gets restored, whenever the app next
+/// gets the chance.
+public struct DockPrefs: Codable, Hashable, Sendable {
+    public var autoHide: Bool
+    public var tileSize: Double
+    public var orientation: String
+
+    public init(autoHide: Bool, tileSize: Double, orientation: String) {
+        self.autoHide = autoHide
+        self.tileSize = tileSize
+        self.orientation = orientation
+    }
+}
+
 public enum DockPosition: String, Codable, Sendable, CaseIterable {
     case left, bottom, right   // deliberately no .top - the menu bar owns that edge
     public var isVertical: Bool { self != .bottom }
@@ -660,6 +678,9 @@ public struct PersistedState: Codable, Sendable {
     public var timer = TimerState()
     /// Snapshot of the user's live Dock taken before Docket ever wrote to it.
     public var originalMacOSDock: [MacOSDockTile]?
+    /// Apple's Dock preferences from before the shelf borrowed its strip.
+    /// Non-nil means they are currently changed and owe a restore.
+    public var borrowedDockPrefs: DockPrefs?
 
     /// Decodes field by field, so an unknown or missing key is a default and
     /// not a thrown error.
@@ -681,6 +702,7 @@ public struct PersistedState: Codable, Sendable {
         menuBar = try c.decodeIfPresent(MenuBarSettings.self, forKey: .menuBar) ?? MenuBarSettings()
         timer = try c.decodeIfPresent(TimerState.self, forKey: .timer) ?? TimerState()
         originalMacOSDock = try c.decodeIfPresent([MacOSDockTile].self, forKey: .originalMacOSDock)
+        borrowedDockPrefs = try c.decodeIfPresent(DockPrefs.self, forKey: .borrowedDockPrefs)
     }
 
     public init() {}

@@ -60,6 +60,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 LocationService.shared.start()
             }
         }
+        // A recorded snapshot means a previous run changed Apple's Dock and
+        // did not put it back, which is what a crash or a force quit leaves
+        // behind. The debt is paid before anything else touches the Dock.
+        Task { @MainActor [state] in
+            await StrutMode.repayIfOwed(state: state.state,
+                                        clear: { state.state.borrowedDockPrefs = nil })
+        }
+
         SystemDockSettings.shared.start()
         SystemMetrics.shared.start()
         NetworkMetrics.shared.start()
@@ -81,6 +89,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        // Synchronous on purpose. Restoring the Dock means writing its
+        // preferences and restarting it, and a Task would not be given the
+        // time: quitting must not be how someone loses their Dock settings.
+        if let borrowed = state?.state.borrowedDockPrefs {
+            state?.state.borrowedDockPrefs = nil
+            DockStrut.releaseNow(borrowed)
+        }
         state?.saveNow()
     }
 
