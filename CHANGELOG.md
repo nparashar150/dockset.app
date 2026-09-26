@@ -3,6 +3,18 @@
 The 0.1.0 entry was written by hand. Everything after it is generated from the
 commits on `main`, which is why the voice changes partway down.
 
+## [0.1.2](https://github.com/nparashar150/docket/compare/v0.1.1...v0.1.2) (2026-09-26)
+
+
+### Features
+
+* give the Show Trash toggle a Trash to show ([#100](https://github.com/nparashar150/docket/issues/100)) ([bfeb22b](https://github.com/nparashar150/docket/commit/bfeb22bef12ab976595cdbf87b72e56ba60f7a92)), closes [#1](https://github.com/nparashar150/docket/issues/1)
+
+
+### Bug Fixes
+
+* let the shelf go back to following the Dock ([#103](https://github.com/nparashar150/docket/issues/103)) ([7b096c7](https://github.com/nparashar150/docket/commit/7b096c71ba0575ce374eecb06054d96c004b01d4)), closes [#10](https://github.com/nparashar150/docket/issues/10) [#11](https://github.com/nparashar150/docket/issues/11) [#9](https://github.com/nparashar150/docket/issues/9)
+
 ## [0.1.1](https://github.com/nparashar150/docket/compare/v0.1.0...v0.1.1) (2026-09-26)
 
 
