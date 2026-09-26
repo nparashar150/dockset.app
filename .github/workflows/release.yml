@@ -39,6 +39,11 @@ jobs:
       #
       # MARKETING_VERSION comes from the tag so the bundle does not report
       # whatever number happened to be sitting in project.yml.
+      #
+      # Both architectures, because the runner is Apple Silicon and would
+      # otherwise produce a thin arm64 binary. macOS 26 is the last release
+      # that runs on Intel Macs, and a thin build does not refuse to launch
+      # there politely — it refuses to launch at all.
       - name: Build Release
         run: |
           xcodebuild build \
@@ -47,6 +52,8 @@ jobs:
             -configuration Release \
             -derivedDataPath build \
             MARKETING_VERSION="${GITHUB_REF_NAME#v}" \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="-" \
             DEVELOPMENT_TEAM="" \
