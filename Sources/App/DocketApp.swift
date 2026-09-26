@@ -80,12 +80,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated { self?.shelf.refresh() }
         }
 
-        // The Dock's own preferences drive our edge and hiding, so follow them.
-        NotificationCenter.default.addObserver(
-            forName: Notification.Name("com.apple.dock.prefchanged"), object: nil, queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.shelf.refresh() }
-        }
+        // The Dock's own preferences drive our edge, size and hiding, so
+        // follow them. Through SystemDockSettings rather than by observing the
+        // notification here: it is a *distributed* notification, posted by
+        // another process, and the observer this used to register on
+        // NotificationCenter.default could never have fired. Nothing re-placed
+        // or re-hid the shelf when the Dock changed, so "Match the macOS Dock"
+        // only matched it at launch.
+        SystemDockSettings.shared.onChange = { [weak self] in self?.shelf.refresh() }
     }
 
     func applicationWillTerminate(_ notification: Notification) {

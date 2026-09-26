@@ -53,15 +53,31 @@ public final class SystemDockSettings {
         max(60, tileSize * 3)
     }
 
+    /// Called after a reading changes, for whoever has to act on it.
+    ///
+    /// One observer rather than two. The shelf also needs to know when the
+    /// Dock's preferences change, and having it watch the same notification
+    /// separately left the two in a race: nothing orders the observers, so the
+    /// shelf could re-place itself against a size and an edge this had not
+    /// re-read yet. Now the values are refreshed first and the callback runs
+    /// after, which is the order the shelf actually needs.
+    @ObservationIgnored public var onChange: (@MainActor () -> Void)?
+
     public func start() {
         guard observer == nil else { return }
         // The Dock posts this whenever its preferences change, so the shelf can
         // follow a size slider being dragged in System Settings live.
+        //
+        // Distributed, not the ordinary centre: another process posts it, and
+        // NotificationCenter.default never sees it at all.
         observer = DistributedNotificationCenter.default().addObserver(
             forName: Notification.Name("com.apple.dock.prefchanged"),
             object: nil, queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refresh() }
+            MainActor.assumeIsolated {
+                self?.refresh()
+                self?.onChange?()
+            }
         }
     }
 
