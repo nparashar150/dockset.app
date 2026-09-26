@@ -202,6 +202,7 @@ struct SettingsView: View {
                     .disabled(!state.customDock.autoHide)
                     .help("A small visible handle while hidden. The edge still reveals the Dock without it.")
                 Toggle("Hide when the macOS Dock appears", isOn: $state.customDock.hideWhenMacOSDockAppears)
+                    .help("Only matters when both are on the same edge. An auto-hidden Dock and the shelf share a reveal trigger there, so reaching for one uncovers the other.")
                     .help("Gets out of the way when both Docks share a screen edge.")
                 Toggle("Use as desktop widget", isOn: $state.customDock.useAsDesktopWidget)
                     .help("Keeps the Dock on the desktop, behind app windows.")
