@@ -37,6 +37,13 @@ learned by looking at Dockset, is in **[NOTICE.md](NOTICE.md)**.
 
 ---
 
+## The shelf
+
+<img src="docs/images/shelf.png" alt="The Docket shelf running along the bottom of a screen, holding a usage meter, an hourly weather strip, a sticky note, and a row of app icons" width="100%">
+
+Live widgets on the left, your apps on the right, sized and positioned from
+your real Dock's own settings.
+
 ## Panels
 
 Clicking a widget opens a detail panel, anchored to the tile it came from, with
