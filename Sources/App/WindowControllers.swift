@@ -109,7 +109,10 @@ final class SettingsWindow: HostedWindow {
                 state: $bindable.state,
                 initialTab: tab,
                 onApplyMacOSProfile: { Task { await app.applyMacOSProfile() } },
-                onCaptureCurrentDock: { Task { await app.captureCurrentDock() } }
+                onCaptureCurrentDock: { Task { await app.captureCurrentDock() } },
+                onSetScale: { app.setScale($0) },
+                onResumeFollowingScale: { app.resumeFollowingScale() },
+                onResumeMirroringApps: { app.resumeMirroringApps() }
             ),
             title: "Docket Settings",
             size: NSSize(width: 520, height: 460)
