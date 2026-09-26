@@ -45,6 +45,10 @@ struct DockShelfView: View {
     @State private var addHovered = false
     @State private var shelfWindow: NSWindow?
 
+    /// Stable across solves: keying it on a fresh UUID would tell SwiftUI the
+    /// Trash was removed and re-added on every pointer move.
+    private static let trashID = UUID.stable(from: "docket.trash")
+
     private struct DragState {
         var id: UUID
         /// Index among draggable entries.
@@ -58,17 +62,19 @@ struct DockShelfView: View {
         var id: UUID
         var item: DockItem
         var isRunningApp: Bool
+        /// The Trash, which is a destination rather than a thing you arrange.
+        var isTrash: Bool = false
         /// Resolved once per solve. Deriving it in the tile body meant a
         /// `stat(2)` and a string allocation for every app on every pointer
         /// move, since `FileRef.resolve()` touches the filesystem.
         var label: String
 
         /// What another tile can be dropped onto to make or join a group.
-        var canReceiveDrop: Bool { !isRunningApp && !item.isWidget }
+        var canReceiveDrop: Bool { !isRunningApp && !item.isWidget && !isTrash }
 
         /// Only pinned, non-widget tiles can go in a group: a running app
         /// that is not on the shelf has no slot to take with it.
-        var canBeGrouped: Bool { !isRunningApp && !item.isWidget && item.group == nil }
+        var canBeGrouped: Bool { !isRunningApp && !item.isWidget && item.group == nil && !isTrash }
 
         /// Whether clicking this tile does anything: unfold a group, open an
         /// app, or - for a widget - show its detail panel, and failing that
@@ -91,8 +97,10 @@ struct DockShelfView: View {
                 "Show Details"
             } else { "Open" }
         }
-        /// Running-but-unpinned apps have no stored position to move.
-        var isDraggable: Bool { !isRunningApp }
+        /// Running-but-unpinned apps have no stored position to move, and
+        /// neither does the Trash: it is pinned to the end the way the Dock
+        /// pins its own.
+        var isDraggable: Bool { !isRunningApp && !isTrash }
     }
 
     /// One position along the shelf: either an entry or the hairline that
@@ -201,6 +209,19 @@ struct DockShelfView: View {
             }
         }
 
+        // Last, behind its own divider, which is where Apple's Dock keeps it.
+        // Not a profile item: it is a setting, so it is appended per solve
+        // rather than stored, and it can never be dragged out of place.
+        if settings.showTrash, let trash = AppCatalog.trashURL {
+            entries.append(Entry(id: Self.trashID,
+                                 item: .folder(id: Self.trashID,
+                                               ref: FileRef(url: trash),
+                                               icon: FolderIcon()),
+                                 isRunningApp: false,
+                                 isTrash: true,
+                                 label: "Trash"))
+        }
+
         // Rebuild slots with the separator and the grip in the right places.
         //
         // The grip goes on the seam between the widgets and the apps rather
@@ -215,6 +236,7 @@ struct DockShelfView: View {
             if entry.isRunningApp, index > 0, !entries[index - 1].isRunningApp {
                 result.slots.append(.separator)
             }
+            if entry.isTrash, index > 0 { result.slots.append(.separator) }
             result.slots.append(.item(entry))
             if let lastWidget, index == lastWidget, index < entries.count - 1 {
                 result.slots.append(.grip)

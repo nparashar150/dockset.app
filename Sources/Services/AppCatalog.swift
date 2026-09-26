@@ -70,11 +70,34 @@ public final class AppCatalog {
     public func icon(for url: URL) -> NSImage {
         let key = url.path(percentEncoded: false)
         if let cached = iconCache[key] { return cached }
-        let icon = NSWorkspace.shared.icon(forFile: key)
+        let icon = Self.trashIcon(for: url) ?? NSWorkspace.shared.icon(forFile: key)
         icon.size = NSSize(width: 128, height: 128)
         iconCache[key] = icon
         return icon
     }
+
+    /// The Trash needs asking for by name.
+    ///
+    /// `NSWorkspace.icon(forFile:)` cannot see inside `~/.Trash` without Full
+    /// Disk Access, and rather than failing it returns a generic document
+    /// icon, which is worse than an error because it looks deliberate. The
+    /// named system image is not behind any permission.
+    ///
+    /// Always the empty can, whatever is in there. Telling full from empty
+    /// means listing the directory, and that is the same Full Disk Access
+    /// again: the most invasive grant macOS has, asked for so a lid can look
+    /// fuller. `NSTrashEmpty` is simply what a trash can looks like, and
+    /// nobody reads it as a claim that it is empty.
+    static func trashIcon(for url: URL) -> NSImage? {
+        guard url.standardizedFileURL == Self.trashURL else { return nil }
+        return NSImage(named: NSImage.trashEmptyName)
+    }
+
+    /// nil on a system with no home Trash, which should not happen but is not
+    /// worth trapping over.
+    static let trashURL: URL? = try? FileManager.default.url(
+        for: .trashDirectory, in: .userDomainMask, appropriateFor: nil, create: false
+    ).standardizedFileURL
 
     public func icon(forBundleID bundleID: String) -> NSImage? {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return nil }
