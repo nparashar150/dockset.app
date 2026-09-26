@@ -50,7 +50,10 @@ public struct NowPlaying: @unchecked Sendable, Equatable {
 /// Spotify and Apple Music, over Apple events.
 ///
 /// Deliberately not MediaRemote: that framework has been entitlement-gated
-/// since macOS 15.4 and silently returns nothing to unsigned callers.
+/// since macOS 15.4. It loads and the symbol resolves, so it looks like it
+/// works; the callback is then handed nil, with no error and no diagnostic.
+/// Claiming the entitlement is not a way round it either, since an ad-hoc
+/// binary asserting a private entitlement is killed at launch.
 ///
 /// Nothing here ever launches a player - an app that is not already running is
 /// skipped, so the shelf cannot boot iTunes to ask what is playing.
