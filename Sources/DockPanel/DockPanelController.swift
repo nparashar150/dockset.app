@@ -360,6 +360,17 @@ final class DockPanelController: NSObject, NSWindowDelegate {
         groupCloseItem?.cancel()
         groupCloseItem = nil
 
+        // Apple's Dock is sliding in over the same edge. Two surfaces stacked
+        // on one edge fight: they share a reveal trigger, so reaching for one
+        // uncovers the other and the shelf sits on top of the Dock the user
+        // was actually going for. Yielding is the only way either is usable.
+        if app.state.customDock.hideWhenMacOSDockAppears, systemDockIsShowing(mouse) {
+            hideWorkItem?.cancel()
+            hideWorkItem = nil
+            if revealed { setRevealed(false) }
+            return
+        }
+
         if revealed {
             // A generous margin: the shelf must not vanish the instant the
             // pointer crosses its border on the way to a tile at the far end.
@@ -371,6 +382,42 @@ final class DockPanelController: NSObject, NSWindowDelegate {
             }
         } else if revealZone.contains(mouse) {
             setRevealed(true)
+        }
+    }
+
+    /// Whether Apple's Dock is on screen, or about to be, on the shelf's edge.
+    ///
+    /// Only its own edge matters: a Dock on the left and a shelf on the bottom
+    /// never contend for the same pixels, so the setting does nothing there.
+    ///
+    /// The two cases need different signals, and getting that wrong is easy.
+    /// A Dock that does not auto-hide is simply always out, which the rect it
+    /// publishes says plainly. An auto-hidden Dock is the case this setting
+    /// actually exists for, and **the rect does not move when it slides in**:
+    /// measured, it stays collapsed the whole time, because `visibleFrame` is
+    /// not supposed to change when the Dock temporarily reveals. Nothing
+    /// public reports that it is out.
+    ///
+    /// So the second case is inferred from the pointer, which is the same
+    /// thing that causes it: within the Dock's own reveal strip on the shared
+    /// edge, the Dock is coming out whether or not it has arrived yet. The
+    /// shelf yields on the way rather than after the collision, which is also
+    /// the right moment for it.
+    private func systemDockIsShowing(_ mouse: CGPoint) -> Bool {
+        let system = SystemDockSettings.shared
+        let edge = app.effectivePosition
+        guard edge == system.position else { return false }
+
+        if !system.autoHide { return DockStrut.thickness(on: edge) > 0 }
+
+        guard let screen = targetScreen as NSScreen? else { return false }
+        let frame = screen.frame
+        // Matches the depth the Dock itself treats as its trigger.
+        let strip: CGFloat = 4
+        return switch edge {
+        case .bottom: mouse.y <= frame.minY + strip
+        case .left: mouse.x <= frame.minX + strip
+        case .right: mouse.x >= frame.maxX - strip
         }
     }
 
