@@ -93,10 +93,12 @@ struct NetworkDetail: View {
         VStack(alignment: .leading, spacing: 4) {
             ZStack {
                 if showsDownload {
-                    DitherChart(samples: downloadHistory, tint: Self.downTint, range: scale)
+                    DitherChart(samples: downloadHistory, tint: Self.downTint,
+                                filled: false, range: scale)
                 }
                 if showsUpload {
-                    DitherChart(samples: uploadHistory, tint: Self.upTint, range: scale)
+                    DitherChart(samples: uploadHistory, tint: Self.upTint,
+                                filled: false, range: scale)
                 }
             }
             .frame(height: 44)

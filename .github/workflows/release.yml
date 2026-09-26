@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+# gh release create writes to the repository.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # macOS 26 is the deployment target, and the SDK has to match.
+    runs-on: macos-26
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # The Xcode project is generated from project.yml and deliberately not
+      # in the tree, so it has to be made before anything can be built.
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate the project
+        run: xcodegen generate
+
+      # project.yml pins Manual signing against a real Apple Development
+      # certificate and team, because macOS will not attach permission grants
+      # to an ad-hoc identity — a developer building locally needs that. A
+      # runner has neither the certificate nor the team, so the release build
+      # overrides signing on the command line: ad-hoc identity ("-"), no team,
+      # and the hardened runtime off, since it is only meaningful alongside a
+      # real Developer ID and notarisation. Overriding here rather than
+      # editing project.yml leaves local builds signing with the real
+      # certificate. The release that comes out of this is unsigned in every
+      # sense that matters to Gatekeeper, which is what RELEASE_NOTES tells
+      # people to expect.
+      #
+      # MARKETING_VERSION comes from the tag so the bundle does not report
+      # whatever number happened to be sitting in project.yml.
+      - name: Build Release
+        run: |
+          xcodebuild build \
+            -project Plinth.xcodeproj \
+            -scheme Plinth \
+            -configuration Release \
+            -derivedDataPath build \
+            MARKETING_VERSION="${GITHUB_REF_NAME#v}" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="-" \
+            DEVELOPMENT_TEAM="" \
+            ENABLE_HARDENED_RUNTIME=NO
+
+      # ditto, not zip: an .app is a bundle full of symlinks and executable
+      # bits, and zip flattens both — the extracted copy will not launch.
+      - name: Zip the app
+        run: |
+          ditto -c -k --keepParent \
+            build/Build/Products/Release/Plinth.app \
+            "Plinth-${GITHUB_REF_NAME}.zip"
+
+      # A draft, because the notes template ships with placeholders in it that
+      # only a person can fill in. Fill them, then publish from the Releases
+      # page.
+      - name: Draft the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --draft \
+            --title "Plinth $GITHUB_REF_NAME" \
+            --notes-file .github/RELEASE_NOTES_TEMPLATE.md \
+            "Plinth-${GITHUB_REF_NAME}.zip"

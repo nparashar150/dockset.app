@@ -38,6 +38,26 @@ targets:
         ENABLE_APP_SANDBOX: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: ""
 
+  # Renders the real views into PNGs for the README.
+  #
+  # Its own target rather than a flag on the app, so nothing that exists only
+  # to make documentation ships inside the thing people download. It compiles
+  # the same sources minus the app's own entry point, which owns @main.
+  Shots:
+    type: tool
+    platform: macOS
+    sources:
+      - path: Sources
+        excludes:
+          - "App/PlinthApp.swift"
+      - path: Tools/Shots
+    settings:
+      base:
+        PRODUCT_NAME: Shots
+        PRODUCT_BUNDLE_IDENTIFIER: com.namanparashar.plinth.shots
+        CODE_SIGN_ENTITLEMENTS: Resources/Plinth.entitlements
+        ENABLE_APP_SANDBOX: NO
+
   PlinthTests:
     type: bundle.unit-test
     platform: macOS

@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    # macOS 26 is the deployment target, and the SDK has to match.
+    runs-on: macos-26
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # The Xcode project is generated from project.yml and deliberately not
+      # in the tree, so it has to be made before anything can be built.
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate the project
+        run: xcodegen generate
+
+      # project.yml pins Manual signing against a real Apple Development
+      # certificate and team, because macOS will not attach permission grants
+      # to an ad-hoc identity — a developer building locally needs that. A
+      # runner has neither the certificate nor the team, so every build here
+      # overrides signing on the command line: ad-hoc identity, no team, and
+      # the hardened runtime off, since it is only meaningful alongside a real
+      # Developer ID and notarisation. Overriding here rather than editing
+      # project.yml leaves local builds signing with the real certificate.
+      - name: Build the app
+        run: |
+          xcodebuild build \
+            -project Plinth.xcodeproj \
+            -scheme Plinth \
+            -configuration Debug \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="-" \
+            DEVELOPMENT_TEAM="" \
+            ENABLE_HARDENED_RUNTIME=NO
+
+      # A separate step because PlinthTests compiles only the pure core, not
+      # the app's own sources — a break in the app would not show up here.
+      - name: Run the tests
+        run: |
+          xcodebuild test \
+            -project Plinth.xcodeproj \
+            -scheme PlinthTests \
+            -configuration Debug \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="-" \
+            DEVELOPMENT_TEAM="" \
+            ENABLE_HARDENED_RUNTIME=NO

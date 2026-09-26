@@ -5,6 +5,9 @@ Plinth.xcodeproj/
 .build/
 .build-test/
 DerivedData/
+# xcodebuild's default when -derivedDataPath is not given, and where the
+# release workflow and the shot capture both put their output.
+build/
 
 # Research notes kept out of the tree
 .dockset-research/

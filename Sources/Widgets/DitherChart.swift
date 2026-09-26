@@ -13,6 +13,13 @@ import SwiftUI
 struct DitherChart: View {
     var samples: [Double]
     var tint: Color
+    /// Whether to shade the area under the line.
+    ///
+    /// The shading is what gives a lone series its weight, but two of them on
+    /// one axis is two stacked washes: the higher line's fill floods the plot
+    /// and swallows the lower line entirely. Sharing an axis means going
+    /// line-only.
+    var filled: Bool = true
     /// Fixed bounds to plot against, instead of the series' own extremes.
     ///
     /// Auto-scaling is right for a price, which has no natural floor — but
@@ -42,7 +49,9 @@ struct DitherChart: View {
             let points = self.points(in: size)
             guard points.count >= 2 else { return }
 
-            context.fill(dither(under: points, in: size), with: .color(tint.opacity(0.8)))
+            if filled {
+                context.fill(dither(under: points, in: size), with: .color(tint.opacity(0.8)))
+            }
 
             var line = Path()
             line.addLines(points)

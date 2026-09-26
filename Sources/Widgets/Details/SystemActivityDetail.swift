@@ -53,7 +53,7 @@ struct SystemActivityDetail: View {
                     // Absolute, so a CPU idling low sits low and the lines
                     // can honestly be read against each other.
                     DitherChart(samples: samples(metric), tint: metric.color,
-                                range: 0...1)
+                                filled: charted.count == 1, range: 0...1)
                 }
             }
             .frame(height: 34)
