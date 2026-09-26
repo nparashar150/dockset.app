@@ -169,8 +169,6 @@ struct SettingsView: View {
             Section("Contents") {
                 Toggle("Show running apps", isOn: $state.customDock.showRunningApps)
                     .help("Include open apps alongside pinned items.")
-                Toggle("Show app badges", isOn: $state.customDock.showAppBadges)
-                    .help("Mirrors the badges Apple's Dock shows. Requires Accessibility access.")
                 Toggle("Show Trash", isOn: $state.customDock.showTrash)
                 Toggle("Magnification", isOn: $state.customDock.magnification)
                     .disabled(state.customDock.followSystemDock)

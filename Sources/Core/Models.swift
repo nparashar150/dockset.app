@@ -561,7 +561,6 @@ public struct CustomDockSettings: Codable, Hashable, Sendable {
     public var hideWhenMacOSDockAppears: Bool = false
     public var showRunningApps: Bool = true
     public var showTrash: Bool = false
-    public var showAppBadges: Bool = true
     /// On by default: a dock that does not magnify does not feel like
     /// the Dock, which is the entire reference point for this surface.
     public var magnification: Bool = true
@@ -592,7 +591,6 @@ public struct CustomDockSettings: Codable, Hashable, Sendable {
         hideWhenMacOSDockAppears = try c.decodeIfPresent(Bool.self, forKey: .hideWhenMacOSDockAppears) ?? false
         showRunningApps = try c.decodeIfPresent(Bool.self, forKey: .showRunningApps) ?? true
         showTrash = try c.decodeIfPresent(Bool.self, forKey: .showTrash) ?? false
-        showAppBadges = try c.decodeIfPresent(Bool.self, forKey: .showAppBadges) ?? true
         magnification = try c.decodeIfPresent(Bool.self, forKey: .magnification) ?? true
     }
 
