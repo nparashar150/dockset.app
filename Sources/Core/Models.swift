@@ -566,6 +566,36 @@ public struct CustomDockSettings: Codable, Hashable, Sendable {
     /// the Dock, which is the entire reference point for this surface.
     public var magnification: Bool = true
 
+    /// Decodes field by field, so an unknown or missing key is a default and
+    /// not a thrown error.
+    ///
+    /// Synthesized `Codable` treats every non-optional property as required.
+    /// That made adding one setting to this struct reject the user's whole
+    /// state file, which `Store.load()` answers by putting the file aside and
+    /// starting from a first-run default: one new key, and every profile,
+    /// widget and pinned app silently gone. Decoding leniently is what makes
+    /// adding a setting a safe thing to do.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        profileID = try c.decodeIfPresent(UUID.self, forKey: .profileID)
+        followSystemDock = try c.decodeIfPresent(Bool.self, forKey: .followSystemDock) ?? true
+        mirrorSystemApps = try c.decodeIfPresent(Bool.self, forKey: .mirrorSystemApps)
+        scaleOverridden = try c.decodeIfPresent(Bool.self, forKey: .scaleOverridden)
+        position = try c.decodeIfPresent(DockPosition.self, forKey: .position) ?? .bottom
+        displayID = try c.decodeIfPresent(UInt32.self, forKey: .displayID)
+        scale = try c.decodeIfPresent(Double.self, forKey: .scale) ?? Geometry.defaultScale
+        material = try c.decodeIfPresent(DockMaterial.self, forKey: .material) ?? .liquidGlass
+        glass = try c.decodeIfPresent(GlassStyle.self, forKey: .glass) ?? .regular
+        autoHide = try c.decodeIfPresent(Bool.self, forKey: .autoHide) ?? false
+        showHandleWhenHidden = try c.decodeIfPresent(Bool.self, forKey: .showHandleWhenHidden) ?? true
+        useAsDesktopWidget = try c.decodeIfPresent(Bool.self, forKey: .useAsDesktopWidget) ?? false
+        hideWhenMacOSDockAppears = try c.decodeIfPresent(Bool.self, forKey: .hideWhenMacOSDockAppears) ?? false
+        showRunningApps = try c.decodeIfPresent(Bool.self, forKey: .showRunningApps) ?? true
+        showTrash = try c.decodeIfPresent(Bool.self, forKey: .showTrash) ?? false
+        showAppBadges = try c.decodeIfPresent(Bool.self, forKey: .showAppBadges) ?? true
+        magnification = try c.decodeIfPresent(Bool.self, forKey: .magnification) ?? true
+    }
+
     public init() {}
 }
 
@@ -575,12 +605,43 @@ public struct MacOSDockSettings: Codable, Hashable, Sendable {
     public var smoothSwitching: Bool = false
     public var autoSaveLiveDockChanges: Bool = false
 
+    /// Decodes field by field, so an unknown or missing key is a default and
+    /// not a thrown error.
+    ///
+    /// Synthesized `Codable` treats every non-optional property as required.
+    /// That made adding one setting to this struct reject the user's whole
+    /// state file, which `Store.load()` answers by putting the file aside and
+    /// starting from a first-run default: one new key, and every profile,
+    /// widget and pinned app silently gone. Decoding leniently is what makes
+    /// adding a setting a safe thing to do.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        profileID = try c.decodeIfPresent(UUID.self, forKey: .profileID)
+        smoothSwitching = try c.decodeIfPresent(Bool.self, forKey: .smoothSwitching) ?? false
+        autoSaveLiveDockChanges = try c.decodeIfPresent(Bool.self, forKey: .autoSaveLiveDockChanges) ?? false
+    }
+
     public init() {}
 }
 
 public struct MenuBarSettings: Codable, Hashable, Sendable {
     public var showIcon: Bool = true
     public var label: MenuBarLabelMode = .custom
+
+    /// Decodes field by field, so an unknown or missing key is a default and
+    /// not a thrown error.
+    ///
+    /// Synthesized `Codable` treats every non-optional property as required.
+    /// That made adding one setting to this struct reject the user's whole
+    /// state file, which `Store.load()` answers by putting the file aside and
+    /// starting from a first-run default: one new key, and every profile,
+    /// widget and pinned app silently gone. Decoding leniently is what makes
+    /// adding a setting a safe thing to do.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        showIcon = try c.decodeIfPresent(Bool.self, forKey: .showIcon) ?? true
+        label = try c.decodeIfPresent(MenuBarLabelMode.self, forKey: .label) ?? .custom
+    }
 
     public init() {}
 }
@@ -601,6 +662,28 @@ public struct PersistedState: Codable, Sendable {
     public var timer = TimerState()
     /// Snapshot of the user's live Dock taken before Docket ever wrote to it.
     public var originalMacOSDock: [MacOSDockTile]?
+
+    /// Decodes field by field, so an unknown or missing key is a default and
+    /// not a thrown error.
+    ///
+    /// Synthesized `Codable` treats every non-optional property as required.
+    /// That made adding one setting to this struct reject the user's whole
+    /// state file, which `Store.load()` answers by putting the file aside and
+    /// starting from a first-run default: one new key, and every profile,
+    /// widget and pinned app silently gone. Decoding leniently is what makes
+    /// adding a setting a safe thing to do.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        version = try c.decodeIfPresent(Int.self, forKey: .version) ?? PersistedState.currentVersion
+        setup = try c.decodeIfPresent(DockSetup.self, forKey: .setup) ?? .both
+        appearance = try c.decodeIfPresent(AppAppearance.self, forKey: .appearance) ?? .system
+        profiles = try c.decodeIfPresent([DockProfile].self, forKey: .profiles) ?? []
+        customDock = try c.decodeIfPresent(CustomDockSettings.self, forKey: .customDock) ?? CustomDockSettings()
+        macOSDock = try c.decodeIfPresent(MacOSDockSettings.self, forKey: .macOSDock) ?? MacOSDockSettings()
+        menuBar = try c.decodeIfPresent(MenuBarSettings.self, forKey: .menuBar) ?? MenuBarSettings()
+        timer = try c.decodeIfPresent(TimerState.self, forKey: .timer) ?? TimerState()
+        originalMacOSDock = try c.decodeIfPresent([MacOSDockTile].self, forKey: .originalMacOSDock)
+    }
 
     public init() {}
 
@@ -643,6 +726,30 @@ public struct TimerState: Codable, Hashable, Sendable {
     public var deadline: Date?
     public var paused: TimeInterval?
     public var duration: TimeInterval?
+
+    /// Decodes field by field, so an unknown or missing key is a default and
+    /// not a thrown error.
+    ///
+    /// Synthesized `Codable` treats every non-optional property as required.
+    /// That made adding one setting to this struct reject the user's whole
+    /// state file, which `Store.load()` answers by putting the file aside and
+    /// starting from a first-run default: one new key, and every profile,
+    /// widget and pinned app silently gone. Decoding leniently is what makes
+    /// adding a setting a safe thing to do.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        work = try c.decodeIfPresent(Int.self, forKey: .work) ?? 25
+        rest = try c.decodeIfPresent(Int.self, forKey: .rest) ?? 5
+        longBreak = try c.decodeIfPresent(Int.self, forKey: .longBreak) ?? 15
+        sessions = try c.decodeIfPresent(Int.self, forKey: .sessions) ?? 4
+        phase = try c.decodeIfPresent(TimerPhase.self, forKey: .phase) ?? .focus
+        completed = try c.decodeIfPresent(Int.self, forKey: .completed) ?? 0
+        color = try c.decodeIfPresent(PaletteColor.self, forKey: .color) ?? .indigo
+        alerts = try c.decodeIfPresent(Bool.self, forKey: .alerts) ?? true
+        deadline = try c.decodeIfPresent(Date.self, forKey: .deadline)
+        paused = try c.decodeIfPresent(TimeInterval.self, forKey: .paused)
+        duration = try c.decodeIfPresent(TimeInterval.self, forKey: .duration)
+    }
 
     public init() {}
 
