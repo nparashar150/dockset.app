@@ -1,0 +1,85 @@
+name: Bug report
+description: Something in Docket does not do what it says it does.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Docket has one maintainer, so the fastest bug to fix is the one that
+        explains itself. The fields below are the ones that usually decide
+        whether a report can be acted on.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, and what Docket did back.
+      placeholder: |
+        Set the Dock to the left edge in System Settings. The shelf stayed on
+        the bottom until I quit and relaunched.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+
+  - type: dropdown
+    id: after-relaunch
+    attributes:
+      label: Does it still happen after quitting and relaunching Docket?
+      description: >
+        This is the single most useful answer in the form. A fault that
+        survives a relaunch is in the saved setup or in the logic; one that
+        does not is in how state is observed while running, which is an
+        entirely different search.
+      options:
+        - "Yes, it comes back"
+        - "No, a relaunch fixes it"
+        - "Have not tried"
+    validations:
+      required: true
+
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      description: Apple menu, then About This Mac.
+      placeholder: "26.1"
+    validations:
+      required: true
+
+  - type: input
+    id: docket-version
+    attributes:
+      label: Docket version
+      description: Menu bar item, then Settings, then the About tab.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: How you installed it
+      description: >
+        Builds from the Releases page are signed ad-hoc, and macOS withholds
+        some permission prompts from an ad-hoc signed app. Anything about a
+        prompt that never appeared depends on this answer.
+      options:
+        - "The .dmg from Releases"
+        - "The .zip from Releases"
+        - "Built from source"
+    validations:
+      required: true
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else
+      description: >
+        Screenshots, a recording, the widgets you had on the shelf, or the
+        console output if you were running it from Xcode. Optional.

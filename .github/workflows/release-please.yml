@@ -1,0 +1,55 @@
+name: Release
+
+# Every push to main. release-please reads the Conventional Commits since the
+# last release and keeps one pull request open with the next version number,
+# the CHANGELOG entry and the version in project.yml already written. Merging
+# that pull request is what cuts the release: nobody tags anything by hand.
+on:
+  push:
+    branches:
+      - main
+
+# contents: commits to the release branch, creates the tag and the release.
+# pull-requests: opens and rewrites the release pull request on every push.
+# issues: the "autorelease: pending" and "autorelease: tagged" labels are how
+# release-please recognises its own pull requests later, and creating a label
+# that does not exist yet goes through the issues API.
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  propose:
+    runs-on: ubuntu-latest
+
+    outputs:
+      released: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
+
+    steps:
+      # Pinned to an exact version rather than the floating v5 tag. This action
+      # decides what number the next release gets and rewrites the changelog to
+      # match; that is not behaviour to let change underneath the project on
+      # someone else's schedule.
+      - uses: googleapis/release-please-action@v5.0.0
+        id: release
+
+  # The binary build is called directly instead of being triggered by the
+  # release. Wiring the other workflow to `release: published` is the obvious
+  # thing to reach for and it silently does nothing: GitHub does not start a
+  # workflow run for an event raised by the default GITHUB_TOKEN, and the job
+  # above raises that event. Every release would go out with no .dmg and no
+  # .zip attached and no failed run to notice. Calling the workflow puts the
+  # build in this same run, where there is no event to suppress.
+  #
+  # The called workflow cannot give itself more than it is given here, so the
+  # permission it needs to upload has to be granted at this end too.
+  binaries:
+    needs: propose
+    if: needs.propose.outputs.released == 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.propose.outputs.tag }}

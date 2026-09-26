@@ -1,0 +1,63 @@
+name: Feature request
+description: Something Docket should be able to do.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two things are worth reading first: [ROADMAP.md](https://github.com/nparashar150/docket/blob/main/ROADMAP.md),
+        which lists what has already been researched and why some of it was
+        ruled out, and the open issues, which are long.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve
+      description: >
+        The situation you are in when you want it, not the feature. A shelf
+        has very little room, so the case for anything on it is the case for
+        what it displaces.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Tile or panel
+      description: >
+        The tile is a small square you read at a glance without clicking. The
+        panel is what opens when you click the tile, where detail and controls
+        live. Getting this wrong is the most common way a widget idea fails:
+        a tile that needs reading is not glanceable, and a panel nobody has a
+        reason to open is dead weight.
+      options:
+        - "On the tile, it has to be readable at a glance"
+        - "In the panel, it is detail you go looking for"
+        - "Both, the tile summarises and the panel explains"
+        - "Neither, it is not a widget"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: textarea
+    id: behaviour
+    attributes:
+      label: How it should behave
+      description: >
+        What it shows, where the data comes from, and what happens when that
+        source is unavailable. A widget that has nothing to show still has to
+        show something.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file it
+      options:
+        - label: This does not duplicate an open issue or a section of ROADMAP.md.
+          required: true
+        - label: >
+            It is not a Docket setting that mirrors a macOS one. Dock size,
+            edge, magnification and auto-hide are read from the real Dock on
+            purpose, so there is nothing to keep in sync.

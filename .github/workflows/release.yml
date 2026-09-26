@@ -1,21 +1,46 @@
-name: Release
+name: Release binaries
 
+# Two ways in, and only one of them runs day to day.
+#
+# workflow_call is how release-please.yml starts this the moment it cuts a
+# release; see the comment there for why the release event cannot be relied on.
+# The release event is kept anyway so that a release published by hand, or one
+# re-published after a failed build, still gets its binaries without anyone
+# having to remember a second step.
+#
+# Either way the release already exists. This workflow attaches to it and never
+# creates one.
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_call:
+    inputs:
+      tag:
+        description: Tag of the release to attach the build to, for example v0.1.1.
+        required: true
+        type: string
+  release:
+    types: [published]
 
-# gh release create writes to the repository.
+# gh release upload and gh release edit both write to the release.
 permissions:
   contents: write
 
 jobs:
-  release:
+  attach:
     # macOS 26 is the deployment target, and the SDK has to match.
     runs-on: macos-26
 
+    # One name for the tag whichever way the run started. The inputs context is
+    # empty on a release event, so the fallback picks the tag out of the event.
+    env:
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The tag, not whatever main happens to be. The release commit is
+          # already on main by the time this runs and main can move again while
+          # the build is going; the binary has to be the code that was released.
+          ref: ${{ env.TAG }}
 
       # The Xcode project is generated from project.yml and deliberately not
       # in the tree, so it has to be made before anything can be built.
@@ -37,8 +62,10 @@ jobs:
       # sense that matters to Gatekeeper, which is what RELEASE_NOTES tells
       # people to expect.
       #
-      # MARKETING_VERSION comes from the tag so the bundle does not report
-      # whatever number happened to be sitting in project.yml.
+      # MARKETING_VERSION comes from the tag rather than project.yml. The two
+      # agree now that release-please updates project.yml as part of the
+      # release, but the tag is the thing the release is actually named after,
+      # so it stays the source.
       #
       # Both architectures, because the runner is Apple Silicon and would
       # otherwise produce a thin arm64 binary. macOS 26 is the last release
@@ -51,7 +78,7 @@ jobs:
             -scheme Docket \
             -configuration Release \
             -derivedDataPath build \
-            MARKETING_VERSION="${GITHUB_REF_NAME#v}" \
+            MARKETING_VERSION="${TAG#v}" \
             ARCHS="arm64 x86_64" \
             ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_STYLE=Manual \
@@ -65,7 +92,7 @@ jobs:
         run: |
           ditto -c -k --keepParent \
             build/Build/Products/Release/Docket.app \
-            "Docket-${GITHUB_REF_NAME}.zip"
+            "Docket-${TAG}.zip"
 
       # A disk image as well as the zip, because it is what a Mac user expects
       # to download: it mounts, it shows the app beside an Applications alias,
@@ -82,18 +109,40 @@ jobs:
             -volname "Docket" \
             -srcfolder "$STAGE" \
             -ov -format UDZO \
-            "Docket-${GITHUB_REF_NAME}.dmg"
+            "Docket-${TAG}.dmg"
 
-      # A draft, because the notes template ships with placeholders in it that
-      # only a person can fill in. Fill them, then publish from the Releases
-      # page.
-      - name: Draft the release
+      # --clobber so a re-run after a build failure replaces the assets instead
+      # of stopping on the ones the first attempt managed to upload.
+      - name: Attach the build to the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --draft \
-            --title "Docket $GITHUB_REF_NAME" \
-            --notes-file .github/RELEASE_NOTES_TEMPLATE.md \
-            "Docket-${GITHUB_REF_NAME}.dmg" \
-            "Docket-${GITHUB_REF_NAME}.zip"
+          gh release upload "$TAG" \
+            "Docket-${TAG}.dmg" \
+            "Docket-${TAG}.zip" \
+            --clobber
+
+      # release-please writes the notes from the commits, which covers what
+      # changed and nothing else. The standing half of the notes - macOS 26
+      # requirement, how to get an unsigned app past Gatekeeper, what it asks
+      # permission for - is not derivable from a commit log and is the part
+      # people actually need, so it gets appended from the template.
+      #
+      # The template's placeholder section above "## Requirements" is skipped,
+      # because there is nothing left for a person to fill in. That heading is
+      # the coupling: rename it in the template and the footer quietly stops
+      # appearing here.
+      - name: Append the standing notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FOOTER="$(sed -n '/^## Requirements$/,$p' .github/RELEASE_NOTES_TEMPLATE.md)"
+          if [ -z "$FOOTER" ]; then
+            echo "::error::No '## Requirements' heading in .github/RELEASE_NOTES_TEMPLATE.md, so the install instructions are missing from this release."
+            exit 1
+          fi
+          {
+            gh release view "$TAG" --json body --jq .body
+            printf '\n---\n\n%s\n' "$FOOTER"
+          } > notes.md
+          gh release edit "$TAG" --notes-file notes.md

@@ -1,0 +1,17 @@
+# Discussions are not enabled on this repository, so there is nowhere to send
+# questions except the issue tracker. Blank issues stay on for that reason:
+# turning them off would leave someone with a question and no way to ask it.
+blank_issues_enabled: true
+
+contact_links:
+  - name: It will not open, or macOS says it is damaged
+    url: https://github.com/nparashar150/docket/releases/latest
+    about: Not a bug. Ad-hoc signed builds are blocked on first launch. The release notes have the steps.
+
+  - name: Docket and Dockset
+    url: https://github.com/nparashar150/docket/blob/main/NOTICE.md
+    about: An independent reimplementation of an idea, not a copy and not a free replacement. NOTICE.md explains the line.
+
+  - name: What is planned, and what was ruled out
+    url: https://github.com/nparashar150/docket/blob/main/ROADMAP.md
+    about: Read before filing a feature request. Some of it is already answered.

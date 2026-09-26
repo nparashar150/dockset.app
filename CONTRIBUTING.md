@@ -146,35 +146,126 @@ comments, commit messages, release notes, workflows or documentation.
 `WeatherService` to your own. MET Norway's terms require a real identifier, and
 it should point at whoever is actually making the requests.
 
-## Pull requests
+## Working on an issue
+
+An issue becomes a branch, the branch becomes a pull request, and merging is
+what ships it. There is no step in that chain you have to remember, because
+each one starts the next.
+
+### Start it
+
+```sh
+scripts/start-issue.sh 46
+```
+
+That runs `gh issue develop`, which creates the branch **on GitHub, linked to
+the issue**. The link is the whole point: a pull request from a linked branch
+closes its issue on merge without anyone writing `Closes #46`. A branch you
+make yourself with `git checkout -b` has no link and closes nothing.
+
+The script refuses to run if you have uncommitted changes, because switching
+branches would carry them across, and that is how work on one issue ends up in
+the pull request for another. It also refuses on a closed issue, and if the
+issue already has a branch it checks that one out instead of opening a second.
+
+### The branch convention
+
+`<prefix>/<issue-number>-<slug-of-the-title>`, for example
+`fix/46-zoomed-windows-run-underneath-the-shelf` or `feat/97-local-iot-hue`.
+The number is in front of you the whole time you are on the branch, and
+`git branch` sorts into fixes and features on its own.
+
+The prefix comes from the issue's labels:
+
+| Label | Prefix |
+| --- | --- |
+| `dead-setting`, `unreachable`, `partial`, `wrong-behaviour`, `data-loss`, `polish`, `bug`, `accessibility` | `fix` |
+| `enhancement`, `groundwork` | `feat` |
+| `documentation` | `docs` |
+| anything else, or nothing | `chore` |
+
+An issue with both a defect label and `enhancement` is a `fix`: the defect is
+what ships. Doing this by hand is fine, the script just saves you deciding.
+
+### Open the pull request
+
+```sh
+gh pr create --fill
+```
 
 Small and focused beats large and sweeping. Say what broke and how you know it
 is fixed. If it is a behaviour change rather than a fix, say what you tried and
 what the alternative was - the reasoning is what ends up in the comment.
 
+**The title is the part that matters.** Commits on the branch can say whatever
+you like, but the pull request title has to be a Conventional Commit, because
+it is what the release automation reads to decide the next version number:
+
+| Title prefix | What it does to the version |
+| --- | --- |
+| `fix:` | patch, `0.1.0` to `0.1.1` |
+| `feat:` | minor, `0.1.4` to `0.2.0` |
+| `docs:`, `chore:`, `refactor:`, `test:`, `ci:`, `build:`, `style:` | nothing, no release |
+| `feat!:`, or a `BREAKING CHANGE:` footer | major, and see below |
+
+While the major version is `0`, do not use `!`. Say in the pull request that
+the change breaks something and the number gets set by hand, because `1.0.0`
+is a decision about the project rather than about one change.
+
+If you squash on merge, check the commit subject GitHub proposes before you
+confirm it. With a single commit on the branch it offers that commit's subject
+rather than the pull request title, and the automation reads the commit.
+
+### What CI checks
+
+Two jobs, both required, both able to fail you:
+
+- **Build and test.** `xcodegen generate`, then a Debug build of the app, then
+  the `DocketTests` suite. The generate step is first and separate: if
+  `project.yml` no longer produces a project, nothing after it means anything.
+  On a failing test the job attaches the full `xcodebuild` log and puts the
+  name of the test that failed in the run summary, so you do not have to go
+  looking for it.
+- **House rules.** A grep over the files your pull request touches, for em
+  dashes and for any line naming the tooling a change was made with. Both are
+  rules that rot silently without something checking them. It runs on Linux
+  and finishes in seconds, alongside the build rather than in front of it, so
+  one push tells you about both.
+
+### Then merge
+
+There is one maintainer, so there is no review to wait for and no approval to
+collect. CI is the gate. When it is green, merge, and the issue closes itself.
+
 ## Releasing
 
-Versions are `MAJOR.MINOR.PATCH`, and while the major is `0` the rules are the
-loose ones that suit a project still finding its shape:
+**Nothing is tagged by hand.** Release Please watches `main`, reads the
+Conventional Commit subject of every merge, and keeps one pull request open
+with the version bump and the changelog entries those merges have earned. That
+pull request rolls forward as more land, so at any moment it is the answer to
+"what would shipping right now look like".
 
-- **Patch** (`0.1.0` to `0.1.1`) for fixes, and for changes nobody has to think
-  about. Most releases are this.
-- **Minor** (`0.1.4` to `0.2.0`) when something genuinely new arrives, or when
-  behaviour someone relied on changes.
-- **Major** stays at `0` until the app is worth calling finished.
+Merging it is the release. It commits the new version and `CHANGELOG.md` and
+tags `vX.Y.Z`, and the tag is what `.github/workflows/release.yml` has been
+waiting for: a universal Release binary with ad-hoc signing, a `.dmg` and a
+`.zip`.
 
-Tag it and the rest happens on its own:
+So the version is decided by what you merged, not by what you type:
 
-```sh
-git tag -a v0.1.1 -m "Docket v0.1.1"
-git push origin v0.1.1
-```
+- **Patch** (`0.1.0` to `0.1.1`) from `fix:` titles. Most releases are this.
+- **Minor** (`0.1.4` to `0.2.0`) from `feat:` titles.
+- **Major** stays at `0` until the app is worth calling finished. Do not use
+  `!` to force it, that is a decision about the project rather than about one
+  change.
 
-`.github/workflows/release.yml` builds a universal Release binary with ad-hoc
-signing, packs a `.dmg` and a `.zip`, and opens a **draft** release with
-`.github/RELEASE_NOTES_TEMPLATE.md` as its body. It is a draft on purpose: the
-template ships with placeholders, and only a person can say what changed. Fill
-them in, then publish from the Releases page.
+A run of `docs:` and `chore:` merges produces no release pull request at all,
+which is correct: there is nothing in them for anyone to download.
+
+Check the release page before you point anyone at it. A generated changelog
+says what changed and nothing else, and the part people actually need is the
+Gatekeeper walkthrough in `.github/RELEASE_NOTES_TEMPLATE.md`, because an
+ad-hoc signed build is blocked on first launch and the old control-click
+advice no longer works.
 
 `MARKETING_VERSION` comes from the tag, so the number in `project.yml` is only a
 default for local builds and never has to be kept in step.
