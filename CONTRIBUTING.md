@@ -151,3 +151,38 @@ it should point at whoever is actually making the requests.
 Small and focused beats large and sweeping. Say what broke and how you know it
 is fixed. If it is a behaviour change rather than a fix, say what you tried and
 what the alternative was - the reasoning is what ends up in the comment.
+
+## Releasing
+
+Versions are `MAJOR.MINOR.PATCH`, and while the major is `0` the rules are the
+loose ones that suit a project still finding its shape:
+
+- **Patch** (`0.1.0` to `0.1.1`) for fixes, and for changes nobody has to think
+  about. Most releases are this.
+- **Minor** (`0.1.4` to `0.2.0`) when something genuinely new arrives, or when
+  behaviour someone relied on changes.
+- **Major** stays at `0` until the app is worth calling finished.
+
+Tag it and the rest happens on its own:
+
+```sh
+git tag -a v0.1.1 -m "Docket v0.1.1"
+git push origin v0.1.1
+```
+
+`.github/workflows/release.yml` builds a universal Release binary with ad-hoc
+signing, packs a `.dmg` and a `.zip`, and opens a **draft** release with
+`.github/RELEASE_NOTES_TEMPLATE.md` as its body. It is a draft on purpose: the
+template ships with placeholders, and only a person can say what changed. Fill
+them in, then publish from the Releases page.
+
+`MARKETING_VERSION` comes from the tag, so the number in `project.yml` is only a
+default for local builds and never has to be kept in step.
+
+### Not GitHub Packages
+
+Packages is a registry for dependencies other projects consume: npm, Maven,
+NuGet, RubyGems, container images. It has no Swift support, and Swift Package
+Manager resolves from git repositories directly in any case. There is nothing
+here to publish to it. The distribution channel that does fit a Mac app is a
+Homebrew cask, which installs from the release zip.
