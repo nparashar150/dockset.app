@@ -298,6 +298,32 @@ public final class AppState {
         state.profiles[index].items = displayed
     }
 
+    /// Whether the shelf is holding its own copy of the Dock's apps.
+    public var hasAdoptedApps: Bool { following && state.customDock.mirrorSystemApps == false }
+
+    /// Hand the app list back to the real Dock.
+    ///
+    /// The counterpart to `adoptSystemApps`, which had none: taking the list
+    /// over happened implicitly on the first drag, and nothing anywhere turned
+    /// it back on, so rearranging one icon stopped the shelf tracking the Dock
+    /// for good.
+    ///
+    /// Undoing it has to remove the copies as well as flip the flag, or the
+    /// adopted apps and the mirrored ones would both be shown and every app
+    /// would appear twice. Matched by bundle identifier against what the Dock
+    /// currently pins, so an app the user added themselves, and which the Dock
+    /// does not have, survives.
+    public func resumeMirroringApps() {
+        guard let id = state.customDock.profileID, let index = self.index(of: id) else { return }
+        func bundleID(_ item: DockItem) -> String? {
+            if case .app(_, let bundleID, _) = item, !bundleID.isEmpty { return bundleID }
+            return nil
+        }
+        let pinned = Set(system.pinnedApps.compactMap(bundleID))
+        state.profiles[index].items.removeAll { pinned.contains(bundleID($0) ?? "") }
+        state.customDock.mirrorSystemApps = true
+    }
+
     /// Applies a displayed ordering back to the active profile.
     ///
     /// Reordering has to work by identity, not by index: while mirroring, the
@@ -323,6 +349,20 @@ public final class AppState {
         if let id = state.customDock.profileID, let index = index(of: id) {
             state.profiles[index].scale = clamped
         }
+    }
+
+    /// Whether the shelf's size is the user's rather than the Dock's.
+    public var isScaleOverridden: Bool { following && state.customDock.scaleOverridden == true }
+
+    /// Go back to taking the size from the real Dock.
+    ///
+    /// `setScale` had no counterpart, so dragging the grip once stopped the
+    /// shelf matching the Dock's size permanently, with nothing in the app
+    /// able to undo it. The stored size is deliberately left alone: it is what
+    /// the shelf goes back to if following is turned off later, and throwing
+    /// it away would make this button destructive rather than reversible.
+    public func resumeFollowingScale() {
+        state.customDock.scaleOverridden = false
     }
 
     // MARK: Apple's Dock

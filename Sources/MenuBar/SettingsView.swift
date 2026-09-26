@@ -13,8 +13,37 @@ struct SettingsView: View {
     var initialTab: String = "General"
     var onApplyMacOSProfile: () -> Void
     var onCaptureCurrentDock: () -> Void
+    /// Sizing the shelf goes through `AppState.setScale`, which also writes
+    /// the active profile and records that the size is now the user's. The
+    /// slider used to bind straight to the stored value and do neither.
+    var onSetScale: (Double) -> Void
+    /// Undoing that, and the same for the app list. Both overrides used to be
+    /// one directional, with nothing in the app able to clear them.
+    var onResumeFollowingScale: () -> Void
+    var onResumeMirroringApps: () -> Void
 
     @State private var tab = "General"
+
+    /// The size the shelf is actually drawn at, which is the Dock's while
+    /// following and the stored one once overridden. Showing the stored value
+    /// unconditionally meant the readout disagreed with the shelf.
+    private var shownScale: Double {
+        DockFollowing.scale(overridden: state.customDock.scaleOverridden == true,
+                            custom: state.customDock.scale,
+                            system: SystemDockSettings.shared.matchedScale,
+                            following: state.customDock.followSystemDock)
+    }
+
+    /// Both overrides only mean anything while following: with following off,
+    /// the shelf's size and app list are the user's by definition and there is
+    /// nothing to hand back.
+    private var scaleOverridden: Bool {
+        state.customDock.followSystemDock && state.customDock.scaleOverridden == true
+    }
+
+    private var adoptedApps: Bool {
+        state.customDock.followSystemDock && state.customDock.mirrorSystemApps == false
+    }
 
 
     var body: some View {
@@ -128,12 +157,24 @@ struct SettingsView: View {
 
                 LabeledContent("Size") {
                     HStack {
-                        Slider(value: $state.customDock.scale, in: Geometry.scaleRange)
-                            .disabled(state.customDock.followSystemDock)
-                        Text("\(Int((state.customDock.scale * 100).rounded()))%")
+                        // Through setScale, not around it. Binding straight to
+                        // the stored value skipped the override flag and never
+                        // wrote the profile, so the size silently reverted.
+                        Slider(value: Binding(get: { shownScale }, set: onSetScale),
+                               in: Geometry.scaleRange)
+                        Text("\(Int((shownScale * 100).rounded()))%")
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                             .frame(width: 44, alignment: .trailing)
+                    }
+                }
+                .help("Sizing the shelf yourself stops it matching the Dock's size. Everything else keeps following.")
+
+                // The way back. Choosing a size used to be one directional:
+                // the grip set an override that nothing could clear.
+                if scaleOverridden {
+                    LabeledContent("") {
+                        Button("Match the Dock's size", action: onResumeFollowingScale)
                     }
                 }
             }
@@ -170,6 +211,16 @@ struct SettingsView: View {
                 Toggle("Show running apps", isOn: $state.customDock.showRunningApps)
                     .help("Include open apps alongside pinned items.")
                 Toggle("Show Trash", isOn: $state.customDock.showTrash)
+
+                // Rearranging a mirrored app takes the list over, which is
+                // right, but nothing used to give it back: one drag and the
+                // shelf stopped tracking the Dock's apps for good.
+                if adoptedApps {
+                    LabeledContent("Apps") {
+                        Button("Mirror the Dock's apps again", action: onResumeMirroringApps)
+                    }
+                    .help("The shelf is holding its own copy, taken when you first rearranged one. This hands the list back, and drops the copies so nothing appears twice.")
+                }
                 Toggle("Magnification", isOn: $state.customDock.magnification)
                     .disabled(state.customDock.followSystemDock)
                     .help("Grow icons under the pointer.")
