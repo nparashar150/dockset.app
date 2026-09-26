@@ -19,7 +19,7 @@ final class GroupDragTests: XCTestCase {
         GroupDrag.leavesSheet(CGPoint(x: x, y: y), sheet: sheet ?? liveSheet)
     }
 
-    // MARK: leavesSheet — the four edges
+    // MARK: leavesSheet - the four edges
 
     func testDraggingPastTheLeadingEdgeLeavesTheSheet() {
         XCTAssertTrue(leaves(-0.5, 60))
@@ -49,7 +49,7 @@ final class GroupDragTests: XCTestCase {
         XCTAssertFalse(leaves(150, 119.5))
     }
 
-    // MARK: leavesSheet — the four corners
+    // MARK: leavesSheet - the four corners
 
     func testEveryCornerJustOutsideTheSheetLeaves() {
         // Both axes out at once must not cancel each other out.
@@ -62,7 +62,7 @@ final class GroupDragTests: XCTestCase {
     /// The corner icons are the ones a drag starts from most often, and they
     /// sit exactly on two boundaries at once. If either boundary resolved
     /// outwards, the icons in the corners of a group could not be dragged at
-    /// all — the first event of the gesture would eject them.
+    /// all - the first event of the gesture would eject them.
     func testEveryCornerExactlyOnTheSheetStays() {
         XCTAssertFalse(leaves(0, 0), "top-leading")
         XCTAssertFalse(leaves(300, 0), "top-trailing")
@@ -70,14 +70,14 @@ final class GroupDragTests: XCTestCase {
         XCTAssertFalse(leaves(300, 120), "bottom-trailing")
     }
 
-    // MARK: leavesSheet — the boundary itself
+    // MARK: leavesSheet - the boundary itself
 
     /// The sheet's own outline belongs to the sheet: the bounds are a closed
     /// rectangle, so a pointer *on* an edge keeps the icon in the group.
     ///
     /// That is the safe direction, and deliberately so. Ejecting is the
-    /// destructive, animated, hard-to-undo outcome — the group may dissolve
-    /// behind it — while staying costs the user another half-millimetre of
+    /// destructive, animated, hard-to-undo outcome - the group may dissolve
+    /// behind it - while staying costs the user another half-millimetre of
     /// travel. An exclusive boundary would also make a drag that merely
     /// grazes the edge, which is most drags along the sheet's rim, fire the
     /// eject at the moment the pointer is least deliberate.
@@ -103,7 +103,7 @@ final class GroupDragTests: XCTestCase {
     }
 
     /// Geometry arithmetic produces signed zeroes freely, and `-0.0` is the
-    /// pointer sitting precisely on the leading edge — not a hair outside it.
+    /// pointer sitting precisely on the leading edge - not a hair outside it.
     /// It must resolve the same way `0.0` does, or which side of the boundary
     /// an edge-hugging drag lands on would depend on how the coordinate was
     /// computed rather than where the pointer is.
@@ -113,7 +113,7 @@ final class GroupDragTests: XCTestCase {
         XCTAssertFalse(leaves(-0.0, -0.0))
     }
 
-    // MARK: leavesSheet — inside a live sheet
+    // MARK: leavesSheet - inside a live sheet
 
     /// The gesture has to be *possible*: for a while it was not, and an icon
     /// could not be repositioned inside its own group because every sampled
@@ -147,8 +147,8 @@ final class GroupDragTests: XCTestCase {
     }
 
     /// Dragging straight out of the sheet must cross the boundary once and
-    /// stay crossed. A test that flipped back — a stale or half-applied sheet
-    /// size, say — would cancel the eject animation mid-flight and leave the
+    /// stay crossed. A test that flipped back - a stale or half-applied sheet
+    /// size, say - would cancel the eject animation mid-flight and leave the
     /// icon translucent and still in the group.
     func testARayOutOfTheSheetCrossesTheBoundaryExactlyOnce() {
         let centre = CGPoint(x: 150, y: 60)
@@ -172,13 +172,13 @@ final class GroupDragTests: XCTestCase {
         }
     }
 
-    // MARK: leavesSheet — sheets that have not been measured
+    // MARK: leavesSheet - sheets that have not been measured
 
     /// The regression this guard exists for: the sheet's size arrives from a
     /// `GeometryReader`, so it is zero for the first frames and for the whole
     /// gesture if the reader never reports. A zero rectangle contains nothing,
     /// so every pointer position read as outside and the icon was thrown out
-    /// of the group by the first drag event — before the user had moved far
+    /// of the group by the first drag event - before the user had moved far
     /// enough to mean it.
     func testAnUnmeasuredSheetKeepsEveryIcon() {
         for x in [CGFloat(-500), -1, 0, 0.5, 40, 5_000] {
@@ -224,8 +224,8 @@ final class GroupDragTests: XCTestCase {
         XCTAssertFalse(GroupDrag.leavesSheet(.zero, sheet: barely))
     }
 
-    /// A negative extent cannot describe a sheet at all — an inverted or
-    /// not-yet-valid frame — and the only safe reading of nonsense geometry is
+    /// A negative extent cannot describe a sheet at all - an inverted or
+    /// not-yet-valid frame - and the only safe reading of nonsense geometry is
     /// the non-destructive one.
     func testANegativeSheetSizeKeepsEveryIcon() {
         for sheet in [CGSize(width: -300, height: -120), CGSize(width: -300, height: 120),
@@ -250,10 +250,10 @@ final class GroupDragTests: XCTestCase {
         XCTAssertTrue(leaves(-1, 40, unbounded), "a negative coordinate is still out of bounds")
     }
 
-    // MARK: leavesSheet — non-finite and far-away pointers
+    // MARK: leavesSheet - non-finite and far-away pointers
 
     /// An unknown pointer position is not an eject. A NaN coordinate compares
-    /// false against every bound, so it reads as inside — the same direction
+    /// false against every bound, so it reads as inside - the same direction
     /// every other unusable input resolves to, which keeps "we do not know
     /// where the pointer is" from destroying the group.
     func testANonFinitePointerPositionNeverEjectsAnIcon() {
@@ -270,7 +270,7 @@ final class GroupDragTests: XCTestCase {
     }
 
     /// A group sheet opens above the shelf, so a pointer dragged well past it
-    /// is ordinary rather than exotic — the sheet's space simply runs negative
+    /// is ordinary rather than exotic - the sheet's space simply runs negative
     /// once the pointer is over the shelf itself.
     func testDeeplyNegativeCoordinatesLeave() {
         XCTAssertTrue(leaves(-1_000, -1_000))
@@ -278,12 +278,12 @@ final class GroupDragTests: XCTestCase {
         XCTAssertTrue(leaves(150, -1_000))
     }
 
-    // MARK: offset — the icon's centre is the pointer
+    // MARK: offset - the icon's centre is the pointer
 
     /// The defining property, stated as the identity the shelf depends on:
     /// displacing the icon by this offset puts its centre exactly under the
-    /// cursor. Everything else about the drag — which slot the icon reads as
-    /// hovering, where the eject fires — is measured from the pointer, so any
+    /// cursor. Everything else about the drag - which slot the icon reads as
+    /// hovering, where the eject fires - is measured from the pointer, so any
     /// residual here is a permanent disagreement between what the user sees
     /// and what the gesture acts on.
     func testTheOffsetPutsTheIconCentreUnderTheCursor() {
@@ -365,8 +365,8 @@ final class GroupDragTests: XCTestCase {
     }
 
     /// Pinning is a difference, so it is blind to where the sheet itself sits:
-    /// shifting the whole coordinate space — a repositioned window, a scrolled
-    /// row, a group opened above a shelf on another screen — leaves the offset
+    /// shifting the whole coordinate space - a repositioned window, a scrolled
+    /// row, a group opened above a shelf on another screen - leaves the offset
     /// untouched. Anything that made the offset depend on absolute position
     /// would show up as an icon that drifts as the sheet moves.
     func testTheOffsetDependsOnlyOnTheSeparationOfCursorAndCentre() {
@@ -386,7 +386,7 @@ final class GroupDragTests: XCTestCase {
     /// The icon tracks the pointer one to one: move the cursor by a vector and
     /// the icon moves by exactly that vector, with no gain and no lag. A
     /// translation-derived offset satisfies this too, which is precisely why
-    /// the regression was hard to see in motion — it tracked correctly while
+    /// the regression was hard to see in motion - it tracked correctly while
     /// sitting at a constant distance from the pointer.
     func testTheIconTracksThePointerOneToOne() {
         let centre = CGPoint(x: 100, y: 100)
@@ -417,7 +417,7 @@ final class GroupDragTests: XCTestCase {
 
     /// Displays to the left of or above the main one have negative origins, so
     /// a group opened there runs its whole drag in negative coordinates. The
-    /// pin must hold there identically — a sign assumption anywhere in this
+    /// pin must hold there identically - a sign assumption anywhere in this
     /// arithmetic would break dragging out of a group on a secondary screen
     /// while working on the primary.
     func testAnIconOnADisplayLeftOfTheMainOneStillPinsToThePointer() {
@@ -435,7 +435,7 @@ final class GroupDragTests: XCTestCase {
     /// The two halves must agree about where the icon is. Because the offset
     /// pins the centre to the cursor, testing the pointer against the sheet
     /// and testing the dragged icon's centre against it are the same question
-    /// — so the icon is never seen inside the sheet while the gesture has
+    /// - so the icon is never seen inside the sheet while the gesture has
     /// decided it left, or the reverse. Under a translation-based offset these
     /// diverge by the press's eccentricity, which is what made the eject fire
     /// while the icon was still visibly over the sheet.
@@ -453,8 +453,8 @@ final class GroupDragTests: XCTestCase {
         }
     }
 
-    /// Against an unmeasured sheet the pin must still work — the icon follows
-    /// the pointer normally — while nothing ejects. The two guards are
+    /// Against an unmeasured sheet the pin must still work - the icon follows
+    /// the pointer normally - while nothing ejects. The two guards are
     /// independent: the earlier bug froze the gesture *and* ejected, and
     /// fixing the eject must not have cost the tracking.
     func testAnIconStillFollowsThePointerInsideAnUnmeasuredSheet() {

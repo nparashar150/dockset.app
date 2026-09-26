@@ -1,4 +1,4 @@
-name: Plinth
+name: Docket
 options:
   bundleIdPrefix: com.namanparashar
   deploymentTarget:
@@ -15,8 +15,8 @@ settings:
     DEAD_CODE_STRIPPING: YES
     ENABLE_HARDENED_RUNTIME: YES
     # Manual, and a real identity rather than ad-hoc. macOS will not offer
-    # location consent to an ad-hoc signed app — the request returns with the
-    # status unchanged and no prompt at all — because there is no stable
+    # location consent to an ad-hoc signed app - the request returns with the
+    # status unchanged and no prompt at all - because there is no stable
     # identity for the grant to be attached to. Automatic signing needs an
     # Xcode account configured; manual only needs the certificate.
     CODE_SIGN_STYLE: Manual
@@ -24,19 +24,24 @@ settings:
     DEVELOPMENT_TEAM: DAK6X938S3
 
 targets:
-  Plinth:
+  Docket:
     type: application
     platform: macOS
     sources:
       - path: Sources
+      - path: Resources/Assets.xcassets
     settings:
       base:
-        PRODUCT_NAME: Plinth
+        PRODUCT_NAME: Docket
+        # Deliberately still the old name. macOS keys a saved setup's location
+        # in Application Support, and every permission the user has granted,
+        # to the bundle identifier. Renaming it would move the one and revoke
+        # the other, to change a string nobody ever sees.
         PRODUCT_BUNDLE_IDENTIFIER: com.namanparashar.plinth
         INFOPLIST_FILE: Resources/Info.plist
-        CODE_SIGN_ENTITLEMENTS: Resources/Plinth.entitlements
+        CODE_SIGN_ENTITLEMENTS: Resources/Docket.entitlements
         ENABLE_APP_SANDBOX: NO
-        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
   # Renders the real views into PNGs for the README.
   #
@@ -49,16 +54,16 @@ targets:
     sources:
       - path: Sources
         excludes:
-          - "App/PlinthApp.swift"
+          - "App/DocketApp.swift"
       - path: Tools/Shots
     settings:
       base:
         PRODUCT_NAME: Shots
         PRODUCT_BUNDLE_IDENTIFIER: com.namanparashar.plinth.shots
-        CODE_SIGN_ENTITLEMENTS: Resources/Plinth.entitlements
+        CODE_SIGN_ENTITLEMENTS: Resources/Docket.entitlements
         ENABLE_APP_SANDBOX: NO
 
-  PlinthTests:
+  DocketTests:
     type: bundle.unit-test
     platform: macOS
     # Compiles the pure core directly instead of hosting the app: these are

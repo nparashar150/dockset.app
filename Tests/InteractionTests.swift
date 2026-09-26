@@ -12,7 +12,7 @@ import XCTest
 ///
 /// Synthetic input through the OS is blocked for this process, but an
 /// `NSEvent` sent straight to a window reaches SwiftUI's gesture recognisers
-/// and AppKit's responders — which is what makes these testable at all.
+/// and AppKit's responders - which is what makes these testable at all.
 @MainActor
 final class InteractionTests: XCTestCase {
 
@@ -135,7 +135,7 @@ final class InteractionTests: XCTestCase {
         XCTAssertEqual(tally.outer, 0, "the card must not also fire")
     }
 
-    /// Away from the control, the card's own action is what runs — a widget
+    /// Away from the control, the card's own action is what runs - a widget
     /// with somewhere to go opens it, rather than swallowing the click.
     func testTheCardActsWhenClickedAwayFromItsControls() {
         let tally = Tally()
@@ -184,7 +184,7 @@ final class InteractionTests: XCTestCase {
     /// This is the one that hid: the earlier tests only ever clicked the
     /// middle of a small interior target, so "the interior wins" read as a
     /// feature. Stretch that interior to the card's bounds and there is no
-    /// remaining pixel for the shelf's own tap — every click on a widget was
+    /// remaining pixel for the shelf's own tap - every click on a widget was
     /// inert, and the only visible symptom was a panel that never opened.
     func testAWholeCardTapLeavesTheCardsActionDeadEverywhere() {
         let tally = Tally()
@@ -260,8 +260,8 @@ final class InteractionTests: XCTestCase {
         XCTAssertEqual(tally.inner, 0)
         XCTAssertEqual(tally.outer, 0, """
             A guard inside a tap's action cannot decline the click. Gate the \
-            gesture — attach it only when it is wanted, the way TapToOpen \
-            does — so an unwanted control leaves the card's tap alone.
+            gesture - attach it only when it is wanted, the way TapToOpen \
+            does - so an unwanted control leaves the card's tap alone.
             """)
     }
 

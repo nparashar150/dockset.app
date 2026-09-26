@@ -3,14 +3,14 @@ import AppKit
 
 /// Reads and writes Apple's Dock.
 ///
-/// An actor because rapid profile switching must apply in order — two
+/// An actor because rapid profile switching must apply in order - two
 /// overlapping writes plus two Dock restarts is how you end up with a Dock
 /// that is a mix of both layouts.
 ///
 /// Scope is deliberately narrow: only `persistent-apps` is ever written.
 /// `persistent-others` (stacks, downloads folder, recent apps) is left
 /// completely alone, which keeps the blast radius of a bug to the part of the
-/// Dock the user explicitly asked Plinth to manage.
+/// Dock the user explicitly asked Docket to manage.
 public actor NativeDockAdapter {
 
     public enum Failure: LocalizedError {
@@ -58,7 +58,7 @@ public actor NativeDockAdapter {
     /// Writes `tiles` to Apple's Dock and restarts it.
     ///
     /// Always snapshots the live Dock first and restores it if the result
-    /// doesn't verify. This is the only code in Plinth that can visibly damage
+    /// doesn't verify. This is the only code in Docket that can visibly damage
     /// a user's setup, so it never writes without a verified read-back.
     public func apply(_ tiles: [MacOSDockTile]) async throws {
         let backup = try readLive()
@@ -89,7 +89,7 @@ public actor NativeDockAdapter {
 
     /// The Dock only reads `persistent-apps` at launch, so applying a layout
     /// means restarting it. `NSRunningApplication.terminate()` is preferred
-    /// over `killall` — no subprocess, and it is the documented API.
+    /// over `killall` - no subprocess, and it is the documented API.
     public func restartDock() throws {
         let docks = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.dock")
         guard !docks.isEmpty else { throw Failure.writeFailed }

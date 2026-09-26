@@ -4,7 +4,7 @@ import SwiftUI
 /// A plain window host for a SwiftUI view.
 ///
 /// The shelf lives in a non-activating `NSPanel`, which cannot present sheets
-/// — a `.sheet` attached to it silently does nothing. Anything modal-ish
+/// - a `.sheet` attached to it silently does nothing. Anything modal-ish
 /// therefore needs a real window of its own.
 @MainActor
 class HostedWindow {
@@ -60,7 +60,7 @@ class HostedWindow {
     ///
     /// `LSUIElement` apps are never "active" in the usual sense, so
     /// `makeKeyAndOrderFront` plus `activate()` quietly opens the window
-    /// *behind* whatever the user is looking at — it exists, it is just
+    /// *behind* whatever the user is looking at - it exists, it is just
     /// invisible. `orderFrontRegardless` is the call that actually raises it,
     /// and a floating level keeps it from sinking again on the next click.
     private func raise(_ window: NSWindow) {
@@ -85,8 +85,8 @@ final class LibraryWindow: HostedWindow {
             WidgetLibraryView(
                 onAdd: { [weak self] widget in
                     withAnimation(.snappy(duration: 0.25)) { app.addItem(.widget(widget)) }
-                    // Adding is a repeated action — people add three widgets at
-                    // a time — so the library stays open, like Shortcuts' own.
+                    // Adding is a repeated action - people add three widgets at
+                    // a time - so the library stays open, like Shortcuts' own.
                     _ = self
                 },
                 onClose: { [weak self] in self?.close() }
@@ -111,7 +111,7 @@ final class SettingsWindow: HostedWindow {
                 onApplyMacOSProfile: { Task { await app.applyMacOSProfile() } },
                 onCaptureCurrentDock: { Task { await app.captureCurrentDock() } }
             ),
-            title: "Plinth Settings",
+            title: "Docket Settings",
             size: NSSize(width: 520, height: 460)
         )
     }

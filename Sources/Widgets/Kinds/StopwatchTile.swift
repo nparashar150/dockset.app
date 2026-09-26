@@ -5,8 +5,8 @@ import SwiftUI
 /// Already a stack, so the 76pt column is the same thing in smaller type.
 ///
 /// A click on the card opens Clock, so the card belongs to the shelf. Starting
-/// and stopping stays on the tile as a glyph the size of itself — a run begun
-/// in one click, without anything opening, is worth the room — and clearing a
+/// and stopping stays on the tile as a glyph the size of itself - a run begun
+/// in one click, without anything opening, is worth the room - and clearing a
 /// stopped run sits beside it, because nothing else can zero the count: the
 /// Stopwatch has no panel and no settings of its own.
 ///
@@ -66,7 +66,7 @@ struct StopwatchTile: View {
             TileGlyph(symbol: state.running ? "pause.fill" : "play.fill",
                       size: size, action: context.isPreview ? nil : (toggle as () -> Void))
                 .accessibilityLabel(state.running ? "Stop stopwatch" : "Start stopwatch")
-            // A run can only be cleared once it has stopped — which is also
+            // A run can only be cleared once it has stopped - which is also
             // the only moment this pair changes shape, since a reset that
             // appeared and vanished under the pointer as the seconds ran would
             // be a trap. Nothing to clear means no glyph at all: a control

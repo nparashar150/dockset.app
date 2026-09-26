@@ -6,14 +6,14 @@ import SwiftUI
 ///
 /// The widget stores two things and only two: how long a cycle is
 /// (`duration`) and when the last drink was logged (`lastDrink`). There is no
-/// count of glasses, no daily goal and no log — one timestamp is overwritten
-/// by the next — so this panel draws no tally, no goal ring and no week's
+/// count of glasses, no daily goal and no log - one timestamp is overwritten
+/// by the next - so this panel draws no tally, no goal ring and no week's
 /// chart. Inventing any of them would be inventing the data behind them.
 ///
 /// What it can say that the tile cannot: the clock time the next drink is due
 /// at rather than a countdown to it, when the last one actually went in, the
-/// interval those two are separated by, and — the tile's blind spot, since its
-/// countdown floors at 0:00 — how long a drink has been overdue.
+/// interval those two are separated by, and - the tile's blind spot, since its
+/// countdown floors at 0:00 - how long a drink has been overdue.
 struct HydrationDetail: View {
     var instance: WidgetInstance
     var context: WidgetContext
@@ -105,7 +105,7 @@ struct HydrationDetail: View {
     /// stays there, which says a drink is due but never that it has been due
     /// for half an hour.
     private func headlineCaption(_ left: TimeInterval, now: Date) -> String {
-        guard left <= 0 else { return "\(plinthClockString(left)) to go" }
+        guard left <= 0 else { return "\(docketClockString(left)) to go" }
         let last = instance.config.double("lastDrink")
         guard !context.isPreview, last > 0 else { return "Due now" }
         let over = now.timeIntervalSince1970 - last - duration
@@ -113,8 +113,8 @@ struct HydrationDetail: View {
     }
 
     /// The one fact only the stored timestamp holds. A widget that has never
-    /// been tapped has no last drink — its cycle is anchored to the reference
-    /// date instead — so it says so rather than dressing the anchor up as one.
+    /// been tapped has no last drink - its cycle is anchored to the reference
+    /// date instead - so it says so rather than dressing the anchor up as one.
     private func lastDrinkLine(now: Date) -> String {
         let last = instance.config.double("lastDrink")
         guard !context.isPreview, last > 0 else { return "Not logged yet" }
@@ -138,7 +138,7 @@ struct HydrationDetail: View {
     private var interval: String { spelled(duration) }
 
     /// Seconds until the next drink, counted from the last one once there has
-    /// been one and from the reference date until then — the tile's rule,
+    /// been one and from the reference date until then - the tile's rule,
     /// re-read against the schedule's clock rather than the frozen one.
     private func remaining(now: Date) -> TimeInterval {
         // The tile's sample value, so a library preview of the two agrees.
@@ -168,7 +168,7 @@ struct HydrationDetail: View {
         date.formatted(date: .omitted, time: .shortened)
     }
 
-    /// Hours and minutes in words — "45 min", "1 hr 30 min". The m:ss clock is
+    /// Hours and minutes in words - "45 min", "1 hr 30 min". The m:ss clock is
     /// right for a countdown that is ticking and wrong for a span that is
     /// merely long.
     private func spelled(_ seconds: TimeInterval) -> String {

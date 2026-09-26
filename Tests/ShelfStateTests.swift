@@ -34,7 +34,7 @@ final class ShelfStateMediaTests: XCTestCase {
     /// The tile this guard exists for: a name with no clock behind it.
     ///
     /// A page reported a title while both the duration and the position were
-    /// zero, and the shelf rendered a track stuck at 0:00 — the numbers on
+    /// zero, and the shelf rendered a track stuck at 0:00 - the numbers on
     /// screen were a paused flag and an elapsed count that had landed in the
     /// title and artist slots of a tile with nothing playing behind it.
     func testATitleWithNothingPlayingBehindItIsNotMeaningful() {
@@ -49,7 +49,7 @@ final class ShelfStateMediaTests: XCTestCase {
     }
 
     /// Scraped titles arrive padded, and a heading that is only padding is the
-    /// same "no name" case — including the non-breaking space an HTML page
+    /// same "no name" case - including the non-breaking space an HTML page
     /// leaves behind, which is not the space character a naive check looks for.
     func testAWhitespaceOnlyTitleIsNotMeaningful() {
         for blank in [" ", "   ", "\t", "\n", "\r\n", " \t \n ", "\u{00A0}"] {
@@ -65,7 +65,7 @@ final class ShelfStateMediaTests: XCTestCase {
     }
 
     /// A track cued and not yet started has a duration and no position, which
-    /// is a real reading of a real player — the 0:00 that must still render.
+    /// is a real reading of a real player - the 0:00 that must still render.
     func testADurationWithNoPositionIsMeaningful() {
         XCTAssertTrue(meaningful("Bohemian Rhapsody", 355, 0))
     }
@@ -111,7 +111,7 @@ final class ShelfStateMediaTests: XCTestCase {
     }
 
     /// A bridge that parses a missing number gives NaN, and every comparison
-    /// against NaN is false — so it must read as "unknown", not as a position,
+    /// against NaN is false - so it must read as "unknown", not as a position,
     /// while a real number beside it still carries the reading.
     func testNotANumberIsNotMistakenForAPosition() {
         XCTAssertFalse(meaningful("Track", .nan, .nan))
@@ -140,7 +140,7 @@ final class ShelfStateFollowingTests: XCTestCase {
     ///
     /// Dragging the resize grip used to switch `followSystemDock` off wholesale,
     /// which silently took the Dock's edge, magnification and auto-hide with it
-    /// — the shelf simply stopped hiding after a resize, with nothing to connect
+    /// - the shelf simply stopped hiding after a resize, with nothing to connect
     /// the two. An explicit size must win while everything else keeps following.
     func testAnOverriddenSizeWinsWhileTheShelfStillFollowsTheDock() {
         XCTAssertEqual(DockFollowing.scale(overridden: true, custom: 0.9,
@@ -166,7 +166,7 @@ final class ShelfStateFollowingTests: XCTestCase {
                                            system: 0.4, following: false), 0.9)
     }
 
-    /// Once the size is overridden, `following` has no say in it at all — which
+    /// Once the size is overridden, `following` has no say in it at all - which
     /// is exactly what lets the flag stay on and keep governing the edge,
     /// magnification and hiding after a resize.
     func testFollowingCannotChangeAnOverriddenSize() {
@@ -258,7 +258,7 @@ final class ShelfStateFollowingTests: XCTestCase {
     }
 
     /// State written before the override flag existed decodes with it absent,
-    /// and those profiles were following the Dock's size — so absent must mean
+    /// and those profiles were following the Dock's size - so absent must mean
     /// "not overridden" rather than failing to decode or defaulting to true.
     func testSettingsWrittenBeforeTheSizeOverrideExistedStillFollowTheDock() throws {
         var settings = CustomDockSettings()
@@ -306,7 +306,7 @@ final class ShelfStateGroupTests: XCTestCase {
     }
 
     /// A dissolving group hands its slot to the icon it held, so the shelf does
-    /// not reshuffle around it — the neighbours must not shift by one.
+    /// not reshuffle around it - the neighbours must not shift by one.
     func testADissolvingGroupSurrendersItsSlotInPlace() {
         let before = Sample.app("before")
         let after = Sample.app("after")
@@ -316,7 +316,7 @@ final class ShelfStateGroupTests: XCTestCase {
         XCTAssertEqual(ShelfItems.dissolvingSmallGroups(in: shelf), [before, inner, after])
     }
 
-    /// An empty group has nothing to hand over, so its slot closes — and the
+    /// An empty group has nothing to hand over, so its slot closes - and the
     /// two icons it sat between keep their order.
     func testAnEmptyGroupBetweenTwoAppsClosesWithoutDisturbingThem() {
         let before = Sample.app("before")
@@ -326,8 +326,8 @@ final class ShelfStateGroupTests: XCTestCase {
         XCTAssertEqual(ShelfItems.dissolvingSmallGroups(in: shelf), [before, after])
     }
 
-    /// Nesting is never created by dropping one tile on another — that joins
-    /// the target group instead — so a group holding only a group came from an
+    /// Nesting is never created by dropping one tile on another - that joins
+    /// the target group instead - so a group holding only a group came from an
     /// older build or a restored backup. The shelf runs this pass on every
     /// render, and each pass peels one layer, so the debris converges on the
     /// icon underneath rather than surviving as a tile of tiles.
@@ -401,7 +401,7 @@ final class ShelfStateGroupTests: XCTestCase {
         XCTAssertTrue(ShelfItems.dissolvingSmallGroups(in: []).isEmpty)
     }
 
-    /// A shelf with no groups at all is returned untouched and in order — the
+    /// A shelf with no groups at all is returned untouched and in order - the
     /// pass runs on every render, so it must be a no-op on the common case.
     func testAShelfWithoutGroupsIsReturnedUnchanged() {
         let shelf = [Sample.app("a"), Sample.spacer("gap"), Sample.link("Docs"),

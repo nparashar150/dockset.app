@@ -27,7 +27,7 @@ struct DockItemView: View {
         }
     }
 
-    /// A small spacer is half a tile, a regular one a full tile — matching
+    /// A small spacer is half a tile, a regular one a full tile - matching
     /// what Apple's Dock does with its two spacer tile types.
     private func spacerLength(_ size: SpacerSize) -> CGFloat {
         let full = position.isVertical ? geo.height : geo.width
@@ -97,7 +97,7 @@ struct DockItemView: View {
         }
     }
 
-    /// Plinth draws its own folder art rather than touching the folder on
+    /// Docket draws its own folder art rather than touching the folder on
     /// disk, so customising an icon can never modify the user's files.
     private func tintedFolder(_ folderIcon: FolderIcon) -> some View {
         let tint = folderIcon.color.map { Color(hex: $0.hex) } ?? Color(hex: PaletteColor.blue.hex)
@@ -126,7 +126,7 @@ struct DockItemView: View {
     }
 
     /// The target is gone. Show it greyed so the user can repair or remove it
-    /// — silently dropping someone's pinned item is worse than showing a gap.
+    /// - silently dropping someone's pinned item is worse than showing a gap.
     private var deadItem: some View {
         ZStack {
             RoundedRectangle(cornerRadius: geo.icon * 0.22, style: .continuous)

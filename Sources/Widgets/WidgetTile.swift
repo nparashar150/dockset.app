@@ -17,7 +17,7 @@ public struct WidgetTile: View {
     /// The instance with any options it predates filled in from the catalog.
     ///
     /// Config is deep-copied from the catalog when a widget is created, so a
-    /// widget saved before an option existed simply has no key for it — and
+    /// widget saved before an option existed simply has no key for it - and
     /// the typed accessors then fall back to Swift's zero value, not the
     /// catalog's. That silently disabled newly added features on every
     /// existing widget. Resolving here means it is impossible to forget.

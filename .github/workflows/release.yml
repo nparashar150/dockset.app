@@ -27,7 +27,7 @@ jobs:
 
       # project.yml pins Manual signing against a real Apple Development
       # certificate and team, because macOS will not attach permission grants
-      # to an ad-hoc identity — a developer building locally needs that. A
+      # to an ad-hoc identity - a developer building locally needs that. A
       # runner has neither the certificate nor the team, so the release build
       # overrides signing on the command line: ad-hoc identity ("-"), no team,
       # and the hardened runtime off, since it is only meaningful alongside a
@@ -43,12 +43,12 @@ jobs:
       # Both architectures, because the runner is Apple Silicon and would
       # otherwise produce a thin arm64 binary. macOS 26 is the last release
       # that runs on Intel Macs, and a thin build does not refuse to launch
-      # there politely — it refuses to launch at all.
+      # there politely - it refuses to launch at all.
       - name: Build Release
         run: |
           xcodebuild build \
-            -project Plinth.xcodeproj \
-            -scheme Plinth \
+            -project Docket.xcodeproj \
+            -scheme Docket \
             -configuration Release \
             -derivedDataPath build \
             MARKETING_VERSION="${GITHUB_REF_NAME#v}" \
@@ -60,12 +60,29 @@ jobs:
             ENABLE_HARDENED_RUNTIME=NO
 
       # ditto, not zip: an .app is a bundle full of symlinks and executable
-      # bits, and zip flattens both — the extracted copy will not launch.
+      # bits, and zip flattens both, and the extracted copy will not launch.
       - name: Zip the app
         run: |
           ditto -c -k --keepParent \
-            build/Build/Products/Release/Plinth.app \
-            "Plinth-${GITHUB_REF_NAME}.zip"
+            build/Build/Products/Release/Docket.app \
+            "Docket-${GITHUB_REF_NAME}.zip"
+
+      # A disk image as well as the zip, because it is what a Mac user expects
+      # to download: it mounts, it shows the app beside an Applications alias,
+      # and dragging across is the whole install. UDZO is the compressed
+      # read-only format; the Applications symlink is what makes the drag
+      # target appear without shipping a background image and a .DS_Store.
+      - name: Build the disk image
+        run: |
+          STAGE="$(mktemp -d)/Docket"
+          mkdir -p "$STAGE"
+          ditto build/Build/Products/Release/Docket.app "$STAGE/Docket.app"
+          ln -s /Applications "$STAGE/Applications"
+          hdiutil create \
+            -volname "Docket" \
+            -srcfolder "$STAGE" \
+            -ov -format UDZO \
+            "Docket-${GITHUB_REF_NAME}.dmg"
 
       # A draft, because the notes template ships with placeholders in it that
       # only a person can fill in. Fill them, then publish from the Releases
@@ -76,6 +93,7 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" \
             --draft \
-            --title "Plinth $GITHUB_REF_NAME" \
+            --title "Docket $GITHUB_REF_NAME" \
             --notes-file .github/RELEASE_NOTES_TEMPLATE.md \
-            "Plinth-${GITHUB_REF_NAME}.zip"
+            "Docket-${GITHUB_REF_NAME}.dmg" \
+            "Docket-${GITHUB_REF_NAME}.zip"

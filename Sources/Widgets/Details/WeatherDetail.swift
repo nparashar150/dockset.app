@@ -6,7 +6,7 @@ import SwiftUI
 ///
 /// Nothing here fetches. The panel only ever opens from a tile that has
 /// already pointed the service at a city and refreshed it, so this renders
-/// whatever the service holds and admits it when that is nothing — a refresh
+/// whatever the service holds and admits it when that is nothing - a refresh
 /// of its own would be refused by the 15-minute throttle anyway.
 ///
 /// Only what `WeatherService` actually publishes: a temperature, a symbol, a
@@ -75,7 +75,7 @@ struct WeatherDetail: View {
             VStack(alignment: .leading, spacing: 1) {
                 temperature(weather.temperatureC)
                 // The hourly layout shows neither the condition nor the city,
-                // so on the shelf this widget is a bare number — both lines
+                // so on the shelf this widget is a bare number - both lines
                 // are what the panel is for.
                 Text(weather.condition)
                     .font(WidgetStyle.label(13))
@@ -158,7 +158,7 @@ struct WeatherDetail: View {
 
     // MARK: Empty states
 
-    /// Nothing typed and nothing from CoreLocation — which, as the README
+    /// Nothing typed and nothing from CoreLocation - which, as the README
     /// records, is the usual outcome for an app that never becomes frontmost.
     /// Tell the two states apart the way the tile's caption does, and point at
     /// the field that settles both.
@@ -184,7 +184,7 @@ struct WeatherDetail: View {
 
     /// A missing reading is either a first fetch still in flight or one that
     /// failed with nothing cached behind it. The service keeps the last good
-    /// values and reports no error, so it cannot tell those apart — and
+    /// values and reports no error, so it cannot tell those apart - and
     /// neither does this. The panel observes the service, so the number
     /// appears here the moment it lands.
     private var unavailable: some View {

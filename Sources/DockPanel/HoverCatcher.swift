@@ -4,8 +4,8 @@ import AppKit
 /// Reports the pointer position over the shelf.
 ///
 /// SwiftUI's `.onHover` / `.onContinuousHover` install tracking areas scoped to
-/// the active app. Plinth is an accessory agent that is never active, and its
-/// shelf lives in a non-activating panel — so those callbacks simply never
+/// the active app. Docket is an accessory agent that is never active, and its
+/// shelf lives in a non-activating panel - so those callbacks simply never
 /// fire here. An `.activeAlways` tracking area of our own is the only thing
 /// that reports hover in this situation, and without hover there is no
 /// magnification and no tooltips.
@@ -47,7 +47,7 @@ struct HoverCatcher: NSViewRepresentable {
             // AppKit views here are not flipped; SwiftUI measures from the top.
             let point = CGPoint(x: local.x, y: bounds.height - local.y)
             // Magnification is a raised cosine over a ~110pt radius, so a
-            // sub-point move cannot change a single pixel — but it did rebuild
+            // sub-point move cannot change a single pixel - but it did rebuild
             // every tile in the shelf, because the pointer is view state.
             if let last = lastReported,
                abs(last.x - point.x) < 1, abs(last.y - point.y) < 1 { return }

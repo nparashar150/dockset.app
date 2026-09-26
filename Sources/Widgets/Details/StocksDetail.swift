@@ -3,8 +3,8 @@ import SwiftUI
 /// The panel behind both stock widgets: one symbol at length, or every symbol
 /// on the watchlist at once.
 ///
-/// One view for two kinds because it is the same readout at two lengths — a
-/// Stock is a Watchlist of one with room for a name and a chart — and both read
+/// One view for two kinds because it is the same readout at two lengths - a
+/// Stock is a Watchlist of one with room for a name and a chart - and both read
 /// the same cache through the same accessors as their tiles.
 ///
 /// Nothing here fetches. The panel only ever opens from a tile that is already
@@ -188,12 +188,12 @@ struct StocksDetail: View {
                 .font(WidgetStyle.label(13))
                 .foregroundStyle(WidgetStyle.primary)
             Spacer(minLength: 8)
-            Text(quote?.priceText ?? "—")
+            Text(quote?.priceText ?? "-")
                 .font(WidgetStyle.value(15))
                 .foregroundStyle(WidgetStyle.primary)
                 .monospacedDigit()
                 .rollingValue(quote?.price ?? 0)
-            Text(quote?.percentText ?? "—")
+            Text(quote?.percentText ?? "-")
                 .font(WidgetStyle.label(11))
                 .foregroundStyle(accent(quote))
                 .monospacedDigit()
@@ -211,7 +211,7 @@ struct StocksDetail: View {
     // MARK: Empty states
 
     /// A missing quote is either a first fetch that has not landed or one that
-    /// failed with nothing cached behind it — the service cannot tell them
+    /// failed with nothing cached behind it - the service cannot tell them
     /// apart, so neither does this.
     private func unavailable(_ symbol: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -227,7 +227,7 @@ struct StocksDetail: View {
     private var staleNote: some View {
         HStack(spacing: 5) {
             Image(systemName: "exclamationmark.triangle")
-            Text("Last refresh failed — these are the previous good numbers.")
+            Text("Last refresh failed - these are the previous good numbers.")
         }
         .font(WidgetStyle.caption(10))
         .foregroundStyle(WidgetStyle.secondary)

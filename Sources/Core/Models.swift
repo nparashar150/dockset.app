@@ -12,7 +12,7 @@ public enum DockSetup: String, Codable, Sendable, CaseIterable {
 }
 
 public enum DockPosition: String, Codable, Sendable, CaseIterable {
-    case left, bottom, right   // deliberately no .top — the menu bar owns that edge
+    case left, bottom, right   // deliberately no .top - the menu bar owns that edge
     public var isVertical: Bool { self != .bottom }
 }
 
@@ -62,7 +62,7 @@ public enum PaletteColor: String, Codable, Sendable, CaseIterable {
         }
     }
 
-    /// The 8 swatches actually offered in pickers — `yellow` and `graphite`
+    /// The 8 swatches actually offered in pickers - `yellow` and `graphite`
     /// exist for stored values but are not user-selectable.
     public static let picker: [PaletteColor] = [.orange, .red, .pink, .purple, .indigo, .blue, .teal, .green]
 }
@@ -232,7 +232,7 @@ public struct WidgetInstance: Codable, Hashable, Identifiable, Sendable {
 // MARK: - Shelf items
 
 public struct FolderIcon: Codable, Hashable, Sendable {
-    /// nil means "System color" — draw Finder's own icon.
+    /// nil means "System color" - draw Finder's own icon.
     public var color: PaletteColor?
     /// Exactly one letter or digit, or nil.
     public var letter: String?
@@ -247,7 +247,7 @@ public struct FolderIcon: Codable, Hashable, Sendable {
 
 /// A file-system reference that survives the target being moved or renamed.
 ///
-/// Plinth is not sandboxed, so the bookmark is not about access rights — it is
+/// Docket is not sandboxed, so the bookmark is not about access rights - it is
 /// purely so a pinned app still resolves after an update relocates it.
 public struct FileRef: Codable, Hashable, Sendable {
     public var url: URL
@@ -263,7 +263,7 @@ public struct FileRef: Codable, Hashable, Sendable {
     }
 
     /// Resolved location, preferring the bookmark. Returns nil when the target
-    /// is genuinely gone — callers render that as a repairable dead item
+    /// is genuinely gone - callers render that as a repairable dead item
     /// rather than silently dropping the user's entry.
     public func resolve() -> URL? {
         if let bookmark {
@@ -302,7 +302,7 @@ public struct DockGroup: Codable, Hashable, Sendable, Identifiable {
 
     /// How many icons the closed tile shows: a 2×2 grid, as Dockset does.
     ///
-    /// Not a preference — the tile is one dock slot wide, and a third column
+    /// Not a preference - the tile is one dock slot wide, and a third column
     /// would put the icons below the size at which their artwork is legible.
     public static let previewCount = 4
 
@@ -414,12 +414,12 @@ public struct DockProfile: Codable, Hashable, Identifiable, Sendable {
 /// trap: while mirroring, every app the profile holds is dropped and the real
 /// Dock's are substituted. An app appended to the profile was therefore
 /// filtered straight back out, and one removed from it came back on the next
-/// render — both read as "the button does nothing". Editing must clear
+/// render - both read as "the button does nothing". Editing must clear
 /// `mirroring` first.
 /// Whether a media reading describes something actually playing.
 ///
 /// A page can report a title with no duration and no position, which rendered
-/// as a track stuck at 0:00 under a name from nowhere — the numbers on screen
+/// as a track stuck at 0:00 under a name from nowhere - the numbers on screen
 /// were a paused flag and an elapsed count that had landed in the title and
 /// artist slots of a tile with nothing real behind it.
 public enum MediaReading {
@@ -452,7 +452,7 @@ public enum ShelfItems {
     /// new group of the two otherwise.
     ///
     /// The target keeps its slot so the shelf does not reshuffle around the
-    /// gesture — the two tiles become one where the target already was.
+    /// gesture - the two tiles become one where the target already was.
     public static func combining(_ itemID: UUID, into targetID: UUID,
                                  named name: String, in items: [DockItem]) -> [DockItem] {
         guard itemID != targetID,
@@ -477,7 +477,7 @@ public enum ShelfItems {
     /// Takes an item out of a group and puts it back on the shelf beside it,
     /// dissolving the group if that leaves it with fewer than two.
     /// - Parameter at: where the user dropped it, as a slot index. Beside the
-    ///   group when unknown — a drop with no destination still has to land
+    ///   group when unknown - a drop with no destination still has to land
     ///   somewhere predictable.
     public static func removingFromGroup(_ itemID: UUID, group groupID: UUID,
                                          in items: [DockItem],
@@ -497,8 +497,8 @@ public enum ShelfItems {
 
     /// A group needs two things in it to be a group.
     ///
-    /// Left holding one it is a worse version of the icon it contains — the
-    /// same tile with the artwork shrunk into a quarter of it — so it gives
+    /// Left holding one it is a worse version of the icon it contains - the
+    /// same tile with the artwork shrunk into a quarter of it - so it gives
     /// way to that icon rather than waiting to be tidied up.
     public static func dissolvingSmallGroups(in items: [DockItem]) -> [DockItem] {
         items.flatMap { item -> [DockItem] in
@@ -511,7 +511,7 @@ public enum ShelfItems {
                                  mirrored: [DockItem],
                                  mirroring: Bool) -> [DockItem] {
         // Enforced here rather than only where items leave a group, so the
-        // rule holds however the data got that way — a group of one written
+        // rule holds however the data got that way - a group of one written
         // by an older build, or restored from a backup, still gives way to
         // the icon it holds instead of rendering three empty cells.
         let profile = dissolvingSmallGroups(in: profile)
@@ -524,7 +524,7 @@ public enum ShelfItems {
 }
 
 public struct CustomDockSettings: Codable, Hashable, Sendable {
-    /// nil renders nothing — an explicit "no shelf", not an error state.
+    /// nil renders nothing - an explicit "no shelf", not an error state.
     public var profileID: UUID?
     /// Mirror the real Dock's size, edge, magnification and hiding.
     ///
@@ -537,13 +537,13 @@ public struct CustomDockSettings: Codable, Hashable, Sendable {
     /// cost the user their mirrored size, edge and hiding: adding or removing
     /// an app takes ownership of the list alone, and everything else keeps
     /// following. Optional so state saved before this flag existed still
-    /// decodes — absent means "yes", which is what those profiles were doing.
+    /// decodes - absent means "yes", which is what those profiles were doing.
     public var mirrorSystemApps: Bool?
     /// Set once the user has sized the shelf themselves.
     ///
     /// Optional so state written before it existed still decodes. Separate
     /// from `followSystemDock` because dragging the grip is an override of
-    /// the *size* — it used to switch following off wholesale, which silently
+    /// the *size* - it used to switch following off wholesale, which silently
     /// took the Dock's edge, magnification and auto-hide with it, so the shelf
     /// simply stopped hiding after a resize.
     public var scaleOverridden: Bool?
@@ -551,7 +551,7 @@ public struct CustomDockSettings: Codable, Hashable, Sendable {
     public var displayID: UInt32?
     /// Live value, mirroring the active profile's scale.
     public var scale: Double = Geometry.defaultScale
-    /// Liquid Glass by default: Plinth requires macOS 26 anyway, and the
+    /// Liquid Glass by default: Docket requires macOS 26 anyway, and the
     /// real material is what makes the shelf sit beside the Dock convincingly.
     public var material: DockMaterial = .liquidGlass
     public var glass: GlassStyle = .regular
@@ -570,7 +570,7 @@ public struct CustomDockSettings: Codable, Hashable, Sendable {
 }
 
 public struct MacOSDockSettings: Codable, Hashable, Sendable {
-    /// nil means "No profile" — leave the live Dock completely alone.
+    /// nil means "No profile" - leave the live Dock completely alone.
     public var profileID: UUID?
     public var smoothSwitching: Bool = false
     public var autoSaveLiveDockChanges: Bool = false
@@ -597,9 +597,9 @@ public struct PersistedState: Codable, Sendable {
     public var customDock = CustomDockSettings()
     public var macOSDock = MacOSDockSettings()
     public var menuBar = MenuBarSettings()
-    /// Shared across every Focus Timer widget — the product treats it as one timer.
+    /// Shared across every Focus Timer widget - the product treats it as one timer.
     public var timer = TimerState()
-    /// Snapshot of the user's live Dock taken before Plinth ever wrote to it.
+    /// Snapshot of the user's live Dock taken before Docket ever wrote to it.
     public var originalMacOSDock: [MacOSDockTile]?
 
     public init() {}
@@ -669,7 +669,7 @@ public extension UUID {
     }
 }
 
-/// Small, dependency-free digest. Not cryptographic — it only needs to spread
+/// Small, dependency-free digest. Not cryptographic - it only needs to spread
 /// bundle identifiers across the UUID space without colliding.
 private struct SHA256Lite {
     private var a: UInt64 = 0x243F6A8885A308D3
@@ -702,7 +702,7 @@ public enum Reorder {
     /// macOS Dock it shows the profile's own items *plus* the Dock's apps, so
     /// a position on screen has no relationship to a position in the stored
     /// array. Ids that the shelf was not showing keep their place rather than
-    /// being dropped — losing a user's pinned item to a drag would be far
+    /// being dropped - losing a user's pinned item to a drag would be far
     /// worse than an imperfect order.
     public static func apply(order displayed: [UUID], to items: [DockItem]) -> [DockItem] {
         var remaining = Dictionary(items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })

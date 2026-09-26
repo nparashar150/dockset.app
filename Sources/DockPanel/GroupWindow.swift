@@ -42,7 +42,7 @@ final class GroupWindow {
         guard isOpen, let panel else { return false }
         // The visible sheet plus a little slack, so crossing the gap between
         // tile and sheet does not read as leaving. The window itself is much
-        // larger than what is drawn — see GroupSheet.dragRoom.
+        // larger than what is drawn - see GroupSheet.dragRoom.
         let slack = GroupSheet.dragRoom - 14
         return panel.frame.insetBy(dx: slack, dy: slack).contains(point)
     }
@@ -171,7 +171,7 @@ struct GroupSheet: View {
     @State private var draft = ""
     @FocusState private var editing: Bool
 
-    /// Wraps rather than growing without limit — a group with thirty apps
+    /// Wraps rather than growing without limit - a group with thirty apps
     /// should not produce a sheet wider than the screen.
     private var columns: Int { min(5, max(1, group.items.count)) }
     private let side: CGFloat = 52
@@ -316,7 +316,7 @@ private struct GroupSheetItem: View {
         GroupDrag.leavesSheet(point, sheet: sheet)
     }
 
-    /// Once it is over the shelf it is a dock icon, so it becomes one — the
+    /// Once it is over the shelf it is a dock icon, so it becomes one - the
     /// sheet draws at its own size, and an icon that kept it would land at the
     /// wrong scale and snap.
     private var carriedSide: CGFloat { leaving ? dockSide : side }
@@ -363,7 +363,7 @@ private struct GroupSheetItem: View {
                 .onChanged { value in
                     // Pinned to the pointer, not displaced by it. Offsetting
                     // by the translation leaves the icon wherever the cursor
-                    // happened to grab it — press near an edge and the icon
+                    // happened to grab it - press near an edge and the icon
                     // trails the pointer by that much for the whole drag.
                     offset = GroupDrag.offset(cursor: value.location, centre: centre)
                     let out = outside(value.location)

@@ -3,11 +3,11 @@ import SwiftUI
 /// One symbol: ticker, price, signed percentage, and a dithered intraday chart.
 ///
 /// Wide (192×62) puts the readout on the left and the chart in the right half.
-/// The 76pt column has no room beside anything, so it stacks — ticker, price,
+/// The 76pt column has no room beside anything, so it stacks - ticker, price,
 /// percentage, then the chart across the full width.
 ///
 /// A click on the card opens the panel. When more than one of the configured
-/// `symbols` is set, a chevron beside the ticker steps to the next of them —
+/// `symbols` is set, a chevron beside the ticker steps to the next of them -
 /// the one on show is `symbol` in the widget's own config, so it survives a
 /// relaunch.
 struct StockTile: View {
@@ -59,7 +59,7 @@ struct StockTile: View {
     }
 
     /// One symbol is not a rotation, and a control that did nothing would
-    /// still swallow the click the card owes the panel — so the chevron is
+    /// still swallow the click the card owes the panel - so the chevron is
     /// only rendered when there is somewhere for it to go.
     private var showsAdvance: Bool {
         !context.isPreview && rotation.count > 1
@@ -105,7 +105,7 @@ struct StockTile: View {
                          fixed: Bool) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             tickerRow(ticker)
-            Text(quote?.priceText ?? "—")
+            Text(quote?.priceText ?? "-")
                 .font(WidgetStyle.value(price))
                 .foregroundStyle(WidgetStyle.primary)
                 .monospacedDigit()
@@ -126,7 +126,7 @@ struct StockTile: View {
     /// the panel. This is the same shape the Time Progress tile's period name
     /// wears.
     ///
-    /// It wears no disc — that is `TileGlyph`, for a control standing on its
+    /// It wears no disc - that is `TileGlyph`, for a control standing on its
     /// own somewhere on the card. A chevron sitting inside a line of type is
     /// already attached to what it acts on, and a disc here would only break
     /// the readout's first line in half.

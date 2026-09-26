@@ -3,8 +3,8 @@ import Foundation
 /// One tile in Apple's Dock.
 ///
 /// The whole original dictionary is kept verbatim as a binary plist. Apple's
-/// tile dicts carry opaque fields — alias `book` blobs, `GUID`, `file-mod-date`
-/// — that we have no business synthesizing. Capturing and replaying them
+/// tile dicts carry opaque fields - alias `book` blobs, `GUID`, `file-mod-date`
+/// - that we have no business synthesizing. Capturing and replaying them
 /// unchanged is both simpler and far safer than modelling them.
 public struct MacOSDockTile: Codable, Hashable, Sendable {
     public var tileType: String
@@ -36,7 +36,7 @@ public struct MacOSDockTile: Codable, Hashable, Sendable {
         try? PropertyListSerialization.propertyList(from: raw, options: [], format: nil) as? [String: Any]
     }
 
-    /// Synthesize a tile for an app the user pinned inside Plinth rather than
+    /// Synthesize a tile for an app the user pinned inside Docket rather than
     /// one captured from the live Dock. The Dock fills in the rest itself.
     public static func app(url: URL, bundleID: String?, label: String) -> MacOSDockTile? {
         var tileData: [String: Any] = [

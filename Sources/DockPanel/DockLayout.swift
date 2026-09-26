@@ -66,7 +66,7 @@ extension DockMagnification {
 /// `CubicKeyframe` cannot express this: SwiftUI fits one C¹ curve through the
 /// whole track, taking each knot's tangent from its neighbours. That gave a
 /// start tangent of zero, so the icon *crept* off the shelf, and a non-zero
-/// tangent at the floor, so the arc sailed smoothly through it — rounding off
+/// tangent at the floor, so the arc sailed smoothly through it - rounding off
 /// the contact and sinking the icon below its resting place on the way. A
 /// thrown ball does the opposite: it leaves at full speed, is motionless only
 /// at the apex, and reverses instantly on contact.
@@ -84,7 +84,7 @@ enum Bounce {
     /// Reasoned, not measured: the Dock here is auto-hidden and will not
     /// reveal for a capture without being restarted, so this is not grounded
     /// the way the removal poof is. The previous 0.55 over 0.40s read as a
-    /// small, quick twitch — a launching icon rises most of its own height
+    /// small, quick twitch - a launching icon rises most of its own height
     /// and the arc fills most of the second between bounces.
     static let peak: CGFloat = 0.85
     /// One arc, up and back down.
@@ -97,7 +97,7 @@ enum Bounce {
     static let giveUp: TimeInterval = 20
 }
 
-/// Gives a tile an explicit hit shape — but only when it has no interior.
+/// Gives a tile an explicit hit shape - but only when it has no interior.
 ///
 /// A widget owns its own controls (play/pause, transport, Connect) and those
 /// must receive their own clicks. The previous attempt at that applied an
@@ -106,7 +106,7 @@ enum Bounce {
 /// empty content shape removes the whole subtree from hit testing, so every
 /// control inside every widget was unreachable.
 ///
-/// Verified with a hosting-view harness that delivers a real NSEvent — child
+/// Verified with a hosting-view harness that delivers a real NSEvent - child
 /// taps land with no content shape and with a filled one, and never with an
 /// empty one.
 public struct TileHitShape: ViewModifier {
@@ -136,7 +136,7 @@ public enum GroupDrag {
 
 /// Whether the user is dragging the size grip right now.
 ///
-/// A discrete size change — a widget added, a style switched — should glide.
+/// A discrete size change - a widget added, a style switched - should glide.
 /// A drag should not: the grip reports a new size on every event, and easing
 /// each one over 0.22s stacks dozens of overlapping window animations, so the
 /// shelf rubber-bands along behind the pointer instead of tracking it.
@@ -151,8 +151,8 @@ public enum ShelfResize {
 ///
 /// SwiftUI dismisses a context menu when the view hosting it is rebuilt, and
 /// a widget tile rebuilds every second because it tracks the clock. The menu
-/// therefore died about a second after opening — right as the pointer reached
-/// a submenu — which reads as a menu that refuses to be used.
+/// therefore died about a second after opening - right as the pointer reached
+/// a submenu - which reads as a menu that refuses to be used.
 ///
 /// Read from `TileContent`'s `nonisolated` equality, so it is a plain flag
 /// rather than observable state. Written only on the main thread, when menu
@@ -174,7 +174,7 @@ public enum ShelfMetrics {
     ///
     /// The panel is `plateLength + longReserve` long and centres the shelf in
     /// it. An overflowing row is pinned to `plateLength` and does not grow by
-    /// `totalExtra` at all — the case that made the label drift as the pointer
+    /// `totalExtra` at all - the case that made the label drift as the pointer
     /// moved, since `totalExtra` tracks magnification.
     public static func inset(plateLength: CGFloat, longReserve: CGFloat,
                              restLength: CGFloat, totalExtra: CGFloat,
@@ -205,7 +205,7 @@ extension GroupDrag {
     /// How far to offset a dragged icon so its centre sits under the pointer.
     ///
     /// Offsetting by the drag's *translation* instead leaves the icon wherever
-    /// on itself the press landed — grab it near an edge and it trails the
+    /// on itself the press landed - grab it near an edge and it trails the
     /// pointer by that much for the whole gesture.
     public static func offset(cursor: CGPoint, centre: CGPoint) -> CGSize {
         CGSize(width: cursor.x - centre.x, height: cursor.y - centre.y)
@@ -215,7 +215,7 @@ extension GroupDrag {
 /// A borderless panel that can still take the keyboard.
 ///
 /// `NSWindow` refuses key status to a borderless window, and keystrokes only
-/// reach the key window — so a text field inside one shows a caret that
+/// reach the key window - so a text field inside one shows a caret that
 /// accepts nothing. That is what stopped a group being renamed. It lives here,
 /// rather than beside the one window that needs it, because the rule is not
 /// obvious and the codebase has now hit it twice.
@@ -227,7 +227,7 @@ public final class KeyablePanel: NSPanel {
 
     /// Escape closes it. Handled here rather than as a SwiftUI keyboard
     /// shortcut so it still fires while a text field inside is first
-    /// responder — a note being written is exactly when you want a way out
+    /// responder - a note being written is exactly when you want a way out
     /// that is not aiming for a button.
     public override func cancelOperation(_ sender: Any?) {
         onCancel?()
@@ -249,7 +249,7 @@ public final class KeyablePanel: NSPanel {
 ///
 /// A click into a window that is not key is consumed as the click that
 /// focuses it, so the first press on a panel that never became key was always
-/// swallowed — which is why an icon could not be dragged out of a group.
+/// swallowed - which is why an icon could not be dragged out of a group.
 public final class FirstMouseHostingView<Content: View>: NSHostingView<Content> {
     public override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }

@@ -4,7 +4,7 @@ import SwiftUI
 /// out in full, and the zone the machine is actually keeping.
 ///
 /// The thinnest panel in the app, deliberately. A clock knows the time and
-/// nothing else, so the honest list of what its tile leaves out is short —
+/// nothing else, so the honest list of what its tile leaves out is short -
 /// seconds, the weekday and year the card has to abbreviate away, and the name
 /// of the zone. Anything more would be invented reasons to be large.
 struct ClockDetail: View {
@@ -84,7 +84,7 @@ struct ClockPanelTime: View {
     }
 }
 
-/// A label and a figure on one line — the row idiom the system panel uses.
+/// A label and a figure on one line - the row idiom the system panel uses.
 struct ClockPanelRow: View {
     var label: String
     var value: String

@@ -4,7 +4,7 @@ import SwiftUI
 /// The hover label, in a window of its own.
 ///
 /// Drawing it inside the shelf meant reserving empty space around the shelf
-/// big enough to hold it — which is guesswork: it depends on the edge, and on
+/// big enough to hold it - which is guesswork: it depends on the edge, and on
 /// how long an app's name happens to be. Too little and long names were
 /// clipped by the window edge; enough for the worst case is a large invisible
 /// window. Apple's Dock uses a separate window for exactly this reason, and
@@ -33,7 +33,7 @@ final class TooltipWindow {
             hosting?.rootView = TooltipLabel(text: text)
             current = text
             // A full SwiftUI sizing pass. It only depends on the text, so it
-            // must not run on every pointer move — sweeping the row changed
+            // must not run on every pointer move - sweeping the row changed
             // the anchor constantly while the label stayed the same.
             currentSize = hosting?.fittingSize ?? .zero
         }
@@ -60,8 +60,8 @@ final class TooltipWindow {
         }
         if !panel.isVisible {
             // Fades up the first time it appears. Moving between tiles only
-            // moves the window, which must stay cheap — see the frame guard
-            // above — so there is nothing to animate on that path.
+            // moves the window, which must stay cheap - see the frame guard
+            // above - so there is nothing to animate on that path.
             panel.alphaValue = 0
             panel.orderFrontRegardless()
             NSAnimationContext.runAnimationGroup { context in
@@ -75,7 +75,7 @@ final class TooltipWindow {
         // Only when something is actually shown. `orderOut` is a synchronous
         // WindowServer round trip that parks the main thread for about 1.5ms,
         // and this is called on *every* pointer move that is not over an icon
-        // — between tiles, over any widget, in the gaps. Measured at ~2s of
+        // - between tiles, over any widget, in the gaps. Measured at ~2s of
         // blocked main thread per 5s of movement: the shelf's whole stutter.
         guard panel?.isVisible == true else { return }
         current = nil

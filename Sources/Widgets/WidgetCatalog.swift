@@ -153,8 +153,8 @@ public enum WidgetCatalog {
     /// The colour a widget's detail panel is tinted with.
     ///
     /// The reference shelf tints an open panel toward whatever the widget is
-    /// *about* — Stripe teal, a sticky note its own paper, activity the
-    /// magenta of its CPU ring — while readouts with no colour of their own
+    /// *about* - Stripe teal, a sticky note its own paper, activity the
+    /// magenta of its CPU ring - while readouts with no colour of their own
     /// stay neutral. A tint on everything would be noise; a tint on nothing
     /// makes eight identical panels.
     public static func accentHex(_ kind: WidgetKind) -> String? {
@@ -198,7 +198,7 @@ public enum WidgetCatalog {
     ///
     /// Every override must match, not just `layout`: "Numbers" and
     /// "Numbers + graph" share a layout and differ only by `chart`, so
-    /// matching on layout alone made them indistinguishable — the style
+    /// matching on layout alone made them indistinguishable - the style
     /// picker could neither tell them apart nor show the right one.
     public static func variantTitle(matching config: WidgetConfig,
                                     kind: WidgetKind) -> String? {
@@ -212,7 +212,7 @@ public enum WidgetCatalog {
     ///
     /// Every tile in the Dock opens something; a widget that reports a number
     /// and does nothing when you click it reads as broken. A tile's own
-    /// controls may only take the click where they actually sit — a gesture
+    /// controls may only take the click where they actually sit - a gesture
     /// spread over the whole card beats this one everywhere and leaves the
     /// card dead, which is exactly how every widget panel came to be
     /// unreachable.

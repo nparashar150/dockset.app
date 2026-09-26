@@ -7,7 +7,7 @@ import SwiftUI
 /// itself: silencing an alarm by a stray click on a card is how you sleep
 /// through something. `enabled` lives in the widget's own config, so a
 /// silenced alarm stays silenced across a relaunch. The time itself is never
-/// hidden while off — you set a switch by knowing what it is set to.
+/// hidden while off - you set a switch by knowing what it is set to.
 struct AlarmTile: View {
     var instance: WidgetInstance
     var context: WidgetContext
@@ -85,8 +85,8 @@ struct AlarmTile: View {
 
     /// Only ever as big as itself: the card's own click has to reach the shelf,
     /// which is what opens Clock.app, so nothing here may spread to fill it.
-    /// `TileGlyph` is the shelf-wide treatment for exactly that — see
-    /// StopwatchTile — and it is what turns this from an orange badge in the
+    /// `TileGlyph` is the shelf-wide treatment for exactly that - see
+    /// StopwatchTile - and it is what turns this from an orange badge in the
     /// corner into a switch.
     ///
     /// The disc carries the alarm's own colour, so an armed alarm sits on

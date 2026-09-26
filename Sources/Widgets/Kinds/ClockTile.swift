@@ -3,7 +3,7 @@ import SwiftUI
 /// Analog face on the left, digital time and date on the right.
 ///
 /// On a side shelf the same parts stack into a 76pt column: face on top, time
-/// under it, and no date — there is no room and it is the least useful part.
+/// under it, and no date - there is no room and it is the least useful part.
 ///
 /// The readout and the face are factored out because World Clock is the same
 /// tile pointed at a different time zone.
@@ -38,7 +38,7 @@ struct ClockReadout: View {
     var vertical: Bool = false
     /// Line under the time in the column, shrunk to fit rather than truncated.
     var columnLabel: String?
-    /// Tiny trailing marker on that line — World Clock's "+1" / "−1".
+    /// Tiny trailing marker on that line - World Clock's "+1" / "−1".
     var columnBadge: String?
 
     var body: some View {
@@ -123,7 +123,7 @@ struct ClockReadout: View {
 // MARK: - Formatting
 
 enum ClockFormat {
-    /// Locale's own clock — 24h or 12h with a meridiem, whichever the user has.
+    /// Locale's own clock - 24h or 12h with a meridiem, whichever the user has.
     static func time(_ date: Date, zone: TimeZone) -> String {
         var style = Date.FormatStyle.dateTime.hour().minute()
         style.timeZone = zone

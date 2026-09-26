@@ -3,7 +3,7 @@ import Observation
 
 /// CPU / memory / disk pressure, sampled once a second off the main run loop.
 ///
-/// Every reading is a cheap syscall, so there is no background queue here —
+/// Every reading is a cheap syscall, so there is no background queue here -
 /// but every one of them can fail, and a failed sample leaves the previous
 /// value in place rather than flashing a zero on the shelf.
 @MainActor @Observable
@@ -20,7 +20,7 @@ final class SystemMetrics {
     ///
     /// The fraction alone leaves a panel with nothing to say that the gauge
     /// has not already said. These come from the same sample at no extra
-    /// cost — they were being computed and thrown away.
+    /// cost - they were being computed and thrown away.
     private(set) var diskFree: Int64 = 0
     private(set) var diskTotal: Int64 = 0
 
@@ -133,7 +133,7 @@ final class SystemMetrics {
 
         let physical = Double(ProcessInfo.processInfo.physicalMemory)
         guard physical > 0 else { return }
-        // Inactive pages are reclaimable, so macOS counts them as available —
+        // Inactive pages are reclaimable, so macOS counts them as available -
         // including them would read ~100% on any machine that has been up a while.
         let pages = UInt64(info.active_count) + UInt64(info.wire_count) + UInt64(info.compressor_page_count)
         memory = min(Double(pages * Self.pageSize) / physical, 1)

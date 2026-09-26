@@ -6,15 +6,15 @@ import SwiftUI
 /// hold: the tile has room for a count or the next item, and the backlog
 /// behind that count is the reason anyone opens it.
 ///
-/// Like `CalendarDetail`, this talks to EventKit itself — the reminders kind
-/// still draws as `UnavailableTile` and no service reads reminders — and keeps
+/// Like `CalendarDetail`, this talks to EventKit itself - the reminders kind
+/// still draws as `UnavailableTile` and no service reads reminders - and keeps
 /// what it finds in value types of its own. Access is asked for only when the
 /// user clicks for it, and without it the panel says so in a line rather than
 /// showing a list it made up.
 ///
 /// Only what EventKit hands back for an incomplete reminder due by tonight: a
 /// title, a due date, its list and that list's colour, and whether it is
-/// flagged high priority. Nothing is completed, created or edited here — the
+/// flagged high priority. Nothing is completed, created or edited here - the
 /// panel reads.
 struct RemindersDetail: View {
     var instance: WidgetInstance
@@ -35,8 +35,8 @@ struct RemindersDetail: View {
 
     private var granted: Bool { access == .fullAccess }
 
-    /// The list the widget was configured for, by title. Empty — the catalog
-    /// default — means every list.
+    /// The list the widget was configured for, by title. Empty - the catalog
+    /// default - means every list.
     private var listFilter: String {
         instance.config.string("list").trimmingCharacters(in: .whitespaces)
     }
@@ -109,7 +109,7 @@ struct RemindersDetail: View {
                 }
             }
             Spacer(minLength: 8)
-            // Which list this is a view of, when it is not all of them —
+            // Which list this is a view of, when it is not all of them -
             // otherwise the counts read as the whole account and are not.
             if !listFilter.isEmpty {
                 Text(listFilter)
@@ -192,7 +192,7 @@ struct RemindersDetail: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// When it was due, then which list it is on — two reminders at 09:00 are
+    /// When it was due, then which list it is on - two reminders at 09:00 are
     /// told apart by the list, never the other way round.
     private func detail(_ item: DueReminder) -> String {
         let when = item.hasTime
@@ -211,8 +211,8 @@ struct RemindersDetail: View {
     private var permission: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(access == .notDetermined
-                 ? "Plinth has not been given access to your reminders."
-                 : "Reminders access is off for Plinth.")
+                 ? "Docket has not been given access to your reminders."
+                 : "Reminders access is off for Docket.")
                 .font(WidgetStyle.caption(12))
                 .foregroundStyle(WidgetStyle.secondary)
                 .fixedSize(horizontal: false, vertical: true)

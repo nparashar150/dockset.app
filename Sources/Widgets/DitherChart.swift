@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A sparkline whose area is filled with an **ordered (Bayer) dither** rather
-/// than a smooth gradient — the signature chart of the shelf.
+/// than a smooth gradient - the signature chart of the shelf.
 ///
 /// The fill is a grid of small square dots. A dot is drawn when its cell's
 /// Bayer threshold falls under the local *intensity*, which is 1 immediately
@@ -22,7 +22,7 @@ struct DitherChart: View {
     var filled: Bool = true
     /// Fixed bounds to plot against, instead of the series' own extremes.
     ///
-    /// Auto-scaling is right for a price, which has no natural floor — but
+    /// Auto-scaling is right for a price, which has no natural floor - but
     /// wrong wherever two series are drawn together, because each would fill
     /// the full height and a CPU idling at 15% would look like memory at 78%.
     var range: ClosedRange<Double>?
@@ -83,7 +83,7 @@ struct DitherChart: View {
 
         // Headroom under the series so the dither has somewhere to live: the
         // low point sits a third of the way up rather than on the floor. An
-        // all-equal series has no span at all — centre it instead of dividing
+        // all-equal series has no span at all - centre it instead of dividing
         // by zero. Fixed bounds already carry their own headroom.
         let floorValue = range == nil ? low - span / 2 : low
         let scale = span > 0 ? (bottom - top) / (high - floorValue) : 0

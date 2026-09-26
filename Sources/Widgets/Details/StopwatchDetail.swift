@@ -16,7 +16,7 @@ struct StopwatchDetail: View {
 
     var body: some View {
         // Tenths are the one thing a 21pt tile readout cannot carry, and the
-        // panel's `context.now` is frozen at the moment it opened — so the
+        // panel's `context.now` is frozen at the moment it opened - so the
         // schedule is what moves the figure. A stopped watch has nothing to
         // redraw ten times a second; the schedule is rebuilt when the config
         // changes, which is the same moment `running` flips.
@@ -77,7 +77,7 @@ struct StopwatchDetail: View {
         return banked + max(0, now.timeIntervalSince1970 - startedAt)
     }
 
-    /// The wall-clock moment the run on screen began — the one fact the config
+    /// The wall-clock moment the run on screen began - the one fact the config
     /// holds that neither the tile nor the readout can say. A run picked up
     /// after a stop says "Resumed", because `started` is then the resume
     /// rather than the beginning.
@@ -91,7 +91,7 @@ struct StopwatchDetail: View {
     // MARK: Actions
 
     /// Banks what has run so far when stopping, so starting again continues
-    /// rather than beginning from zero — the tile's own rule.
+    /// rather than beginning from zero - the tile's own rule.
     private func toggle() {
         guard !context.isPreview else { return }
         let started = startedAt

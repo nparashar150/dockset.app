@@ -12,7 +12,7 @@ struct StickyNoteTile: View {
     var context: WidgetContext
 
     /// Every `PaperColor` is a light swatch in both appearances, so the ink is
-    /// deliberately fixed dark rather than semantic — `Color.primary` would go
+    /// deliberately fixed dark rather than semantic - `Color.primary` would go
     /// white in dark mode and vanish into the paper.
     private static let ink = Color(hex: "#1C1C1E")
 
@@ -48,7 +48,7 @@ struct StickyNoteTile: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.vertical, column ? 8 : 9)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                // No button trait: the note itself is read, not activated —
+                // No button trait: the note itself is read, not activated -
                 // writing is its own control and the card belongs to the shelf.
                 .accessibilityLabel(stored.isEmpty ? "Empty note" : "Note: \(stored)")
         }

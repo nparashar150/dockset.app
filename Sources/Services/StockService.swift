@@ -47,7 +47,7 @@ final class StockService {
     /// first widget asks, so a shelf with no stock widgets never touches the
     /// network.
     ///
-    // ponytail: the tracked set only grows for the life of the process — a
+    // ponytail: the tracked set only grows for the life of the process - a
     // removed widget costs one extra request per five minutes. Add a refcount
     // if someone actually churns watchlists.
     func track(_ symbols: [String]) {
@@ -135,7 +135,7 @@ final class StockService {
         }
     }
 
-    /// Mirrors only the handful of fields we read, all optional — a shape
+    /// Mirrors only the handful of fields we read, all optional - a shape
     /// change drops us to `nil`, never a trap.
     private struct Payload: Decodable {
         struct Meta: Decodable {
@@ -162,7 +162,7 @@ final class StockService {
               let meta = result.meta
         else { return nil }
 
-        // Gaps in the series are nulls, not zeros — dropping them keeps the
+        // Gaps in the series are nulls, not zeros - dropping them keeps the
         // chart honest instead of drawing a cliff to the x-axis.
         let closes = (result.indicators?.quote?.first?.close ?? [])
             .compactMap { $0 }
@@ -232,7 +232,7 @@ extension StockQuote {
         )
     }
 
-    /// A deterministic random walk — same symbol, same squiggle every launch,
+    /// A deterministic random walk - same symbol, same squiggle every launch,
     /// so the library card does not shimmer as it redraws.
     private static func sampleHistory(seed: String, rising: Bool) -> [Double] {
         var state = seed.unicodeScalars.reduce(UInt64(0x9E37_79B9)) { $0 &* 31 &+ UInt64($1.value) }

@@ -152,7 +152,7 @@ struct NetworkActivityTile: View {
         }
     }
 
-    /// KB/s until it no longer fits, then MB/s — matching how the menu bar reads.
+    /// KB/s until it no longer fits, then MB/s - matching how the menu bar reads.
     private func formatted(_ bytesPerSecond: Double) -> (value: String, unit: String) {
         let kb = max(bytesPerSecond, 0) / 1024
         if kb < 1024 { return ("\(Int(kb.rounded()))", "KB/s") }
@@ -167,7 +167,7 @@ struct Sparkline: Shape {
     /// Value that sits on the floor of the chart.
     ///
     /// Without this the series is always normalised against zero, so a metric
-    /// hovering at 77% fills almost the entire box — which reads as a solid
+    /// hovering at 77% fills almost the entire box - which reads as a solid
     /// colour block rather than a graph. Normalising over the range the series
     /// actually occupies is what makes the *shape* legible.
     var floor: Double = 0

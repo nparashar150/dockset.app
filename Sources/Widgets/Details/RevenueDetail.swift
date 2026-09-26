@@ -3,7 +3,7 @@ import SwiftUI
 /// The panel behind Stripe, Paddle and Shopify.
 ///
 /// One view rather than three near-copies: the three are the same widget with
-/// different plumbing — an account, a metric, a period, an amount, a chart —
+/// different plumbing - an account, a metric, a period, an amount, a chart -
 /// and the provider only decides which metrics and periods are on offer and
 /// what the figure is called. Stripe's `revenue` is titled "Net revenue" on
 /// Paddle; at this layer that is nearly the whole difference.
@@ -13,7 +13,7 @@ import SwiftUI
 /// this build ships no client for any of them: there is no series, no total
 /// and no last refresh to report. A plausible amount under a real account name
 /// is indistinguishable from a working widget, which is the one failure a
-/// money readout cannot afford — so the panel states the connection instead,
+/// money readout cannot afford - so the panel states the connection instead,
 /// and keeps only the labels that are genuinely knowable from the config.
 struct RevenueDetail: View {
     var instance: WidgetInstance
@@ -75,7 +75,7 @@ struct RevenueDetail: View {
             Text("Not connected")
                 .font(WidgetStyle.value(20))
                 .foregroundStyle(WidgetStyle.primary)
-            Text("Plinth holds no \(provider) credentials, so there is no amount to show and no history to chart.")
+            Text("Docket holds no \(provider) credentials, so there is no amount to show and no history to chart.")
                 .font(WidgetStyle.caption(12))
                 .foregroundStyle(WidgetStyle.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -98,7 +98,7 @@ struct RevenueDetail: View {
     }
 
     /// What the figure would mean, which is worth saying whether or not the
-    /// figure is there — and the one part of this panel that is fully known
+    /// figure is there - and the one part of this panel that is fully known
     /// without an account.
     private var about: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -209,7 +209,7 @@ struct RevenueDetail: View {
         case "year": "YTD"
         case "lastYear": "L365"
         case "allTime": "All"
-        default: "—"
+        default: "-"
         }
     }
 
@@ -281,7 +281,7 @@ struct RevenueDetail: View {
         // Shopify included, is a point per day.
         let grain = period == "today" && instance.kind != .shopify ? "hourly" : "daily"
         let headline = isLevel
-            ? "\(metricTitle) is the latest point in the series rather than a total — the level as it stood at the last refresh."
+            ? "\(metricTitle) is the latest point in the series rather than a total - the level as it stood at the last refresh."
             : "\(metricTitle) totals every \(grain) point across \(periodName.lowercased())."
         return headline + " A connected account refreshes every five minutes while the shelf is on screen."
     }

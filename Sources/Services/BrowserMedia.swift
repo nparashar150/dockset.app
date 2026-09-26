@@ -3,15 +3,15 @@ import CoreServices
 import Foundation
 import Observation
 
-/// The browsers Plinth can actually talk to.
+/// The browsers Docket can actually talk to.
 ///
 /// Verified on this machine: all four ship the standard automation dictionary
-/// — `execute … javascript` for the Chromium three, `do JavaScript` for
-/// Safari — and every one of them resolves by bundle id. Firefox ships no
+/// - `execute … javascript` for the Chromium three, `do JavaScript` for
+/// Safari - and every one of them resolves by bundle id. Firefox ships no
 /// sdef at all and is deliberately absent: there is nothing there to address.
 ///
 /// Never address a browser by *name*. `application "Brave Browser"` resolves
-/// to Helium here — a Brave fork that inherited the LaunchServices name — so
+/// to Helium here - a Brave fork that inherited the LaunchServices name - so
 /// a name lookup can silently drive the wrong app. Bundle ids only, which is
 /// also what `NSAppleEventDescriptor(bundleIdentifier:)` wants.
 public enum BrowserApp: String, CaseIterable, Sendable {
@@ -57,7 +57,7 @@ public struct BrowserTrack: Sendable, Equatable {
     public var duration: TimeInterval
     public var browser: BrowserApp
 
-    /// 0…1, never NaN — a live stream reports no duration.
+    /// 0…1, never NaN - a live stream reports no duration.
     public var progress: Double {
         guard duration > 0 else { return 0 }
         return min(1, max(0, elapsed / duration))
@@ -68,13 +68,13 @@ public struct BrowserTrack: Sendable, Equatable {
 ///
 /// Two things are true and shape everything here:
 ///
-/// 1. Enumerating every tab is cheap — one plural-form Apple Event returns all
+/// 1. Enumerating every tab is cheap - one plural-form Apple Event returns all
 ///    115 tabs of 4 windows in ~10 ms, less than a single Spotify query. Doing
 ///    it *per tab* is 9 ms each and is the only way to get this wrong, so the
 ///    found tab is cached and re-queried alone.
 /// 2. Reading playback state needs JavaScript, which every browser ships
 ///    switched off. Without it a matching URL tells us a media tab *exists*,
-///    not that anything is playing — so we never invent a track from a URL.
+///    not that anything is playing - so we never invent a track from a URL.
 ///    We say what to switch on instead.
 @MainActor @Observable
 public final class BrowserMedia {
@@ -169,8 +169,8 @@ public final class BrowserMedia {
         // somewhere else. Running one every 3s is what wedged this service.
         // Time alone, not what we believe is playing. `track` is the last
         // good reading and `playPause()` flips it optimistically, so keying
-        // off it meant a closed or navigated tab — whose cached read returns
-        // nothing — could keep reporting "still playing" and never earn a
+        // off it meant a closed or navigated tab - whose cached read returns
+        // nothing - could keep reporting "still playing" and never earn a
         // rescan. A playing cached tab short-circuits inside poll() anyway, so
         // allowing the rescan costs nothing while playback is healthy.
         let rescan = tab == nil || now.timeIntervalSince(lastRescan) >= Self.rescanInterval
@@ -185,8 +185,8 @@ public final class BrowserMedia {
             // made every cold scan "time out" on a machine with a lot open.
             //
             // The test is whether a rescan is coming, NOT whether a tab handle
-            // exists. Holding the handle through a pause — which is what makes
-            // resume possible — meant a paused track took the rescan path on
+            // exists. Holding the handle through a pause - which is what makes
+            // resume possible - meant a paused track took the rescan path on
             // the 3s budget, timed out, and three strikes later blocked the
             // browser outright with the tile stuck on Connect.
             let budget: Double = rescan ? 8 : 3
@@ -217,7 +217,7 @@ public final class BrowserMedia {
         needsPermission = true
         // Drop the last reading. Keeping it meant the tile showed a stale
         // paused track forever *and* hid the Connect button, which is the
-        // only thing that clears `blocked` — there was no way back.
+        // only thing that clears `blocked` - there was no way back.
         track = nil
     }
 
@@ -251,7 +251,7 @@ public final class BrowserMedia {
 
     /// The only control offered. `next`/`previous` are meaningless for a video
     /// element and the sites that do have playlists each need their own DOM
-    /// poking — a dead button is worse than no button.
+    /// poking - a dead button is worse than no button.
     ///
     /// Resume can still be refused: JavaScript injected over Apple Events
     /// carries no user activation, so autoplay policy has the last word. The
@@ -268,7 +268,7 @@ public final class BrowserMedia {
     /// runs solely because the user asked for it.
     public func requestPermission() {
         // An Automation prompt is only shown for the frontmost app, and an
-        // accessory agent with no ordinary window never becomes frontmost —
+        // accessory agent with no ordinary window never becomes frontmost -
         // so briefly become a regular app, ask, then slip back.
         let policy = NSApp.activationPolicy()
         NSApp.setActivationPolicy(.regular)
@@ -288,7 +288,7 @@ public final class BrowserMedia {
 // MARK: - Apple event plumbing
 
 /// Everything that talks to a browser, kept off the main thread and serialised
-/// onto one queue — `NSAppleScript` is not documented as thread-safe and a 2 s
+/// onto one queue - `NSAppleScript` is not documented as thread-safe and a 2 s
 /// poll has no use for concurrency.
 enum BrowserBridge {
     /// Where the media was found. Indices, because that is all a Chromium or
@@ -531,7 +531,7 @@ enum BrowserBridge {
 
     /// Compiled scripts, keyed by source.
     ///
-    /// Confined to the serial `browser` queue — every call reaches here via
+    /// Confined to the serial `browser` queue - every call reaches here via
     /// `offMain`, so no locking is needed. Recompiling per poll was the single
     /// biggest cost in a profile of this app's music poll; the same applies
     /// here. Per-tab sources embed indices, so the cache is capped rather than
@@ -573,7 +573,7 @@ enum BrowserBridge {
 private enum Script {
     /// Collects `<video>`/`<audio>` from the document and one level of
     /// same-origin iframe, prefers whatever is actually playing, then the
-    /// longest — which skips autoplaying ad and preview clips.
+    /// longest - which skips autoplaying ad and preview clips.
     ///
     /// Cross-origin iframes are unreachable by design, so an embedded player
     /// on a third-party page cannot be read. Every direct watch page
@@ -587,7 +587,7 @@ private enum Script {
     o.sort(function(a,b){return (a.paused-b.paused)||(b.duration-a.duration)});
     """
 
-    /// `mediaSession.metadata` first — YouTube, Netflix, Spotify Web,
+    /// `mediaSession.metadata` first - YouTube, Netflix, Spotify Web,
     /// SoundCloud and Twitch all populate it and it yields a clean title and
     /// artist. `document.title` is the dirty fallback.
     ///
@@ -618,20 +618,20 @@ private enum Script {
     /// The **active** tab of every window, as `window`⇥`index`⇥`url` lines.
     ///
     /// Deliberately not every tab. Chromium suspends background tabs, and
-    /// injected JavaScript in a suspended tab never runs — the Apple Event
+    /// injected JavaScript in a suspended tab never runs - the Apple Event
     /// simply never returns. Measured here: probing one background tab hung
     /// for over two minutes, while the active tab of the same window answered
     /// instantly. One hang is enough to consume the whole scan budget, so only
     /// awake tabs are ever probed.
     ///
     /// The cost of that is real: a video playing in a background tab is not
-    /// found. There is no way around it — we cannot run code in a tab the
+    /// found. There is no way around it - we cannot run code in a tab the
     /// browser has put to sleep.
     ///
     /// Still one plural-form Apple Event rather than one per window.
     static func list(_ browser: BrowserApp) -> String {
         // Safari has no `active tab`; its equivalent is `current tab`, and it
-        // exposes no index for it, so address it as tab 1 of that window —
+        // exposes no index for it, so address it as tab 1 of that window -
         // `execute` special-cases Safari anyway.
         let selection = browser.isSafari
             ? """

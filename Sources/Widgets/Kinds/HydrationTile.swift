@@ -3,8 +3,8 @@ import SwiftUI
 
 /// A glass that fills up between drinks (168×124, always expanded).
 ///
-/// The card is a light blue in *both* appearances — matching the shipped
-/// design — so only the ink flips with the colour scheme.
+/// The card is a light blue in *both* appearances - matching the shipped
+/// design - so only the ink flips with the colour scheme.
 ///
 /// A click on the card belongs to the shelf, so logging a drink is a "+" beside
 /// the readout rather than the whole glass: the card is what opens the widget,
@@ -76,7 +76,7 @@ struct HydrationTile: View {
                 if context.position.isVertical {
                     // 76×88: the water is the widget, so it keeps the whole
                     // column and the readout floats in the middle of it. No
-                    // room — and no need — for the caption.
+                    // room - and no need - for the caption.
                     VStack(spacing: 4) {
                         Text(clock)
                             .font(.system(size: 17, weight: .bold))
@@ -89,7 +89,7 @@ struct HydrationTile: View {
                 } else {
                     // The readout and the control sit side by side rather than
                     // stacked: a wide card is 58pt tall, which the clock, its
-                    // caption and a 26pt disc under them overran — the "+" was
+                    // caption and a 26pt disc under them overran - the "+" was
                     // being clipped off the bottom of the glass.
                     HStack(spacing: 8) {
                         VStack(alignment: .leading, spacing: 1) {
@@ -117,7 +117,7 @@ struct HydrationTile: View {
 
     /// Only ever as big as itself: the card's own click has to reach the shelf,
     /// so nothing here may spread to fill it. `TileGlyph` is the shelf-wide
-    /// treatment for exactly that — see StopwatchTile. The plain "+" replaces
+    /// treatment for exactly that - see StopwatchTile. The plain "+" replaces
     /// `plus.circle.fill`, which would have drawn a disc inside a disc.
     ///
     /// The fill rising is the only confirmation a drink registered, which is

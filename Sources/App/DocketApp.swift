@@ -2,12 +2,12 @@ import AppKit
 import SwiftUI
 
 @main
-struct PlinthMain {
+struct DocketMain {
     static func main() {
         let app = NSApplication.shared
         let delegate = AppDelegate()
         app.delegate = delegate
-        // Agent app: no Dock tile of our own, no menu bar of our own. Plinth's
+        // Agent app: no Dock tile of our own, no menu bar of our own. Docket's
         // only permanent UI is its status item.
         app.setActivationPolicy(.accessory)
         app.run()
@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // is better than no window at all.
         state.installDefaultProfile()
 
-        // Widgets write their own state through here — see WidgetWriter. An
+        // Widgets write their own state through here - see WidgetWriter. An
         // open detail panel holds the instance by value, so it is redrawn from
         // the same funnel rather than left showing what the tile used to say.
         WidgetWriter.update = { [state] instance in

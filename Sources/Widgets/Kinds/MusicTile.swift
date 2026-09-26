@@ -13,7 +13,7 @@ struct MusicTile: View {
     private var config: WidgetConfig { instance.config }
     private var isMini: Bool { config.bool("mini") }
 
-    /// Sources the user allows, in preference order — whichever is enabled
+    /// Sources the user allows, in preference order - whichever is enabled
     /// first wins when both are playing.
     private var sources: [MusicSource] {
         var list: [MusicSource] = []
@@ -60,7 +60,7 @@ struct MusicTile: View {
         }
         .onAppear {
             guard !context.isPreview else { return }
-            // ponytail: shared poll, start-only — the shelf is always on
+            // ponytail: shared poll, start-only - the shelf is always on
             // screen, so there is nothing to stop it for.
             MusicService.shared.enabled = sources
             MusicService.shared.start()
@@ -80,7 +80,7 @@ struct MusicTile: View {
         if isMini {
             // Artwork only, and deliberately inert: on the chip the artwork
             // *is* the card, so a control there would swallow the click that
-            // opens the detail panel — where the transport lives in full.
+            // opens the detail panel - where the transport lives in full.
             Artwork(image: playing?.artwork,
                     side: context.position.isVertical ? 52 : 44, corner: 10)
         } else if needsPermission, playing == nil {
@@ -117,7 +117,7 @@ struct MusicTile: View {
                     }
                     Spacer(minLength: 0)
                     // Play/pause is on the artwork in this layout, so the row
-                    // carries only what the artwork cannot — and is dropped
+                    // carries only what the artwork cannot - and is dropped
                     // entirely when there is nothing else to carry.
                     if track.hasSkipControls {
                         transport(track, size: 14, spacing: 10, playPause: false)
@@ -146,7 +146,7 @@ struct MusicTile: View {
                         .fill(WidgetStyle.primary)
                         .frame(width: max(0, geo.size.width * track.progress))
                         // Playback advances at a constant rate, so gliding to
-                        // each new reading at that rate *is* the truth — and a
+                        // each new reading at that rate *is* the truth - and a
                         // bar that steps once a second reads as a stutter even
                         // though the number behind it is correct. Linear, and
                         // only while playing: a seek or a pause should land.
@@ -203,7 +203,7 @@ struct MusicTile: View {
             .lineLimit(1)
             // Truncated, never shrunk. A video title runs long, and scaling it
             // to fit drove the most important line on the tile down to a few
-            // points — smaller than the artist underneath it.
+            // points - smaller than the artist underneath it.
             .truncationMode(.tail)
     }
 
@@ -219,8 +219,8 @@ struct MusicTile: View {
     /// mean nothing to a `<video>` element, and a button that does nothing is
     /// worse than one that is not there.
     ///
-    /// `playPause` is false where the layout already puts it on the artwork —
-    /// the wide strip does, the column does not — because the two rendered it
+    /// `playPause` is false where the layout already puts it on the artwork -
+    /// the wide strip does, the column does not - because the two rendered it
     /// side by side otherwise, twice in the same row.
     @ViewBuilder
     private func transport(_ track: Playing, size: CGFloat, spacing: CGFloat,
@@ -315,8 +315,8 @@ struct MusicTile: View {
         }
         .foregroundStyle(WidgetStyle.secondary)
         .frame(maxWidth: .infinity)
-        .help(setup.map { "A browser tab has media, but Plinth cannot read it. Turn on \($0)." }
-              ?? (open ? "Nothing is playing." : "Plinth reads \(sourceNames), and video in a scriptable browser tab."))
+        .help(setup.map { "A browser tab has media, but Docket cannot read it. Turn on \($0)." }
+              ?? (open ? "Nothing is playing." : "Docket reads \(sourceNames), and video in a scriptable browser tab."))
     }
 
     /// The menu item the user has to switch on, or nil when nothing is asking.
@@ -350,7 +350,7 @@ struct Playing {
     ///
     /// A `<video>` element has nothing to skip to, so browser playback offers
     /// play/pause and nothing else. Which view draws that one button is the
-    /// layout's business — see `transport`'s `playPause`.
+    /// layout's business - see `transport`'s `playPause`.
     var hasSkipControls: Bool { !isBrowser }
 
     init(native: NowPlaying) {
@@ -378,7 +378,7 @@ struct Playing {
     }
 }
 
-/// Album art, or a music-note placeholder when there is none — the tile must
+/// Album art, or a music-note placeholder when there is none - the tile must
 /// never show an empty hole while artwork is still downloading.
 private struct Artwork: View {
     var image: NSImage?
@@ -436,7 +436,7 @@ private struct Artwork: View {
                         // Full strength, and large. The artwork renders about
                         // 31pt on a default-sized shelf, so a small
                         // semi-transparent glyph over a dark placeholder was
-                        // invisible in practice — it read as no control at all.
+                        // invisible in practice - it read as no control at all.
                         Image(systemName: control ? "pause.fill" : "play.fill")
                             .font(.system(size: side * 0.46, weight: .bold))
                             .foregroundStyle(.white)

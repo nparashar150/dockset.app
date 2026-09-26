@@ -22,7 +22,7 @@ jobs:
 
       # project.yml pins Manual signing against a real Apple Development
       # certificate and team, because macOS will not attach permission grants
-      # to an ad-hoc identity — a developer building locally needs that. A
+      # to an ad-hoc identity - a developer building locally needs that. A
       # runner has neither the certificate nor the team, so every build here
       # overrides signing on the command line: ad-hoc identity, no team, and
       # the hardened runtime off, since it is only meaningful alongside a real
@@ -31,21 +31,21 @@ jobs:
       - name: Build the app
         run: |
           xcodebuild build \
-            -project Plinth.xcodeproj \
-            -scheme Plinth \
+            -project Docket.xcodeproj \
+            -scheme Docket \
             -configuration Debug \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="-" \
             DEVELOPMENT_TEAM="" \
             ENABLE_HARDENED_RUNTIME=NO
 
-      # A separate step because PlinthTests compiles only the pure core, not
-      # the app's own sources — a break in the app would not show up here.
+      # A separate step because DocketTests compiles only the pure core, not
+      # the app's own sources - a break in the app would not show up here.
       - name: Run the tests
         run: |
           xcodebuild test \
-            -project Plinth.xcodeproj \
-            -scheme PlinthTests \
+            -project Docket.xcodeproj \
+            -scheme DocketTests \
             -configuration Debug \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="-" \

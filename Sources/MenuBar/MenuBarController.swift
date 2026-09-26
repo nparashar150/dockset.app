@@ -22,7 +22,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     func refreshButton() {
         guard let button = statusItem.button else { return }
         button.image = NSImage(systemSymbolName: "rectangle.bottomthird.inset.filled",
-                               accessibilityDescription: "Plinth")
+                               accessibilityDescription: "Docket")
         button.image?.isTemplate = true
         button.title = labelText.isEmpty ? "" : " \(labelText)"
     }
@@ -61,7 +61,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         menu.addItem(.separator())
         menu.addItem(item("Add Widget…", #selector(openLibrary)))
         menu.addItem(item("Settings…", #selector(openSettings), key: ","))
-        menu.addItem(item("Quit Plinth", #selector(quit), key: "q"))
+        menu.addItem(item("Quit Docket", #selector(quit), key: "q"))
     }
 
     private func addProfileSection(to menu: NSMenu, kind: ProfileKind, title: String) {

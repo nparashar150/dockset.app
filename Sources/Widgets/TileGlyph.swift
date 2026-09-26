@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The shape every inline control on these tiles wears.
 ///
-/// A bare symbol dropped at the trailing edge of a card reads as decoration —
+/// A bare symbol dropped at the trailing edge of a card reads as decoration -
 /// nothing about it says it can be pressed. Every compact macOS surface that
 /// has to fit a control beside a readout answers this the same way, from
 /// Control Center's tiles to the menu bar's Now Playing: a low-opacity disc
@@ -11,7 +11,7 @@ import SwiftUI
 ///
 /// It is twice the glyph across, which is the hit target these tiles already
 /// reserved, so a control gains its backing without any layout moving around
-/// it — the 76pt column keeps the smaller glyph it was drawn with and the
+/// it - the 76pt column keeps the smaller glyph it was drawn with and the
 /// 168pt card keeps its larger one.
 ///
 /// The disc takes its colour from the glyph, so the Alarm's orange stays
@@ -62,7 +62,7 @@ private extension View {
             .foregroundStyle(tint)
             .frame(width: size * 2, height: size * 2)
             .background(Circle().fill(tint.opacity(pressed ? 0.3 : 0.13)))
-            // Confined to the disc — and to the disc's own round shape, so the
+            // Confined to the disc - and to the disc's own round shape, so the
             // corners of its box still belong to the card. A descendant tap
             // beats the shelf's, and the shelf's is what opens the widget.
             .contentShape(Circle())

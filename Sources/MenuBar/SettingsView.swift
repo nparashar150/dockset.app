@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Plinth's Settings window.
+/// Docket's Settings window.
 ///
 /// It owns no state: the app passes a binding to the single `PersistedState`
 /// it already persists, so every edit here is saved by the same code path that
@@ -82,7 +82,7 @@ struct SettingsView: View {
             } header: {
                 Text("Saved Docks")
             } footer: {
-                Text("A backup contains your saved profiles — names, colours, items and widget configuration — not the apps or files they point to.")
+                Text("A backup contains your saved profiles - names, colours, items and widget configuration - not the apps or files they point to.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -104,7 +104,7 @@ struct SettingsView: View {
                     }
                 }
             } footer: {
-                Text("Turn this off to place and size Plinth independently of your Dock.")
+                Text("Turn this off to place and size Docket independently of your Dock.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -119,7 +119,7 @@ struct SettingsView: View {
                 Picker("Display", selection: $state.customDock.displayID) {
                     Text("Active display").tag(UInt32?.none)
                     ForEach(NSScreen.screens, id: \.self) { screen in
-                        if let id = screen.plinthDisplayID {
+                        if let id = screen.docketDisplayID {
                             Text(screen.localizedName).tag(UInt32?.some(id))
                         }
                     }
@@ -197,7 +197,7 @@ struct SettingsView: View {
             } header: {
                 Text("Focus Timer")
             } footer: {
-                Text("Every Focus Timer widget shares these settings — Plinth treats them as one timer.")
+                Text("Every Focus Timer widget shares these settings - Docket treats them as one timer.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -235,11 +235,11 @@ struct SettingsView: View {
                     Image(nsImage: NSApp.applicationIconImage)
                         .resizable()
                         .frame(width: 64, height: 64)
-                    Text("Plinth").font(.title2.weight(.semibold))
+                    Text("Docket").font(.title2.weight(.semibold))
                     Text("Version \(shortVersion)")
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
-                    Text("Plinth keeps everything on this Mac, in a single file in Application Support. Nothing is synced.")
+                    Text("Docket keeps everything on this Mac, in a single file in Application Support. Nothing is synced.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -253,7 +253,7 @@ struct SettingsView: View {
     }
 
     private var shortVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "-"
     }
 }
 
@@ -309,7 +309,7 @@ private func title(_ value: MenuBarLabelMode) -> String {
 
 private extension NSScreen {
     /// `CGDirectDisplayID` for this screen, which is what `displayID` stores.
-    var plinthDisplayID: UInt32? {
+    var docketDisplayID: UInt32? {
         deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? UInt32
     }
 }

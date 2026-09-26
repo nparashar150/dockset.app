@@ -86,7 +86,7 @@ struct SystemActivityTile: View {
                 // bare percentages cannot say which one is the memory.
                 // The arc is the reading. A number inside it says the same
                 // thing twice and is the part that made the gauge look busy,
-                // so the middle carries what the ring is *of* instead — which
+                // so the middle carries what the ring is *of* instead - which
                 // also retires the label underneath and lets the ring take
                 // the card's full height.
                 MetricProgressRing(progress: value(metric),
@@ -131,7 +131,7 @@ struct SystemActivityTile: View {
 
     // MARK: Column layouts
     //
-    // Each metric owns a 54pt row — `WidgetCatalog.verticalHeight` hands out
+    // Each metric owns a 54pt row - `WidgetCatalog.verticalHeight` hands out
     // `metrics * 54 + 8`, the 8 being this stack's vertical padding.
 
     private var verticalNumbers: some View {
@@ -315,7 +315,7 @@ struct SystemActivityTile: View {
         }
 
         /// Shown inside its ring in place of a number. `cpuchip` does not
-        /// exist on this system — checked — so the older `cpu` is used.
+        /// exist on this system - checked - so the older `cpu` is used.
         var symbol: String {
             switch self {
             case .cpu: "cpu"
@@ -358,7 +358,7 @@ struct SystemActivityTile: View {
 }
 
 /// A round progress gauge with something in the middle. Shared by the system
-/// and battery tiles — the only two kinds that draw one.
+/// and battery tiles - the only two kinds that draw one.
 struct MetricProgressRing<Content: View>: View {
     var progress: Double
     var tint: Color

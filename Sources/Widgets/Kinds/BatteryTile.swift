@@ -57,7 +57,7 @@ struct BatteryTile: View {
     }
 
     /// The same gauge the activity tile draws: the arc is the reading, and the
-    /// middle says what it is of. No figure underneath — it restates the arc
+    /// middle says what it is of. No figure underneath - it restates the arc
     /// and is what made the ring look cramped next to the metric rings.
     private var gauges: some View {
         HStack(spacing: 0) {
@@ -109,7 +109,7 @@ struct BatteryTile: View {
         }
     }
 
-    /// One 62pt row per device — `WidgetCatalog.verticalHeight` hands out
+    /// One 62pt row per device - `WidgetCatalog.verticalHeight` hands out
     /// `devices * 62`. A lone device gets the bigger ring the room allows.
     private var column: some View {
         VStack(spacing: 0) {
@@ -165,7 +165,7 @@ struct BatteryTile: View {
     }
 
     /// What a tile needs to draw one device. An absent device keeps `level` at
-    /// zero — a missing accessory must never show an invented percentage.
+    /// zero - a missing accessory must never show an invented percentage.
     private struct Reading {
         var level: Double
         var charging: Bool
@@ -206,7 +206,7 @@ struct BatteryTile: View {
                     .foregroundStyle(WidgetStyle.secondary)
             }
         } else {
-            Text("—")
+            Text("-")
                 .font(.system(size: size, weight: .bold))
                 .foregroundStyle(WidgetStyle.secondary)
         }

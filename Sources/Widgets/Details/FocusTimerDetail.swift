@@ -5,7 +5,7 @@ import SwiftUI
 /// buttons, and the session lengths it has no room for at all.
 ///
 /// The timer is one timer for the whole app, so every action here writes
-/// `TimerStateProvider.shared.state` on the tile's terms — pausing banks what
+/// `TimerStateProvider.shared.state` on the tile's terms - pausing banks what
 /// is left rather than the deadline, so resuming carries on from the figure on
 /// screen instead of from a moment that has since gone by.
 struct FocusTimerDetail: View {
@@ -35,7 +35,7 @@ struct FocusTimerDetail: View {
 
         return VStack(spacing: 16) {
             VStack(spacing: 4) {
-                Text(plinthClockString(left))
+                Text(docketClockString(left))
                     .font(WidgetStyle.value(52))
                     .monospacedDigit()
                     .foregroundStyle(WidgetStyle.primary)
@@ -114,7 +114,7 @@ struct FocusTimerDetail: View {
         return "\(state.phase.label) · Session \(session) of \(state.sessions)"
     }
 
-    /// A countdown at zero has nothing to resume, so it offers a fresh start —
+    /// A countdown at zero has nothing to resume, so it offers a fresh start -
     /// which is what pressing it then does.
     private func primaryTitle(_ state: TimerState, left: TimeInterval) -> String {
         guard left > 0 else { return "Start" }

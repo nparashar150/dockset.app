@@ -3,7 +3,7 @@ import AppKit
 
 /// The shelf's backing surface.
 ///
-/// Two materials. **Liquid Glass** uses macOS 26's real `glassEffect` — an
+/// Two materials. **Liquid Glass** uses macOS 26's real `glassEffect` - an
 /// earlier version of this file approximated it with a blur plus stacked white
 /// overlays, which produced a flat milky slab with none of the refraction or
 /// specular edge that makes the genuine material read as glass. **Frosted** is
@@ -74,7 +74,7 @@ struct MaterialBackground: View {
     /// The real macOS 26 material, shape-matched to the shelf.
     ///
     /// Glass samples whatever is behind the window, so over a white page it
-    /// turns white — and the shelf's labels, which follow the *system*
+    /// turns white - and the shelf's labels, which follow the *system*
     /// appearance, stayed white and vanished into it. Measured against the
     /// real Dock in the same screenshot: the Dock holds ~47 luminance units of
     /// separation from its backdrop, this held 23. The scrim floors that
@@ -92,7 +92,7 @@ struct MaterialBackground: View {
     }
 }
 
-/// `NSVisualEffectView` bridge — SwiftUI's `.ultraThinMaterial` samples only
+/// `NSVisualEffectView` bridge - SwiftUI's `.ultraThinMaterial` samples only
 /// within the window, and a floating shelf needs what is *behind* it.
 struct VisualEffectPlate: NSViewRepresentable {
     var material: NSVisualEffectView.Material

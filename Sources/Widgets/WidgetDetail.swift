@@ -4,7 +4,7 @@ import SwiftUI
 /// A widget's detail panel: what opens when its tile is clicked.
 ///
 /// This is the shape the reference shelf takes and the one thing the tiles
-/// were missing. A tile is a glance — a temperature, a percentage, a title —
+/// were missing. A tile is a glance - a temperature, a percentage, a title -
 /// and the panel is where the same widget says everything it knows: the whole
 /// day's events rather than the next one, every battery rather than the Mac's,
 /// a chart behind the number.
@@ -21,12 +21,12 @@ final class WidgetDetailWindow {
 
     private var panel: KeyablePanel?
     private var hosting: FirstMouseHostingView<WidgetDetailChrome>?
-    /// Watches for the click that dismisses it — one monitor for clicks
+    /// Watches for the click that dismisses it - one monitor for clicks
     /// landing in another app, one for clicks landing in this one.
     private var monitors: [Any] = []
     /// The shelf's own frame, which the dismissal watcher ignores.
     ///
-    /// The shelf already decides what a click on it means — the same tile
+    /// The shelf already decides what a click on it means - the same tile
     /// toggles this shut, another widget swaps it, an app tile closes it. A
     /// monitor closing it first would let the tile's own tap reopen it on the
     /// very same press.
@@ -51,8 +51,8 @@ final class WidgetDetailWindow {
     /// Redraws the open panel after its widget's config changed.
     ///
     /// The panel is handed a `WidgetInstance` by value, so a tile that edits
-    /// its own config — the stocks chevron stepping to the next symbol, a
-    /// setting changed while the panel is up — left the two disagreeing until
+    /// its own config - the stocks chevron stepping to the next symbol, a
+    /// setting changed while the panel is up - left the two disagreeing until
     /// it was closed and reopened. Every widget write funnels through
     /// `WidgetWriter`, which is where this is called from.
     ///
@@ -70,7 +70,7 @@ final class WidgetDetailWindow {
     /// Closes on the next click outside the panel and its own tile.
     ///
     /// The panel used to close when the *pointer* left it, on a half-second
-    /// timer — which is why it needed a close button: a panel that vanishes
+    /// timer - which is why it needed a close button: a panel that vanishes
     /// because you looked away is one you cannot trust to stay. Nothing on
     /// this platform behaves that way. A popover waits for a click.
     private func watchForDismissal() {
@@ -150,7 +150,7 @@ final class WidgetDetailWindow {
         // Only now is the tail's offset knowable: clamping against the end of
         // the screen moves the panel but not the tile, and a tail still
         // pointing at the panel's own middle would point at nothing. Assigning
-        // the root view twice is cheap and cannot change the measured size —
+        // the root view twice is cheap and cannot change the measured size -
         // the offset moves the tail within the outline, not the frame.
         let offset: CGFloat = switch edge {
         case .bottom: anchor.x - (placed.x + size.width / 2)
@@ -216,7 +216,7 @@ final class WidgetDetailWindow {
 /// tail pointing back at the tile.
 ///
 /// There is no header at all. It carried the widget's name, a settings button
-/// and a close button, and each has somewhere better to be — the tail says
+/// and a close button, and each has somewhere better to be - the tail says
 /// which tile this belongs to, settings are in that tile's context menu, and
 /// it closes on a click outside, on Escape or on Command-W. A close button is
 /// what you add when you do not trust the dismissal, and it was the first
@@ -272,7 +272,7 @@ struct WidgetDetailChrome: View {
     ///
     /// This has been wrong twice. First `.regularMaterial` with the widget's
     /// accent flooded over the whole surface, which reads as a web card and
-    /// defeats vibrancy — the thing that makes native text sit *in* a surface
+    /// defeats vibrancy - the thing that makes native text sit *in* a surface
     /// rather than on it. Then an opaque window background, which fixed the
     /// stain and lost the vibrancy with it. `.popover` is documented as
     /// exactly this material, and a real popover's layer tree carries no tint
@@ -316,7 +316,7 @@ enum WidgetDetail {
     static func exists(for kind: WidgetKind) -> Bool {
         switch kind {
         // Everything with a tile and something to say. `.shortcut` and
-        // `.aiUsage` are the only kinds left out, and both are stubs — no
+        // `.aiUsage` are the only kinds left out, and both are stubs - no
         // tile, no service, nothing a panel could honestly show.
         case .shortcut, .aiUsage:
             false

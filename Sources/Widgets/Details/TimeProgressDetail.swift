@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-/// All three spans at once — which is the one thing the tile cannot do.
+/// All three spans at once - which is the one thing the tile cannot do.
 ///
 /// Its period name is a button that pages day → month → year, so a card only
 /// ever answers one of the three questions and you have to click twice to see
@@ -9,7 +9,7 @@ import SwiftUI
 /// three quarters gone sitting above a year barely past three quarters is a
 /// different feeling from either number alone.
 ///
-/// Nothing is read but the calendar, same as the tile — real intervals around
+/// Nothing is read but the calendar, same as the tile - real intervals around
 /// the current moment, so DST days and leap years stay honest. Each row
 /// carries the figure behind its percentage, because "73%" of a year is a mood
 /// and "98 days left" is something you can act on.
@@ -35,9 +35,9 @@ struct TimeProgressDetail: View {
     /// A row is also the tile's period control: clicking one puts that span on
     /// the card, which is the same write the tile's own name makes.
     ///
-    /// The library draws live previews, where a write must never fire — and a
+    /// The library draws live previews, where a write must never fire - and a
     /// button that refused to act would still swallow the click that adds the
-    /// widget — so there the rows are plain text.
+    /// widget - so there the rows are plain text.
     @ViewBuilder
     private func row(_ span: Span, now: Date) -> some View {
         if context.isPreview {
@@ -78,7 +78,7 @@ struct TimeProgressDetail: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// Bold figure, quiet sign — the tile's own treatment, so a percentage
+    /// Bold figure, quiet sign - the tile's own treatment, so a percentage
     /// does not change character on its way from the shelf into the panel.
     private func percent(_ fraction: Double) -> some View {
         let value = Int(fraction * 100)
@@ -112,7 +112,7 @@ struct TimeProgressDetail: View {
     // MARK: Figures
 
     /// 0…1 through the span, clamped. A missing interval means the calendar
-    /// could not place the date at all — nothing rather than no progress — but
+    /// could not place the date at all - nothing rather than no progress - but
     /// a bar has to be drawn at some length, and empty is the honest one.
     private func fraction(_ interval: DateInterval?, now: Date) -> Double {
         guard let interval, interval.duration > 0 else { return 0 }
@@ -122,7 +122,7 @@ struct TimeProgressDetail: View {
     /// What is actually left, in the unit the span is lived in: a day in hours
     /// and minutes, the longer spans in days.
     private func remaining(_ span: Span, end: Date?, now: Date) -> String {
-        guard let end else { return "—" }
+        guard let end else { return "-" }
         switch span {
         case .day:
             // Rounded up, so the last half-minute of the day reads "1m left"
@@ -174,8 +174,8 @@ struct TimeProgressDetail: View {
             }
         }
 
-        /// The tile's label for the span — the weekday, the month's name, the
-        /// year — rather than the abstract word for it.
+        /// The tile's label for the span - the weekday, the month's name, the
+        /// year - rather than the abstract word for it.
         func title(_ now: Date) -> String {
             switch self {
             case .day: now.formatted(.dateTime.weekday(.wide))

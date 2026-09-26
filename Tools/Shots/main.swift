@@ -10,7 +10,7 @@ import SwiftUI
 // blending: .behindWindow)`, and behind-window vibrancy is sampled by the
 // window server from what is genuinely composited behind the window. Nothing
 // is behind an offscreen bitmap, so an offscreen render comes back as a
-// transparent — or, once flattened, black — slab with the text floating on it.
+// transparent - or, once flattened, black - slab with the text floating on it.
 // The material is most of what these panels look like, so the only honest
 // render is one the display has actually drawn.
 //
@@ -22,7 +22,7 @@ import SwiftUI
 
 // MARK: - Protocol with the capture script
 //
-// One line per shot on stdout — `name x y width height` — then a blocking read
+// One line per shot on stdout - `name x y width height` - then a blocking read
 // of stdin, which the script answers once `screencapture` has returned. A
 // handshake rather than a sleep because a fixed wait is either too short on a
 // busy machine or wasted on an idle one, and a truncated capture is silent.
@@ -42,7 +42,7 @@ private func log(_ message: String) {
 /// `screencapture -R` measures from the top-left of the primary display and
 /// counts downward; AppKit's screen coordinates start at that display's
 /// bottom-left and count upward. Both describe the same global space, so the
-/// flip is against the *primary* screen's full frame — not the visible frame,
+/// flip is against the *primary* screen's full frame - not the visible frame,
 /// which excludes the menu bar, and not the frame of whichever screen the
 /// window happens to be on.
 private func topLeftRect(_ rect: CGRect) -> CGRect {
@@ -87,7 +87,7 @@ private func shots() -> [Shot] {
         Shot(name: "focus-timer", instance: widget(.timer), isPreview: false,
              prepare: startFocusSession),
 
-        // Sample data — the same deterministic traffic the library draws.
+        // Sample data - the same deterministic traffic the library draws.
         Shot(name: "network", instance: widget(.network), isPreview: true),
 
         // The music panel has no sample data at all, by design: it shows what
@@ -98,7 +98,7 @@ private func shots() -> [Shot] {
         Shot(name: "music", instance: widget(.music), isPreview: true),
 
         // Live, and deliberately last: the graph is drawn from
-        // `SystemMetrics`' rolling buffer, which has no `isPreview` stand-in —
+        // `SystemMetrics`' rolling buffer, which has no `isPreview` stand-in -
         // the only way to show it is to let the sampler fill, which it has
         // been doing since launch while the other panels were captured.
         Shot(name: "system-activity",
@@ -119,7 +119,7 @@ private func widget(_ kind: WidgetKind,
 /// Starts a focus session the way the panel's own Start button does.
 ///
 /// `TimerStateProvider` is in-memory and is never persisted, so this touches
-/// nothing the user has saved — and the countdown in the image is a real one,
+/// nothing the user has saved - and the countdown in the image is a real one,
 /// not a time typed in to look busy.
 @MainActor
 private func startFocusSession() async {
@@ -226,12 +226,12 @@ private func run() async {
     // `.main` is the screen with keyboard focus, which a tool that never
     // becomes key may not have; the first screen is the primary display.
     guard let screen = NSScreen.main ?? NSScreen.screens.first else {
-        log("no display attached — these shots have to be taken on a real screen")
+        log("no display attached - these shots have to be taken on a real screen")
         exit(1)
     }
 
     // Started first thing so the buffer is filling all through the run, and
-    // the system panel — captured last — has a full minute to draw.
+    // the system panel - captured last - has a full minute to draw.
     SystemMetrics.shared.start()
 
     let backdrop = makeBackdrop(on: screen)

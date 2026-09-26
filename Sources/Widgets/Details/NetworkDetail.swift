@@ -3,7 +3,7 @@ import SwiftUI
 /// Network said at length: the two rates the tile leads with, and under them
 /// the minute they came out of.
 ///
-/// The tile answers "how fast, right now" — a figure that is already stale by
+/// The tile answers "how fast, right now" - a figure that is already stale by
 /// the time it is read. What a card cannot hold is the *shape*: whether this
 /// second is a spike in an idle minute or the tail of a long download, and how
 /// the two directions relate. That is the whole reason this panel exists.
@@ -12,7 +12,7 @@ import SwiftUI
 /// sixty one-second samples of each. The sampler sums every non-loopback link,
 /// so there is no interface to name, and it keeps rates rather than counters,
 /// so there is no session total to report. The averages and peaks below are
-/// read off the same history the chart draws — nothing here is a second
+/// read off the same history the chart draws - nothing here is a second
 /// source.
 struct NetworkDetail: View {
     var instance: WidgetInstance
@@ -23,7 +23,7 @@ struct NetworkDetail: View {
             headline
 
             // Two samples is the minimum a line can be drawn from, and the
-            // sampler's first tick is only a baseline — so a panel opened in
+            // sampler's first tick is only a baseline - so a panel opened in
             // the first seconds of the shelf's life honestly shows the rates
             // alone until the history catches up.
             if window >= 2 {
@@ -81,7 +81,7 @@ struct NetworkDetail: View {
     /// Both directions over one shared minute.
     ///
     /// Throughput has no natural ceiling the way a percentage does, so the
-    /// scale is the larger of the two series' own peaks — the same choice the
+    /// scale is the larger of the two series' own peaks - the same choice the
     /// tile's sparkline makes, and the only one under which the lines can be
     /// read against each other. Let each auto-scale and a 2 KB/s keepalive
     /// would draw exactly as tall as a 40 MB/s download sitting beside it.
@@ -218,7 +218,7 @@ struct NetworkDetail: View {
         }
     }
 
-    /// KB/s until it no longer fits, then MB/s — the tile's rule, so the
+    /// KB/s until it no longer fits, then MB/s - the tile's rule, so the
     /// headline reads the same before and after the panel opens.
     private func formatted(_ bytesPerSecond: Double) -> (value: String, unit: String) {
         let kb = max(bytesPerSecond, 0) / 1024

@@ -4,8 +4,8 @@ import SwiftUI
 /// Now Playing at length: the artwork at a size worth looking at, the track,
 /// a scrubber you can actually drag, and the transport in full.
 ///
-/// The tile is width-starved — 264pt carrying artwork, two lines of text, a
-/// scrubber and buttons — so it hides controls and shrinks the art. None of
+/// The tile is width-starved - 264pt carrying artwork, two lines of text, a
+/// scrubber and buttons - so it hides controls and shrinks the art. None of
 /// those compromises apply here, and the panel undoes them rather than
 /// restating the tile larger.
 ///
@@ -140,7 +140,7 @@ struct MusicDetail: View {
     /// Browser playback is read-only apart from play/pause: there is no way to
     /// move a `<video>` element's playhead from here.
     private func seek(_ track: Playing, width: CGFloat) -> some Gesture {
-        // Zero minimum distance so a plain click seeks too — jumping to a
+        // Zero minimum distance so a plain click seeks too - jumping to a
         // point is the more common gesture, dragging the rarer one.
         DragGesture(minimumDistance: 0)
             .onChanged { value in
@@ -175,7 +175,7 @@ struct MusicDetail: View {
     // MARK: Transport
 
     /// Previous and next are unconditional here even though the tile makes
-    /// them optional — that switch exists to buy width on a 264pt strip, and
+    /// them optional - that switch exists to buy width on a 264pt strip, and
     /// the panel has width to spare. The skip-by-N buttons stay opt-in,
     /// because those are a preference rather than a concession to space.
     @ViewBuilder
@@ -263,11 +263,11 @@ struct MusicDetail: View {
         let setup = browserSetupHint
         return VStack(spacing: 4) {
             Text(setup == nil ? (open ? "Not playing" : "Nothing to read")
-                              : "A tab has media Plinth cannot read")
+                              : "A tab has media Docket cannot read")
                 .font(WidgetStyle.label(13))
                 .foregroundStyle(WidgetStyle.primary)
             Text(setup ?? (open ? "Start something in \(sourceNames)."
-                                : "Plinth reads \(sourceNames), and video in a scriptable browser tab."))
+                                : "Docket reads \(sourceNames), and video in a scriptable browser tab."))
                 .font(WidgetStyle.caption(12))
                 .foregroundStyle(WidgetStyle.secondary)
         }

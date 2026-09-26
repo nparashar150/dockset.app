@@ -32,7 +32,7 @@ final class ScrollRelay {
     /// across a side shelf is as natural as one along it.
     ///
     /// A trackpad reports precise deltas already in points, so those map
-    /// straight through. A mouse wheel reports *notches* — passing a delta of
+    /// straight through. A mouse wheel reports *notches* - passing a delta of
     /// 1 through unscaled would creep the shelf one point per click.
     nonisolated static func step(dx: CGFloat, dy: CGFloat, precise: Bool) -> CGFloat {
         let delta = abs(dx) > abs(dy) ? dx : dy
@@ -44,7 +44,7 @@ final class ScrollRelay {
 ///
 /// Event monitors are the wrong tool here, and the panel is too far up. A
 /// *local* monitor only sees events routed to this app, and a non-activating
-/// panel belonging to an accessory agent is often not the event target — macOS
+/// panel belonging to an accessory agent is often not the event target - macOS
 /// hands the scroll to whatever is underneath, so it never fires. A *global*
 /// monitor always sees it but needs Accessibility permission and cannot
 /// consume, so the window behind scrolls too. Overriding the panel does

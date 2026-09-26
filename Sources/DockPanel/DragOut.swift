@@ -4,7 +4,7 @@ import Observation
 /// An icon being dragged out of an opened group.
 ///
 /// The group sheet and the shelf are two separate `NSWindow`s, so they share
-/// no SwiftUI hierarchy — no `Namespace`, no `matchedGeometryEffect`, no
+/// no SwiftUI hierarchy - no `Namespace`, no `matchedGeometryEffect`, no
 /// gesture that spans both. This is the channel between them: the sheet
 /// publishes where the icon currently is, and the shelf reads it to open a
 /// gap under it, so the drag reads as one gesture across two windows.
@@ -19,7 +19,7 @@ final class DragOut {
     private(set) var group: UUID?
     /// Where the pointer is, in screen coordinates.
     private(set) var location: CGPoint = .zero
-    /// Whether the pointer has left the sheet — only then does the shelf make
+    /// Whether the pointer has left the sheet - only then does the shelf make
     /// room, or an icon nudged inside its own folder would part the row.
     private(set) var outside = false
 

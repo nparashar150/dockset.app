@@ -17,8 +17,8 @@ struct WeatherTile: View {
 
     /// An empty `city` means "wherever I am".
     ///
-    /// That is the default now. The shipped default was "Oslo" — the city in
-    /// the reference screenshots — and a widget that confidently reports the
+    /// That is the default now. The shipped default was "Oslo" - the city in
+    /// the reference screenshots - and a widget that confidently reports the
     /// weather somewhere the user has never been is worse than one that asks.
     private var city: String {
         let stored = instance.config.string("city").trimmingCharacters(in: .whitespaces)
@@ -29,7 +29,7 @@ struct WeatherTile: View {
     /// What the tile says where the city goes.
     ///
     /// Never blank. This app is an accessory and never becomes frontmost, so
-    /// a location prompt can go unseen the same way the automation one does —
+    /// a location prompt can go unseen the same way the automation one does -
     /// and a widget showing "--°" under no name at all gives the user nothing
     /// to act on. Say which of the two states it is in.
     private var placeCaption: String {
@@ -50,7 +50,7 @@ struct WeatherTile: View {
     var body: some View {
         // No tint of its own. Weather ran an orange card while the clock,
         // battery and activity tiles beside it used the neutral recess, which
-        // is the inconsistency — the reference shelf tints only what is
+        // is the inconsistency - the reference shelf tints only what is
         // genuinely coloured (a sticky note's paper), never a readout.
         WidgetSurface {
             if context.position.isVertical {
@@ -58,7 +58,7 @@ struct WeatherTile: View {
             } else {
                 switch layout {
                 case "hourly": hourlyStrip
-                case "conditions": wide(caption: weather?.condition ?? "—", size: 12, lines: 2)
+                case "conditions": wide(caption: weather?.condition ?? "-", size: 12, lines: 2)
                 default: wide(caption: placeCaption, size: 14, lines: 1)
                 }
             }
@@ -139,7 +139,7 @@ struct WeatherTile: View {
         VStack(spacing: 2) {
             icon(size: 21)
             temperature(weather?.temperatureC, size: 17)
-            Text(layout == "conditions" ? (weather?.condition ?? "—") : city)
+            Text(layout == "conditions" ? (weather?.condition ?? "-") : city)
                 .font(WidgetStyle.caption(10))
                 .foregroundStyle(WidgetStyle.secondary)
                 .lineLimit(1)
@@ -157,7 +157,7 @@ struct WeatherTile: View {
     }
 
     /// Big figure with a lighter degree mark riding on top of it. A missing
-    /// reading shows dashes — never a zero that could pass for real weather.
+    /// reading shows dashes - never a zero that could pass for real weather.
     private func temperature(_ celsius: Double?, size: CGFloat) -> some View {
         HStack(alignment: .top, spacing: 0) {
             Text(celsius.map { String(Int(converted($0).rounded())) } ?? "--")

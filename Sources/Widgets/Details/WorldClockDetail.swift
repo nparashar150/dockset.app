@@ -6,7 +6,7 @@ import SwiftUI
 /// The strip is the part the tile can never be. A card shows one instant in one
 /// city; the question anyone actually has about another zone is when the two
 /// overlap. Every column is the same moment formatted twice, so nothing here is
-/// predicted — the zone's own rules do the arithmetic, daylight saving changes
+/// predicted - the zone's own rules do the arithmetic, daylight saving changes
 /// included.
 ///
 /// One zone, because one widget carries one zone: `zone` and `city` are single
@@ -138,7 +138,7 @@ struct WorldClockDetail: View {
         return date.formatted(style)
     }
 
-    /// Daytime by the clock — 6am to 6pm — and not by the sun.
+    /// Daytime by the clock - 6am to 6pm - and not by the sun.
     ///
     /// Nothing in the app knows when the sun rises in an arbitrary city: the
     /// weather service holds one place and carries no sunrise even for that,

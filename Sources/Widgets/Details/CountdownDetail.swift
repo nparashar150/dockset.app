@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// The model is one key: `deadline`, an epoch, written by the tile's play
 /// glyph. Present and in the future means running; absent means idle, and the
-/// figure then stands at the full `duration` rather than at zero — again the
+/// figure then stands at the full `duration` rather than at zero - again the
 /// tile's own rule, so the card and the panel cannot disagree.
 ///
 /// There is no pause. A paused countdown would have to bank what is left
@@ -36,7 +36,7 @@ struct CountdownDetail: View {
 
         return VStack(spacing: 16) {
             VStack(spacing: 4) {
-                Text(plinthClockString(left))
+                Text(docketClockString(left))
                     .font(WidgetStyle.value(52))
                     .monospacedDigit()
                     .foregroundStyle(WidgetStyle.primary)
@@ -111,7 +111,7 @@ struct CountdownDetail: View {
     }
 
     /// Absent while idle, so the panel can tell "not started" from "finished"
-    /// — both of which read 0:00 on a card.
+    /// - both of which read 0:00 on a card.
     private var deadline: TimeInterval? {
         guard !context.isPreview, instance.config["deadline"] != nil else { return nil }
         return instance.config.double("deadline")
@@ -130,7 +130,7 @@ struct CountdownDetail: View {
     /// `presets` in the widget's own config, read as minutes. The settings
     /// pane has no editor for the key, so an unset list falls back to the
     /// lengths a countdown is usually cut to rather than leaving the row
-    /// empty — these are controls, not a claim about the user's timers.
+    /// empty - these are controls, not a claim about the user's timers.
     private var presets: [Int] {
         let configured = instance.config.strings("presets")
             .compactMap { Int($0.prefix(while: \.isNumber)) }
@@ -170,7 +170,7 @@ struct CountdownDetail: View {
     }
 
     /// A preset sets the length the countdown runs for, and trims one already
-    /// in flight rather than restarting it — restarting is the button above.
+    /// in flight rather than restarting it - restarting is the button above.
     private func pick(_ minutes: Int, now: Date) {
         guard !context.isPreview else { return }
         let picked = Double(minutes * 60)

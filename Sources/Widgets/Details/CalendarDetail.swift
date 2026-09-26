@@ -4,8 +4,8 @@ import SwiftUI
 
 /// The whole of today, where the tile has room for the next thing only.
 ///
-/// Nothing else in Plinth reads EventKit yet — the calendar kind still draws
-/// as `UnavailableTile` and there is no calendar service — so the panel talks
+/// Nothing else in Docket reads EventKit yet - the calendar kind still draws
+/// as `UnavailableTile` and there is no calendar service - so the panel talks
 /// to the store itself and keeps what it reads in value types of its own. It
 /// asks for access only when the user clicks for it, and when it has none it
 /// says so in one line: a calendar showing a plausible day it made up is worse
@@ -20,7 +20,7 @@ struct CalendarDetail: View {
     /// The filter as the panel currently has it.
     ///
     /// The chrome hands the panel the instance it was opened with and never
-    /// updates it, so a config write does not come back here — without a local
+    /// updates it, so a config write does not come back here - without a local
     /// copy, ticking a calendar off would change nothing until the panel was
     /// reopened. `nil` means "not touched yet, read the config".
     @State private var picked: Set<String>?
@@ -69,7 +69,7 @@ struct CalendarDetail: View {
                 .foregroundStyle(WidgetStyle.primary)
             Spacer(minLength: 12)
             // Nothing to choose between with one calendar, and no filter to
-            // offer without access — a button that opens an empty menu reads
+            // offer without access - a button that opens an empty menu reads
             // as broken.
             if granted, calendars.count > 1 { picker }
         }
@@ -163,8 +163,8 @@ struct CalendarDetail: View {
     private var permission: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(access == .notDetermined
-                 ? "Plinth has not been given access to your calendar."
-                 : "Calendar access is off for Plinth.")
+                 ? "Docket has not been given access to your calendar."
+                 : "Calendar access is off for Docket.")
                 .font(WidgetStyle.caption(12))
                 .foregroundStyle(WidgetStyle.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -202,8 +202,8 @@ struct CalendarDetail: View {
     ///
     /// EventKit answers a single day out of its local cache, and the panel is
     /// laid out once when it opens; enumerating on a background queue would
-    /// mean carrying `EKEvent`s — which are neither `Sendable` nor safe to
-    /// keep — back across an isolation boundary for no gain.
+    /// mean carrying `EKEvent`s - which are neither `Sendable` nor safe to
+    /// keep - back across an isolation boundary for no gain.
     private func load() {
         guard !context.isPreview else { return }
         access = EKEventStore.authorizationStatus(for: .event)

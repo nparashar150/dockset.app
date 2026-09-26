@@ -5,7 +5,7 @@ import SwiftUI
 /// Built from each kind's catalog defaults rather than hand-written per kind:
 /// the type of a default decides its control, so every widget gets settings
 /// and a new one gets them for free. The Widgets tab previously claimed each
-/// widget "keeps its own settings" on the Dock, which was not true anywhere —
+/// widget "keeps its own settings" on the Dock, which was not true anywhere -
 /// the twenty-odd show/hide options in the catalog had no UI at all.
 struct WidgetSettingsSections: View {
     @Binding var state: PersistedState
@@ -13,7 +13,7 @@ struct WidgetSettingsSections: View {
     var body: some View {
         if instances.isEmpty {
             Section("Widgets") {
-                Label("No widgets on the Dock yet — add one with the + button at the end of it.",
+                Label("No widgets on the Dock yet - add one with the + button at the end of it.",
                       systemImage: "square.grid.2x2")
                     .foregroundStyle(.secondary)
             }

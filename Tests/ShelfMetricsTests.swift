@@ -3,7 +3,7 @@ import XCTest
 
 /// The shelf is centred inside a panel longer than itself, so every
 /// conversion between a panel position and a slot in the row goes through
-/// that inset — outwards for the hover label, inwards for the drop gap. The
+/// that inset - outwards for the hover label, inwards for the drop gap. The
 /// two directions disagreeing about it is the single defect this shelf has
 /// shipped most often, and always silently.
 final class ShelfMetricsTests: XCTestCase {
@@ -20,7 +20,7 @@ final class ShelfMetricsTests: XCTestCase {
             .map { Double($0) }
     }
 
-    /// A row of `count` tiles, each budgeting the gap that follows it — which
+    /// A row of `count` tiles, each budgeting the gap that follows it - which
     /// is how the shelf measures its own rest length.
     private func restLength(_ count: Int) -> CGFloat {
         CGFloat(count) * (length + gap)
@@ -35,9 +35,9 @@ final class ShelfMetricsTests: XCTestCase {
     /// between the two ends.
     ///
     /// Both conversions treat the inset as the *only* difference between panel
-    /// and row coordinates. Measuring it against the plate alone — forgetting
+    /// and row coordinates. Measuring it against the plate alone - forgetting
     /// that the panel is `plateLength + longReserve` long, because the reserve
-    /// is invisible until something magnifies into it — leaves half the reserve
+    /// is invisible until something magnifies into it - leaves half the reserve
     /// unaccounted for in every position derived from it.
     func testTheShelfIsCentredInThePanelItSitsIn() {
         for reserve in [CGFloat(0), 40, 110] {
@@ -141,7 +141,7 @@ final class ShelfMetricsTests: XCTestCase {
         }
     }
 
-    /// An empty shelf has no length to centre, so the whole panel is inset —
+    /// An empty shelf has no length to centre, so the whole panel is inset -
     /// and the figure must still be halved, because the add button and grip it
     /// leaves behind are positioned through the same conversion.
     func testAnEmptyRowIsCentredWithNothingInIt() {
@@ -188,7 +188,7 @@ final class ShelfMetricsTests: XCTestCase {
 
     /// The row is rigid: scrolling and centring move every slot together, so
     /// the distance between two slots never depends on where the row currently
-    /// sits. A per-slot correction — re-centring on the nearest item, say —
+    /// sits. A per-slot correction - re-centring on the nearest item, say -
     /// would show up here as a pitch that changes along the row.
     func testTheRowIsRigidUnderScrollingAndCentring() {
         let centres = centres(6)
@@ -205,8 +205,8 @@ final class ShelfMetricsTests: XCTestCase {
         }
     }
 
-    /// The shelf scrolls negative — the row slides leading-edge-first out of
-    /// the panel — so a negative scroll must carry slots towards the panel's
+    /// The shelf scrolls negative - the row slides leading-edge-first out of
+    /// the panel - so a negative scroll must carry slots towards the panel's
     /// start, not away from it.
     func testANegativeScrollMovesTheRowTowardsThePanelsStart() {
         XCTAssertLessThan(ShelfMetrics.panelPosition(slotCentre: 104, padding: 8,
@@ -229,7 +229,7 @@ final class ShelfMetricsTests: XCTestCase {
     }
 
     /// Past the last centre there is no slot left to land in, so the answer is
-    /// one past the end — an append, and the largest index the caller may
+    /// one past the end - an append, and the largest index the caller may
     /// legally insert at.
     func testAPositionPastEveryCentreAppendsToTheEnd() {
         let centres = centres(5)
@@ -248,7 +248,7 @@ final class ShelfMetricsTests: XCTestCase {
     /// are the half-open span from centre `i-1` up to centre `i`: the spans
     /// tile the axis with no overlap and no gap, and every position belongs to
     /// exactly one of them. Which side the tie falls on matters far less than
-    /// it falling on the same side in both directions — a `<=` here against a
+    /// it falling on the same side in both directions - a `<=` here against a
     /// `<` in the outward conversion is precisely how the gap and the label
     /// came to disagree by one tile.
     func testAPositionExactlyOnACentreInsertsAfterThatTile() {
@@ -279,7 +279,7 @@ final class ShelfMetricsTests: XCTestCase {
     }
 
     /// Sweeping the pointer along the panel must walk the slots in order, one
-    /// at a time, and never leave the range the caller can insert at — the
+    /// at a time, and never leave the range the caller can insert at - the
     /// result indexes an array of tiles. A sign error in any of the three
     /// offsets shows up here as an index that runs backwards.
     func testTheSlotIndexRisesInStepAcrossTheWholePanel() {
@@ -302,7 +302,7 @@ final class ShelfMetricsTests: XCTestCase {
     }
 
     /// An empty row still has the one slot everything is inserted at, whatever
-    /// the pointer says — an empty shelf is the state the app launches in, and
+    /// the pointer says - an empty shelf is the state the app launches in, and
     /// a drop onto it must not index past zero.
     func testAnEmptyRowHasOnlyTheOneSlotThereIsToInsertInto() {
         for position in [-10_000.0, -1, 0, 1, 314, 10_000, .nan] {
@@ -369,7 +369,7 @@ final class ShelfMetricsTests: XCTestCase {
     /// run in opposite directions, and every one of those bugs was the two
     /// disagreeing about one of its terms. A slot's own centre must therefore
     /// come back as that slot for every row length, both overflow states, and
-    /// every combination of padding and scrolling — the insertion index a hair
+    /// every combination of padding and scrolling - the insertion index a hair
     /// before the centre, since exactly on it belongs to the tile after.
     func testASlotCentreComesBackAsThatSlot() {
         for count in 1...12 {
@@ -406,7 +406,7 @@ final class ShelfMetricsTests: XCTestCase {
     ///
     /// This is the shape of the defect rather than an instance of it. The label
     /// was corrected for the inset while the drop target was not, so the gap
-    /// opened a fixed distance from the pointer — a distance that was nearly
+    /// opened a fixed distance from the pointer - a distance that was nearly
     /// nothing on a full shelf and most of a tile on a short one, which is why
     /// it read as intermittent instead of as an off-by-one.
     func testTheOffsetsCancelSoTheAnswerDependsOnlyOnTheSlot() {
@@ -430,7 +430,7 @@ final class ShelfMetricsTests: XCTestCase {
     }
 
     /// With magnification off and the shelf unscrolled, the inset is the only
-    /// offset there is — which is exactly why forgetting it survived review for
+    /// offset there is - which is exactly why forgetting it survived review for
     /// so long. The round trip has to hold when the one correction in play is
     /// the one that was missing.
     func testTheRoundTripHoldsWhenTheInsetIsTheOnlyOffset() {
@@ -496,7 +496,7 @@ final class ShelfMetricsTests: XCTestCase {
     ///
     /// A magnified overflowing row is pinned to its plate, so the pinned inset
     /// is the true one. Converting outwards with it and back with the growing
-    /// formula — one direction corrected for magnification and the other not —
+    /// formula - one direction corrected for magnification and the other not -
     /// moves the answer by more than a whole tile, which is the drop gap
     /// opening beside the icon under the pointer rather than at it.
     func testMismatchedInsetsLandOnTheWrongSlot() {

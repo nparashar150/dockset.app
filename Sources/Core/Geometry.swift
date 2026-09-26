@@ -1,6 +1,6 @@
 import Foundation
 
-/// Layout maths for the Plinth shelf.
+/// Layout maths for the Docket shelf.
 ///
 /// These formulas are the load-bearing part of the whole product: every tile
 /// size, gap, corner radius and drag gesture derives from them. They are
@@ -78,7 +78,7 @@ public enum Geometry {
     /// Inverse of the tile-extent function: given a drag delta in points,
     /// returns the scale that makes the shelf exactly that much bigger.
     ///
-    /// The two branches mirror `contentScale`'s two branches — collapsing this
+    /// The two branches mirror `contentScale`'s two branches - collapsing this
     /// into a single linear map is the obvious "simplification" and it makes
     /// the grip feel wrong below 50%, which is exactly where users drag.
     public static func resizedScale(_ scale: Double, delta: Double,

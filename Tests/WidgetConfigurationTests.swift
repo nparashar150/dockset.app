@@ -51,7 +51,7 @@ final class WidgetConfigurationTests: XCTestCase {
     ///
     /// "Rings" says nothing about `chart`, so a user who turned the graph on
     /// while on the numbers layout and then switched to rings must still see
-    /// Rings selected — tightening the match to "every key in the config"
+    /// Rings selected - tightening the match to "every key in the config"
     /// would blank the picker instead.
     func testARingsConfigStillMatchesWithTheChartFlagOn() {
         guard let instance = WidgetCatalog.make(.system, overrides: ["layout": .string("rings"),
@@ -76,7 +76,7 @@ final class WidgetConfigurationTests: XCTestCase {
     }
 
     func testAConfigMatchingNoVariantReportsNone() {
-        // A layout no variant offers — a value left behind by an older build.
+        // A layout no variant offers - a value left behind by an older build.
         let stale = WidgetConfig(["layout": .string("spiral"), "chart": .bool(false)])
         XCTAssertNil(WidgetCatalog.variantTitle(matching: stale, kind: .system))
     }
@@ -111,7 +111,7 @@ final class WidgetConfigurationTests: XCTestCase {
     /// Callers must resolve a stored config against the defaults first.
     ///
     /// Matching is exact equality per key, and an absent key is not equal to
-    /// anything — so a config saved before `chart` existed matches neither
+    /// anything - so a config saved before `chart` existed matches neither
     /// numbers variant and would open the picker with nothing selected. The
     /// same `merging(defaults:)` that keeps old widgets working is what puts
     /// the row back.
@@ -140,7 +140,7 @@ final class WidgetConfigurationTests: XCTestCase {
     /// The style picker owns `layout`.
     ///
     /// Listing it as a plain text field beside that picker let the two
-    /// disagree — typing a layout the picker does not offer left the widget in
+    /// disagree - typing a layout the picker does not offer left the widget in
     /// a state no row represented.
     func testConfigurableKeysNeverOfferLayout() {
         for kind in WidgetKind.allCases {
@@ -198,7 +198,7 @@ final class WidgetConfigurationTests: XCTestCase {
     }
 
     /// `prefix(1).uppercased()` on an empty string is empty, and the label is
-    /// only ever shown next to a control that exists — so an empty key must
+    /// only ever shown next to a control that exists - so an empty key must
     /// come back empty rather than trapping on a missing first character.
     func testAnEmptyKeyProducesAnEmptyLabel() {
         XCTAssertEqual(WidgetCatalog.optionLabel(""), "")
@@ -225,14 +225,14 @@ final class WidgetConfigurationTests: XCTestCase {
     /// Accepted rather than special-cased: the humaniser has no dictionary and
     /// guessing at runs of capitals breaks as many keys as it fixes. What
     /// keeps it harmless is that no catalog key contains consecutive capitals
-    /// — asserted below.
+    /// - asserted below.
     func testConsecutiveCapitalsEachStartAWord() {
         XCTAssertEqual(WidgetCatalog.optionLabel("showURL"), "Show U R L")
         XCTAssertEqual(WidgetCatalog.optionLabel("AB"), "A B")
     }
 
     /// Whatever the key, the label only inserts spaces and raises the first
-    /// letter — it never drops a character, so no option can be labelled with
+    /// letter - it never drops a character, so no option can be labelled with
     /// a truncated or blank row.
     func testEveryCatalogOptionGetsAReadableLabel() {
         for entry in WidgetCatalog.entries {
@@ -250,7 +250,7 @@ final class WidgetConfigurationTests: XCTestCase {
     // MARK: Catalog invariants
 
     /// `byKind` is built with `uniqueKeysWithValues`, which traps on a
-    /// duplicate — a second entry for a kind would crash the app during static
+    /// duplicate - a second entry for a kind would crash the app during static
     /// initialisation, before any window appears.
     func testEveryEntryHasItsOwnKindAndName() {
         let kinds = WidgetCatalog.entries.map(\.kind)
@@ -407,7 +407,7 @@ final class WidgetConfigurationTests: XCTestCase {
     ///
     /// NaN is not equal to itself, so a NaN in a variant's overrides would
     /// make that variant permanently unmatchable even against the very config
-    /// it produced — and the same value feeds the tile sizing maths.
+    /// it produced - and the same value feeds the tile sizing maths.
     func testEveryNumberInTheCatalogIsFinite() {
         XCTAssertNotEqual(WidgetConfig.Value.number(.nan), .number(.nan),
                           "precondition: a NaN config value never matches itself")
@@ -438,7 +438,7 @@ final class WidgetConfigurationTests: XCTestCase {
 
     /// The first release ships only widgets that need no permission and no
     /// network, so a kind that reads the user's calendar, reminders or
-    /// shortcuts must never appear in the shippable set — it would render as a
+    /// shortcuts must never appear in the shippable set - it would render as a
     /// permanently empty card for anyone who has not granted access.
     func testTheShippableSetExcludesEveryPermissionDependentKind() {
         let shippable = Set(WidgetCatalog.shippable.map(\.kind))
@@ -472,9 +472,9 @@ final class WidgetConfigurationTests: XCTestCase {
 
     /// Only Battery has no app of its own to open.
     ///
-    /// The two cases leave through different doors — a settings target is
+    /// The two cases leave through different doors - a settings target is
     /// resolved as an `x-apple.systempreferences:` URL, an app target by
-    /// bundle identifier — so a kind that reports the wrong one opens nothing
+    /// bundle identifier - so a kind that reports the wrong one opens nothing
     /// at all.
     func testBatteryIsTheOnlyWidgetThatOpensSystemSettings() {
         for kind in WidgetKind.allCases {

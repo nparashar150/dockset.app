@@ -22,9 +22,9 @@ struct WeatherHour: Sendable {
 ///
 /// No API key, but the licence and the terms of service both ask for
 /// something: a descriptive `User-Agent` on every request, and visible
-/// attribution wherever the data is shown — see `attribution`.
+/// attribution wherever the data is shown - see `attribution`.
 ///
-/// ponytail: one shared location for every Weather tile — the last
+/// ponytail: one shared location for every Weather tile - the last
 /// `setLocation` wins. Key the cache by city if two tiles ever need two cities.
 @MainActor @Observable
 final class WeatherService {
@@ -35,7 +35,7 @@ final class WeatherService {
 
     /// MET blocks requests without a real identifier. Replace the contact
     /// with the shipping app's own before release.
-    private static let userAgent = "Plinth/1.0 (macOS dock widget; https://github.com/plinth-app/plinth)"
+    private static let userAgent = "Docket/1.0 (macOS dock widget; https://github.com/nparashar150/docket)"
 
     /// MET asks for ~1 call per location per 15 minutes.
     private static let minimumInterval: TimeInterval = 15 * 60
@@ -106,7 +106,7 @@ final class WeatherService {
             apply(try decoder.decode(Forecast.self, from: data))
             lastModified = http.value(forHTTPHeaderField: "Last-Modified")
         } catch {
-            // Offline, throttled or malformed — keep the last good values.
+            // Offline, throttled or malformed - keep the last good values.
         }
     }
 
@@ -132,7 +132,7 @@ final class WeatherService {
             .prefix(12)
             .compactMap { entry in
                 // No summary means the far end of the series, where MET only
-                // publishes 12-hour buckets — nothing to draw an hour with.
+                // publishes 12-hour buckets - nothing to draw an hour with.
                 guard let celsius = entry.data.instant.details.airTemperature,
                       let code = entry.data.symbolCode else { return nil }
                 return WeatherHour(date: entry.time, temperatureC: celsius,

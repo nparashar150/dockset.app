@@ -3,7 +3,7 @@ import SwiftUI
 /// Every battery, one row each, where the tile had room for a row of glyphs.
 ///
 /// The tile's gauge says how full a device is and nothing about which device
-/// it is — a glyph inside a 42pt ring is all a shelf affords. A panel row is
+/// it is - a glyph inside a 42pt ring is all a shelf affords. A panel row is
 /// wide enough to name the device, say whether it is charging, and still give
 /// the percentage the size it deserves.
 struct BatteryDetail: View {
@@ -59,7 +59,7 @@ struct BatteryDetail: View {
     ///
     /// A device in the config was asked for, so "Not connected" is the answer
     /// it is owed rather than being dropped. The rest are here because the
-    /// panel is where the widget says everything it knows — a tile left at the
+    /// panel is where the widget says everything it knows - a tile left at the
     /// default lists the Mac alone, and a panel that did the same would only
     /// restate it. Slot order comes from the service so the rows do not
     /// reshuffle as accessories come and go.
@@ -120,7 +120,7 @@ struct BatteryDetail: View {
             }
         } else {
             // A dash, never a zero: an accessory that is not here has no level.
-            Text("—")
+            Text("-")
                 .font(WidgetStyle.value(24))
                 .foregroundStyle(WidgetStyle.secondary)
         }

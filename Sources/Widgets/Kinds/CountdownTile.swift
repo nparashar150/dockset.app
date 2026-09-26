@@ -3,8 +3,8 @@ import SwiftUI
 /// Time left against a deadline, with what it is counting to underneath.
 ///
 /// A click anywhere on the card belongs to the shelf, so starting sits on the
-/// tile as a glyph the size of itself — begun in one click, without anything
-/// opening — and only while the countdown is idle, since a gesture that would
+/// tile as a glyph the size of itself - begun in one click, without anything
+/// opening - and only while the countdown is idle, since a gesture that would
 /// decline the click still swallows it. Restarting a countdown in flight
 /// throws away time already run and is the panel's alone rather than a stray
 /// click on a card.
@@ -24,9 +24,9 @@ struct CountdownTile: View {
             if context.position.isVertical {
                 // 76x62 column: no room for the timer symbol, so the clock
                 // carries the tile and the name captions it. The glyph goes
-                // under both — the clock already fills the column's width.
+                // under both - the clock already fills the column's width.
                 VStack(spacing: 1) {
-                    Text(plinthClockString(remaining(duration: duration)))
+                    Text(docketClockString(remaining(duration: duration)))
                         .font(WidgetStyle.value(19))
                         .monospacedDigit()
                         .foregroundStyle(WidgetStyle.primary)
@@ -45,7 +45,7 @@ struct CountdownTile: View {
                         .font(.system(size: 23, weight: .regular))
                         .foregroundStyle(WidgetStyle.secondary)
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(plinthClockString(remaining(duration: duration)))
+                        Text(docketClockString(remaining(duration: duration)))
                             .font(WidgetStyle.value(20))
                             .monospacedDigit()
                             .foregroundStyle(WidgetStyle.primary)
@@ -67,7 +67,7 @@ struct CountdownTile: View {
 
     /// Only ever as big as itself: the card's own click has to reach the shelf,
     /// so nothing here may spread to fill it. `TileGlyph` is the shelf-wide
-    /// treatment for exactly that — see StopwatchTile.
+    /// treatment for exactly that - see StopwatchTile.
     private func startButton(title: String, size: CGFloat) -> some View {
         TileGlyph(symbol: "play.fill", size: size,
                   action: context.isPreview ? nil : (start as () -> Void))

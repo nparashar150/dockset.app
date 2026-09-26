@@ -40,7 +40,7 @@ final class GeometryTests: XCTestCase {
 
     func testResizeIsInvertibleAcrossTheBranchPoint() {
         // Drag out by n points then back by n and you must land where you
-        // started — including across the 50% branch, which is exactly where a
+        // started - including across the 50% branch, which is exactly where a
         // naive linear map breaks.
         for position in DockPosition.allCases {
             for start in [0.3, 0.45, 0.5, 0.55, 0.9, 1.4] {
@@ -213,7 +213,7 @@ final class WidgetCatalogTests: XCTestCase {
 
     func testSideShelfKeepsWidgetsReadable() {
         // A side shelf must NOT squeeze widgets into the 76pt column that suits
-        // app icons — doing so cropped two metrics into "1%7%". Height becomes
+        // app icons - doing so cropped two metrics into "1%7%". Height becomes
         // the long axis there, so tall layouts get the room they were drawn for.
         let f = Geometry.contentScale(0.5)
         for entry in WidgetCatalog.entries {
@@ -630,7 +630,7 @@ extension WidgetCatalogTests {
         let dock = [sampleApp("com.apple.Safari")]
         let shown = ShelfItems.displayed(profile: [mine], mirrored: dock, mirroring: true)
         XCTAssertFalse(shown.contains { $0.id == mine.id },
-                       "a profile app must not survive mirroring — that is the trap")
+                       "a profile app must not survive mirroring - that is the trap")
         XCTAssertEqual(shown.map(\.id), dock.map(\.id))
     }
 
@@ -642,7 +642,7 @@ extension WidgetCatalogTests {
     }
 
     /// Non-app items are the whole point of the shelf, so they survive
-    /// mirroring — and lead, so a long Dock cannot push them off-screen.
+    /// mirroring - and lead, so a long Dock cannot push them off-screen.
     func testWidgetsSurviveMirroringAndComeFirst() throws {
         let widget = try XCTUnwrap(sampleWidget())
         let dock = [sampleApp("com.apple.Safari")]
@@ -738,7 +738,7 @@ extension WidgetCatalogTests {
         }
     }
 
-    /// A tile with no honest destination must report none — a tap gesture with
+    /// A tile with no honest destination must report none - a tap gesture with
     /// a no-op action still consumes the click, which would eat the controls
     /// inside the card.
     func testSelfContainedWidgetsAdvertiseNoDestination() {
@@ -867,8 +867,8 @@ extension WidgetCatalogTests {
         XCTAssertTrue(ShelfItems.dissolvingSmallGroups(in: [group]).isEmpty)
     }
 
-    /// However a group of one came to exist — an older build, a restored
-    /// backup — it must never reach the shelf.
+    /// However a group of one came to exist - an older build, a restored
+    /// backup - it must never reach the shelf.
     func testAGroupOfOneNeverRenders() {
         let inner = sampleApp("com.apple.Safari")
         let stray = DockItem.group(DockGroup(name: "New Group", items: [inner]))
@@ -894,7 +894,7 @@ extension WidgetCatalogTests {
         XCTAssertFalse(GroupDrag.leavesSheet(CGPoint(x: 300, y: 120), sheet: sheet))
     }
 
-    /// Before the sheet has been measured, nothing may count as leaving it —
+    /// Before the sheet has been measured, nothing may count as leaving it -
     /// a zero size would report every point as outside and throw the icon out
     /// on the very first drag event.
     func testAnUnmeasuredSheetNeverDropsAnIcon() {
@@ -937,7 +937,7 @@ extension WidgetCatalogTests {
         var scale = start
         var travelled = 0.0
 
-        // A fixed number of events, so the sign of `step` cannot run away —
+        // A fixed number of events, so the sign of `step` cannot run away -
         // counting distance against a positive target loops forever when the
         // drag is towards the minimum.
         for _ in 0..<steps {

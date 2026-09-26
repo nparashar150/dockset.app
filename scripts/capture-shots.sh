@@ -9,8 +9,8 @@
 # on screen, so an offscreen render is not the same picture.
 #
 # Must be run on a Mac, sitting at a real display that is awake and unlocked.
-# Screen Recording permission belongs to whatever runs this — Terminal, iTerm,
-# your editor — not to the Shots binary, so the first run may capture blank
+# Screen Recording permission belongs to whatever runs this - Terminal, iTerm,
+# your editor - not to the Shots binary, so the first run may capture blank
 # images until that app is ticked in System Settings > Privacy & Security >
 # Screen & System Audio Recording, and restarted.
 #
@@ -24,26 +24,26 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_DIR="$ROOT/docs/images"
-DERIVED="${TMPDIR:-/tmp}/plinth-shots-build"
+DERIVED="${TMPDIR:-/tmp}/docket-shots-build"
 
 fail() { printf 'capture-shots: %s\n' "$1" >&2; exit 1; }
 
-[ "$(uname -s)" = "Darwin" ] || fail "macOS only — this drives the window server."
+[ "$(uname -s)" = "Darwin" ] || fail "macOS only - this drives the window server."
 [ -z "${SSH_CONNECTION:-}" ] || fail "run this at the Mac itself; an SSH session has no display to capture."
-command -v xcodebuild >/dev/null || fail "xcodebuild not found — install the Xcode command line tools."
+command -v xcodebuild >/dev/null || fail "xcodebuild not found - install the Xcode command line tools."
 command -v screencapture >/dev/null || fail "screencapture not found."
 
 echo "capture-shots: building the Shots target…"
-# -target rather than -scheme, so this does not depend on a generated scheme —
+# -target rather than -scheme, so this does not depend on a generated scheme -
 # but xcodebuild refuses -derivedDataPath without one, so the build lands in the
 # project's usual location and the binary is found by asking where that is.
-xcodebuild -project "$ROOT/Plinth.xcodeproj" \
+xcodebuild -project "$ROOT/Docket.xcodeproj" \
            -target Shots \
            -configuration Release \
            build >"$DERIVED.log" 2>&1 \
   || { tail -40 "$DERIVED.log" >&2; fail "build failed; the full log is at $DERIVED.log"; }
 
-PRODUCTS=$(xcodebuild -project "$ROOT/Plinth.xcodeproj" -target Shots \
+PRODUCTS=$(xcodebuild -project "$ROOT/Docket.xcodeproj" -target Shots \
                       -configuration Release -showBuildSettings 2>/dev/null \
            | awk -F' = ' '/ BUILT_PRODUCTS_DIR/{print $2; exit}')
 BIN="$PRODUCTS/Shots"
@@ -55,7 +55,7 @@ mkdir -p "$OUT_DIR"
 # tears the window down once this script says the capture came back. A fixed
 # wait is either too short on a busy machine or wasted on an idle one, and a
 # capture that lands early is silently half a window.
-PIPES="$(mktemp -d "${TMPDIR:-/tmp}/plinth-shots.XXXXXX")"
+PIPES="$(mktemp -d "${TMPDIR:-/tmp}/docket-shots.XXXXXX")"
 FRAMES="$PIPES/frames"
 ACK="$PIPES/ack"
 mkfifo "$FRAMES" "$ACK"
@@ -99,7 +99,7 @@ echo "capture-shots: wrote ${#WRITTEN[@]} image(s) to docs/images/"
 for name in "${WRITTEN[@]:-}"; do
   [ -n "$name" ] || continue
   # `|| true`: a file sips cannot read reports no size rather than taking the
-  # whole summary down with it — the check that matters already ran above.
+  # whole summary down with it - the check that matters already ran above.
   pw=""; ph=""
   read -r pw ph < <(sips -g pixelWidth -g pixelHeight "$OUT_DIR/$name.png" 2>/dev/null \
                     | awk '$1=="pixelWidth:"{w=$2} $1=="pixelHeight:"{h=$2}

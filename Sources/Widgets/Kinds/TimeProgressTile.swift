@@ -7,7 +7,7 @@ import SwiftUI
 /// `percentage` (112×62). The fraction comes from the real calendar interval
 /// around `context.now`, so there is nothing to stub out in the library.
 ///
-/// A click on the period name — and only on the name — moves the span on:
+/// A click on the period name - and only on the name - moves the span on:
 /// day → month → year. The card's own click belongs to the shelf, so the
 /// control is as small as the thing it changes. The choice is `period` in the
 /// widget's own config, the same key the catalog seeds, so it survives a
@@ -30,8 +30,8 @@ struct TimeProgressTile: View {
         }
     }
 
-    /// 0…1 through the current period. A calendar interval — not a fixed
-    /// 24h/365d — so DST days and leap years stay honest.
+    /// 0…1 through the current period. A calendar interval - not a fixed
+    /// 24h/365d - so DST days and leap years stay honest.
     private var fraction: Double {
         let calendar = Calendar.current
         guard let span = calendar.dateInterval(of: period, for: context.now),
@@ -55,7 +55,7 @@ struct TimeProgressTile: View {
             Group {
                 if context.position.isVertical {
                     // The 52-bar run cannot survive 56pt of usable width, so a
-                    // column always rings — whatever the horizontal layout is.
+                    // column always rings - whatever the horizontal layout is.
                     if instance.config.string("layout", default: "bars") == "percentage" {
                         columnPercentage
                     } else {
@@ -179,8 +179,8 @@ struct TimeProgressTile: View {
     /// would beat the shelf's own click and the card would stop opening.
     ///
     /// The library draws live previews, where an action must never write
-    /// config — and a button that refused to act would still swallow the
-    /// click — so there the name is plain text and wears no chevron.
+    /// config - and a button that refused to act would still swallow the
+    /// click - so there the name is plain text and wears no chevron.
     ///
     /// `prominent` is the bars layout, where the name is the tile's headline
     /// rather than a caption under the figure.
@@ -188,7 +188,7 @@ struct TimeProgressTile: View {
     /// No disc behind the chevron: `TileGlyph` (see StopwatchTile) is for a
     /// control standing on its own on a card, where nothing else says it can
     /// be pressed. This one is inside a line of type and already reads as part
-    /// of the word it changes — the same shape the Stock tile's ticker wears.
+    /// of the word it changes - the same shape the Stock tile's ticker wears.
     @ViewBuilder
     private func periodLabel(_ size: CGFloat, prominent: Bool = false) -> some View {
         if context.isPreview {
@@ -224,7 +224,7 @@ struct TimeProgressTile: View {
             .minimumScaleFactor(0.7)
     }
 
-    /// The figure is bold and primary, the sign is quieter — reads as one
+    /// The figure is bold and primary, the sign is quieter - reads as one
     /// number rather than a number shouting a unit.
     private func percentText(_ size: CGFloat) -> some View {
         HStack(spacing: 0) {

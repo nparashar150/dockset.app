@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Presentational for now — the drop target lands with file handling.
+/// Presentational for now - the drop target lands with file handling.
 struct AirDropTile: View {
     var instance: WidgetInstance
     var context: WidgetContext

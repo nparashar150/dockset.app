@@ -9,7 +9,7 @@ struct DockShelfView: View {
     /// The dragged tile's own displacement, deliberately *outside* `drag`.
     ///
     /// SwiftUI coalesces writes to one @State within an update cycle, so the
-    /// last write carries the transaction — animating `destination` after
+    /// last write carries the transaction - animating `destination` after
     /// setting `translation` on the same value still spring-smooths the
     /// translation, and the tile trails the cursor. Kept apart, the finger's
     /// position can never end up inside an animated transaction.
@@ -71,7 +71,7 @@ struct DockShelfView: View {
         var canBeGrouped: Bool { !isRunningApp && !item.isWidget && item.group == nil }
 
         /// Whether clicking this tile does anything: unfold a group, open an
-        /// app, or — for a widget — show its detail panel, and failing that
+        /// app, or - for a widget - show its detail panel, and failing that
         /// open the app it is about.
         ///
         /// Has to agree with `open(_:)`, which tries the panel first and the
@@ -85,7 +85,7 @@ struct DockShelfView: View {
         }
 
         /// Names the click for assistive tech, matching what `open(_:)` will
-        /// actually do — a panel for a widget that has one, otherwise the app.
+        /// actually do - a panel for a widget that has one, otherwise the app.
         var actionLabel: String {
             if let widget = item.widget, WidgetDetail.exists(for: widget.kind) {
                 "Show Details"
@@ -99,7 +99,7 @@ struct DockShelfView: View {
     /// separates pinned items from running apps.
     ///
     /// Modelling the separator as a slot keeps every layout calculation
-    /// uniform — otherwise its width silently skews every position after it,
+    /// uniform - otherwise its width silently skews every position after it,
     /// and magnification drifts off the running apps.
     private enum Slot: Identifiable {
         case item(Entry)
@@ -111,7 +111,7 @@ struct DockShelfView: View {
         ///
         /// Keying the row on its index told SwiftUI that adding or removing an
         /// item was a content change to the view at that position rather than
-        /// an insertion or a removal — so no insertion ever happened, no
+        /// an insertion or a removal - so no insertion ever happened, no
         /// transition could fire, and every tile after the change swapped its
         /// contents in place. That is why nothing animated.
         var id: UUID {
@@ -129,7 +129,7 @@ struct DockShelfView: View {
     /// The whole shelf geometry, solved once.
     ///
     /// Every piece of this used to be a separate computed property, so a
-    /// single render rebuilt the entry list six or eight times over — once per
+    /// single render rebuilt the entry list six or eight times over - once per
     /// property that happened to touch it. On a pointer move that is the
     /// difference between feeling immediate and feeling sluggish.
     private struct Solved {
@@ -143,7 +143,7 @@ struct DockShelfView: View {
         ///
         /// Distinct from `centers`, which are rest positions. Once tiles grow
         /// along the shelf everything after them shifts, so anything that has
-        /// to point at a tile on screen — the hover label, the hit test — has
+        /// to point at a tile on screen - the hover label, the hit test - has
         /// to use these instead.
         var viewCenters: [CGFloat] = []
         /// Leading gap before each slot. Not uniform: a widget sits almost
@@ -206,7 +206,7 @@ struct DockShelfView: View {
         // The grip goes on the seam between the widgets and the apps rather
         // than after everything: that is the edge the drag actually moves, and
         // at the end of the row it sat a long way from the thing it resizes.
-        // Modelled as a slot for the same reason the separator is — anything
+        // Modelled as a slot for the same reason the separator is - anything
         // occupying width that the layout does not know about silently skews
         // every position after it.
         let lastWidget = entries.lastIndex { $0.item.isWidget }
@@ -294,7 +294,7 @@ struct DockShelfView: View {
     /// Spacing between two neighbouring slots.
     ///
     /// Uniform. The shipped metrics list a *negative* gap for widget-touching
-    /// edges, but that assumes a tile which carries its own outer margin —
+    /// edges, but that assumes a tile which carries its own outer margin -
     /// ours does not, so applying it crushed neighbouring cards to within a
     /// point of each other and they read as one fused slab. Measured at 0.5pt
     /// apart before this was reverted.
@@ -327,8 +327,8 @@ struct DockShelfView: View {
     ///
     /// The add button's extent along the shelf is its *height* on a side
     /// shelf. Budgeting `width` in both orientations left the model longer
-    /// than the row actually rendered, and every length derived from it — the
-    /// plate, the scroll limit, the hover label — inherited the error.
+    /// than the row actually rendered, and every length derived from it - the
+    /// plate, the scroll limit, the hover label - inherited the error.
     private var gripExtent: CGFloat {
         chrome.itemGap + (vertical ? iconGeometry.height : iconGeometry.width)
     }
@@ -389,7 +389,7 @@ struct DockShelfView: View {
     private func isOverflowing(_ s: Solved) -> Bool { s.restLength > maxLength }
     private func plateLength(_ s: Solved) -> CGFloat { min(s.restLength, maxLength) }
 
-    /// Room for a magnified icon to grow out of the plate — and for a launch
+    /// Room for a magnified icon to grow out of the plate - and for a launch
     /// bounce to leave it.
     ///
     /// This used to be zero whenever magnification was off, which sized the
@@ -416,8 +416,8 @@ struct DockShelfView: View {
                 row(solved)
                     .offset(x: vertical ? 0 : scroll, y: vertical ? scroll : 0)
                     // Frame *then* clip. Clipping first applies the shape to
-                    // the row's own bounds, which contain it by definition —
-                    // a no-op — and items ran straight off the end of the
+                    // the row's own bounds, which contain it by definition -
+                    // a no-op - and items ran straight off the end of the
                     // plate and off the screen.
                     .frame(width: vertical ? solved.restCross : plateLength(solved),
                            height: vertical ? plateLength(solved) : solved.restCross,
@@ -501,7 +501,7 @@ struct DockShelfView: View {
             }
             // Padded to match `gripExtent`, which budgets a gap before each.
             // Without them the rendered row was two gaps shorter than every
-            // length formula assumed — the plate, the scroll limit and the
+            // length formula assumed - the plate, the scroll limit and the
             // hover label all measure against `restLength`.
             addButton
                 .padding(vertical ? .top : .leading, chrome.itemGap)
@@ -518,7 +518,7 @@ struct DockShelfView: View {
     /// Where an icon being carried out of a group would land, as a slot index.
     ///
     /// The sheet lives in another window, so the only thing shared is the
-    /// pointer — see DragOut. Converting it to a position along the shelf is
+    /// pointer - see DragOut. Converting it to a position along the shelf is
     /// enough to know which two tiles it falls between.
     private func incomingSlot(_ solved: Solved) -> Int? {
         guard DragOut.shared.isCarrying, let window = shelfWindow else { return nil }
@@ -531,7 +531,7 @@ struct DockShelfView: View {
 
         let movable = solved.entries.filter(\.isDraggable)
         let centers = restCenters(of: movable, solved)
-        // The exact inverse of what the hover label does on its way out —
+        // The exact inverse of what the hover label does on its way out -
         // see `shelfInset`. Without the inset the gap opened a fixed distance
         // from where the pointer actually was.
         return ShelfMetrics.slot(atPanelPosition: Double(along), centres: centers,
@@ -567,7 +567,7 @@ struct DockShelfView: View {
 
                 // Starting a drag is an implicit "I want to arrange these
                 // myself", so take ownership of the mirrored Dock apps now
-                // rather than at the end — otherwise a widget cannot be put
+                // rather than at the end - otherwise a widget cannot be put
                 // between two icons at all, because mirroring pins every app
                 // after every widget.
                 if drag == nil, app.isMirroringApps { app.adoptSystemApps() }
@@ -708,7 +708,7 @@ struct DockShelfView: View {
             // both fixed forced every item to be nudged by hand, which slid
             // the entire row when the pointer crossed a wide widget.
             .frame(width: size.width, height: size.height)
-            // Only non-widgets get a hit shape at all — see TileHitShape.
+            // Only non-widgets get a hit shape at all - see TileHitShape.
             .modifier(TileHitShape(filled: !entry.item.isWidget))
             // Armed as a drop target: iOS grows the tile under your finger and
             // puts a plate behind it, which is the whole signal that releasing
@@ -732,7 +732,7 @@ struct DockShelfView: View {
                 // One arc per tick. Each LinearKeyframe interpolates only
                 // between its own endpoints, so there is no cross-keyframe
                 // tangent to round the contact off or push the icon below
-                // rest — see Bounce.
+                // rest - see Bounce.
                 KeyframeTrack {
                     LinearKeyframe(peak, duration: Bounce.arc / 2, timingCurve: Bounce.rise)
                     LinearKeyframe(0, duration: Bounce.arc / 2, timingCurve: Bounce.fall)
@@ -740,7 +740,7 @@ struct DockShelfView: View {
             }
             .zIndex(drag?.id == entry.id ? 2 : 0)
             // Grows out of the plate and shrinks back into it, anchored on the
-            // docked edge — the same anchor magnification uses, so a tile
+            // docked edge - the same anchor magnification uses, so a tile
             // arrives the way a magnified one grows rather than fading in from
             // nowhere. Without this an added or removed item simply popped.
             // A poofed tile leaves instantly: the poof *is* the disappearance,
@@ -751,7 +751,7 @@ struct DockShelfView: View {
                         ? .identity
                         : .scale(scale: 0.32, anchor: magnificationAnchor)
                             .combined(with: .opacity))
-            // Widgets take it too now, but only those with somewhere to go —
+            // Widgets take it too now, but only those with somewhere to go -
             // a panel to show or an app to open: a tap gesture whose action is
             // a no-op still *consumes* the tap.
             .modifier(TapToOpen(enabled: entry.opens,
@@ -812,7 +812,7 @@ struct DockShelfView: View {
             // Controls inside the card win this click; only the card itself
             // reaches here. Verified with a hosting-view harness.
             //
-            // A widget with more to say opens its own panel — the whole day's
+            // A widget with more to say opens its own panel - the whole day's
             // events rather than the next one, every battery rather than the
             // Mac's. The rest open the app they are about.
             if WidgetDetail.exists(for: widget.kind) {
@@ -832,7 +832,7 @@ struct DockShelfView: View {
         // forward, which is all AppCatalog.open does for it, and the Dock
         // stays still for that.
         // Bounce first so the click has an answer immediately, then stop the
-        // moment the launch settles — whether it succeeded or never started.
+        // moment the launch settles - whether it succeeded or never started.
         if !isRunning(entry.item) { bounce(entry) }
         AppCatalog.shared.open(entry.item) { _ in stopBounce(entry.id) }
     }
@@ -842,7 +842,7 @@ struct DockShelfView: View {
     /// the app is still starting.
     ///
     /// Driven by ticks rather than a repeating keyframe track, because
-    /// `repeating: false` snaps the offset home mid-air — this way the arc in
+    /// `repeating: false` snaps the offset home mid-air - this way the arc in
     /// flight is always allowed to land.
     private func bounce(_ entry: Entry) {
         guard case .app = entry.item else { return }
@@ -851,7 +851,7 @@ struct DockShelfView: View {
             for _ in 0 ..< Int(Bounce.giveUp / Bounce.period) {
                 bounceTick[entry.id, default: 0] += 1
                 try? await Task.sleep(for: .seconds(Bounce.period))
-                // Fed by NSWorkspace.didLaunchApplication — the Dock's own
+                // Fed by NSWorkspace.didLaunchApplication - the Dock's own
                 // stop signal. Some apps never post it, hence the bound.
                 if Task.isCancelled || isRunning(entry.item) { return }
             }
@@ -876,7 +876,7 @@ struct DockShelfView: View {
     /// coordinates. Equatable so the window is only touched when it changes.
     private struct HoverTarget: Equatable {
         /// Nil for a widget, which shows its own content: a label naming it is
-        /// noise. The rest of the target still applies — a widget needs an
+        /// noise. The rest of the target still applies - a widget needs an
         /// anchor for its detail panel just as an app tile needs one for its
         /// group.
         var text: String?
@@ -893,8 +893,8 @@ struct DockShelfView: View {
     /// The panel is `plateLength + longReserve` long and centres the shelf in
     /// it, so every conversion between a panel position and a position along
     /// the row needs this. It lives here because it is needed in both
-    /// directions — the hover label converts outward, the drop target
-    /// converts inward — and the two drifting apart is what put the gap the
+    /// directions - the hover label converts outward, the drop target
+    /// converts inward - and the two drifting apart is what put the gap the
     /// shelf opens somewhere other than under the pointer.
     ///
     /// An overflowing row is pinned to `plateLength` and does not grow by
@@ -938,7 +938,7 @@ struct DockShelfView: View {
         let along = plateCentre(of: hit, solved) + shelfInset(solved)
         // Point at the far edge of the magnified tile, which is what the Dock
         // measures its label against. A widget's icon does not grow out of the
-        // plate, so its own outer edge is the plate's — anything further out
+        // plate, so its own outer edge is the plate's - anything further out
         // and its panel floats away from the tile it belongs to.
         let growth = entry.item.isWidget ? 0 : iconGrowth
         let cross: CGFloat = switch position {
@@ -946,14 +946,14 @@ struct DockShelfView: View {
         case .left: solved.restCross + growth
         case .right: crossHeadroom - growth
         }
-        // `cross` above points at the far edge of the magnified tile — where
-        // a label belongs — which is most of a tile from the icon's middle.
+        // `cross` above points at the far edge of the magnified tile - where
+        // a label belongs - which is most of a tile from the icon's middle.
         //
         // The middle has to be measured from the plate's own near edge, and
         // which side that is depends on the position: a left shelf is pinned
         // to the leading edge with its headroom beyond it, so there is no
-        // headroom to skip past. `iconGeometry` also swaps axes — the cross
-        // extent is `height` lying down and `width` on a side — and using the
+        // headroom to skip past. `iconGeometry` also swaps axes - the cross
+        // extent is `height` lying down and `width` on a side - and using the
         // wrong one put the removal poof out over the desktop.
         let crossCentre: CGFloat = switch position {
         case .bottom: crossHeadroom + chrome.padding + iconGeometry.height / 2
@@ -980,7 +980,7 @@ struct DockShelfView: View {
         }
         // Kept so an opened group or widget panel can grow from the tile that
         // was clicked: you have to be hovering a tile to click it, so this is
-        // the right anchor by the time `open` runs — which is why every tile
+        // the right anchor by the time `open` runs - which is why every tile
         // has to yield one. While widgets were excluded from `hoverTarget`
         // their panels opened from `.zero`, in the corner of the screen, or
         // from whichever app tile was hovered last.
@@ -1050,7 +1050,7 @@ struct DockShelfView: View {
         .padding(vertical ? .vertical : .horizontal, 3)
     }
 
-    /// Visible way to reach the widget library — adding a widget is the whole
+    /// Visible way to reach the widget library - adding a widget is the whole
     /// point of the shelf, so it needs an affordance on the shelf itself.
     private var addButton: some View {
         let geo = iconGeometry
@@ -1127,7 +1127,7 @@ struct DockShelfView: View {
     ///
     /// Two of the Dock's own Options entries are missing on purpose. "Open at
     /// Login" writes to the background-task database and "Assign To" sets a
-    /// Space, and both are private to Apple — a menu item that silently does
+    /// Space, and both are private to Apple - a menu item that silently does
     /// nothing is worse than one that is not there.
     private func menu(for entry: Entry) -> some View {
         Menu("Options") {
@@ -1176,7 +1176,7 @@ struct DockShelfView: View {
         // one, which the shelf now dissolves on sight. Groups are made by
         // dropping one icon onto another.
         // Top level, not nested inside Options. A Menu inside a Menu inside a
-        // contextMenu is where SwiftUI's menus stop responding — the submenu
+        // contextMenu is where SwiftUI's menus stop responding - the submenu
         // opens and its items do nothing.
         if let widget = entry.item.widget,
            let catalog = WidgetCatalog.entry(widget.kind), !catalog.variants.isEmpty {
@@ -1223,7 +1223,7 @@ struct DockShelfView: View {
     /// the icon is, and the row closes the gap behind it.
     ///
     /// `NSAnimationEffect.poof` is the actual animation macOS uses when
-    /// something is dragged off the Dock — not an imitation of it — so this is
+    /// something is dragged off the Dock - not an imitation of it - so this is
     /// the one part of the shelf that cannot drift from the real thing.
     private func remove(_ entry: Entry) {
         poofing.insert(entry.id)
@@ -1231,7 +1231,7 @@ struct DockShelfView: View {
             // The one deliberate deprecation warning in this project.
             //
             // `NSAnimationEffect` is deprecated and its suggested replacement
-            // is a *cursor* — Apple withdrew the API without offering another
+            // is a *cursor* - Apple withdrew the API without offering another
             // way to play this animation. It is the Dock's own poof rather
             // than an imitation of it, and it still renders on macOS 26
             // (verified: ~53k pixels of the screen change when it fires), so
@@ -1315,13 +1315,13 @@ struct DockShelfView: View {
 /// The drawn part of a tile, isolated so SwiftUI can skip it.
 ///
 /// Magnification changes only geometry, but a pointer move re-evaluates the
-/// shelf's body — and without this the body of every widget (charts, canvases,
+/// shelf's body - and without this the body of every widget (charts, canvases,
 /// rings) re-ran on every mouse move.
 /// The part of a tile that only changes when its *content* does.
 ///
 /// The context menu lives in here rather than on the magnification chain
 /// outside. SwiftUI builds a `contextMenu`'s content eagerly, so out there it
-/// rebuilt every tile's whole menu on every pointer move — measured at roughly
+/// rebuilt every tile's whole menu on every pointer move - measured at roughly
 /// half the cost of the per-move rebuild. In here the `Equatable` gate skips
 /// it entirely when only the pointer moved.
 private struct TileContent<Menu: View>: View, Equatable {
@@ -1366,7 +1366,7 @@ private struct TileContent<Menu: View>: View, Equatable {
 /// Adds a tap action only when it is wanted.
 ///
 /// `.onTapGesture` cannot be conditionally applied inline without changing the
-/// view's type, and attaching one with an empty closure is not equivalent —
+/// view's type, and attaching one with an empty closure is not equivalent -
 /// it still swallows the gesture.
 private struct TapToOpen: ViewModifier {
     var enabled: Bool
@@ -1379,7 +1379,7 @@ private struct TapToOpen: ViewModifier {
             content
                 .onTapGesture(perform: action)
                 // A tap gesture is not an action as far as VoiceOver is
-                // concerned, and a widget tile is a *container* — it keeps its
+                // concerned, and a widget tile is a *container* - it keeps its
                 // children so their own controls stay reachable, which rules
                 // out the button trait that carries an app tile's activation.
                 // Without this a widget's panel is reachable by mouse only.

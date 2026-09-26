@@ -2,14 +2,14 @@ import SwiftUI
 
 /// One alarm, said properly.
 ///
-/// The widget holds exactly one — `time`, `name` and `enabled` in its own
-/// config — so this is a single-alarm panel rather than a list pretending to
+/// The widget holds exactly one - `time`, `name` and `enabled` in its own
+/// config - so this is a single-alarm panel rather than a list pretending to
 /// be one. Several alarms means several widgets, each with its own tile and
 /// its own panel.
 ///
 /// What the card cannot fit: which day the next ring lands on, the count to it
 /// to the second rather than rounded up to the minute, and a switch you have
-/// to mean — silencing an alarm is how you sleep through something, which is
+/// to mean - silencing an alarm is how you sleep through something, which is
 /// why the tile keeps it to a glyph the size of itself and the panel gives it
 /// a button.
 struct AlarmDetail: View {
@@ -18,7 +18,7 @@ struct AlarmDetail: View {
 
     var body: some View {
         // The panel's context is frozen at the moment it opened, so the
-        // schedule is what carries the count down — and what rolls the next
+        // schedule is what carries the count down - and what rolls the next
         // occurrence over to tomorrow the second this one passes.
         TimelineView(.periodic(from: .now, by: 1)) { tick in
             content(now: tick.date)
@@ -93,7 +93,7 @@ struct AlarmDetail: View {
     }
 
     /// An alarm repeats daily, so the next one is today's or tomorrow's and
-    /// nothing else — but which of the two, and what date that is, is exactly
+    /// nothing else - but which of the two, and what date that is, is exactly
     /// what a 24-hour time on a card leaves you to work out.
     private func dayLine(_ date: Date, now: Date) -> String {
         let day = Calendar.current.isDate(date, inSameDayAs: now) ? "Today" : "Tomorrow"

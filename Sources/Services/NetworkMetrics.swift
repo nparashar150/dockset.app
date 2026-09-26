@@ -4,7 +4,7 @@ import Observation
 /// Throughput across every non-loopback interface, in bytes per second.
 ///
 /// The kernel only hands out cumulative byte counters, so the rate is a delta
-/// between samples divided by the real elapsed time — the timer can fire late,
+/// between samples divided by the real elapsed time - the timer can fire late,
 /// and dividing by a nominal 1s would over-report after a sleep.
 @MainActor @Observable
 final class NetworkMetrics {
@@ -79,7 +79,7 @@ final class NetworkMetrics {
         for entry in sequence(first: first, next: { $0.pointee.ifa_next }) {
             let flags = Int32(entry.pointee.ifa_flags)
             guard flags & IFF_LOOPBACK == 0, flags & IFF_UP != 0 else { continue }
-            // Byte counters live on the link-layer entry, not the IP ones —
+            // Byte counters live on the link-layer entry, not the IP ones -
             // counting every address family would multiply the same traffic.
             guard let address = entry.pointee.ifa_addr, address.pointee.sa_family == UInt8(AF_LINK),
                   let data = entry.pointee.ifa_data?.assumingMemoryBound(to: if_data.self)

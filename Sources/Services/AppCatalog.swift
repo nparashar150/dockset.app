@@ -20,8 +20,8 @@ public final class AppCatalog {
     public private(set) var running: [RunningApp] = []
     /// Membership only, for the hot path.
     ///
-    /// `isRunning` is asked once per tile per render — the context menu alone
-    /// calls it for every icon on every layout pass — and a linear scan of
+    /// `isRunning` is asked once per tile per render - the context menu alone
+    /// calls it for every icon on every layout pass - and a linear scan of
     /// `running` there costs hundreds of string compares a frame. Observed,
     /// not ignored, so a launch or quit still invalidates the tiles.
     public private(set) var runningIDs: Set<String> = []
@@ -57,7 +57,7 @@ public final class AppCatalog {
         !bundleID.isEmpty && runningIDs.contains(bundleID)
     }
 
-    /// Apps that are running but not pinned to the given profile — the shelf
+    /// Apps that are running but not pinned to the given profile - the shelf
     /// shows these after a separator, exactly like Apple's Dock.
     public func unpinned(from items: [DockItem]) -> [RunningApp] {
         let pinned = Set(items.compactMap { item -> String? in
@@ -95,7 +95,7 @@ public final class AppCatalog {
     /// `running` instead was wrong twice over: that list is filtered to
     /// `activationPolicy == .regular`, so anything that opens without
     /// registering as an ordinary app never satisfied it, and a path that
-    /// fails to resolve launches nothing at all — both left the tile bouncing
+    /// fails to resolve launches nothing at all - both left the tile bouncing
     /// until its give-up timer while the app was plainly open.
     public func open(_ item: DockItem,
                      completion: (@MainActor @Sendable (Bool) -> Void)? = nil) {

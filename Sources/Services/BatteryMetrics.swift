@@ -26,7 +26,7 @@ struct BatteryDevice: Identifiable, Sendable {
 ///
 /// The Mac comes from the power-source API; accessories publish a
 /// `BatteryPercent` in the IO registry. Anything that does not answer is
-/// reported absent — a desktop Mac and a missing pair of AirPods look the
+/// reported absent - a desktop Mac and a missing pair of AirPods look the
 /// same to this class, and both are honest.
 @MainActor @Observable
 final class BatteryMetrics {
@@ -143,7 +143,7 @@ final class BatteryMetrics {
     }
 
     /// Registry percentages are 0...100 integers, and a disconnected accessory
-    /// that still has a stale registry entry reports 0 — treat that as unknown.
+    /// that still has a stale registry entry reports 0 - treat that as unknown.
     private static func percent(_ value: Any?) -> Double? {
         guard let number = value as? NSNumber else { return nil }
         let raw = number.doubleValue

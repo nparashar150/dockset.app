@@ -30,7 +30,7 @@ public enum WidgetStyle {
     public static let corner: CGFloat = 18
     public static let inset: CGFloat = 10
 
-    /// The large figure — times, percentages, amounts.
+    /// The large figure - times, percentages, amounts.
     public static func value(_ size: CGFloat = 26) -> Font {
         .system(size: size, weight: .bold)
     }
@@ -55,7 +55,7 @@ public enum WidgetStyle {
 }
 
 public extension Color {
-    /// `#RRGGBB` / `#RRGGBBAA`. Falls back to clear rather than trapping — a
+    /// `#RRGGBB` / `#RRGGBBAA`. Falls back to clear rather than trapping - a
     /// bad swatch should not take the shelf down.
     init(hex: String) {
         let raw = hex.hasPrefix("#") ? String(hex.dropFirst()) : hex
@@ -82,7 +82,7 @@ public struct WidgetSurface<Content: View>: View {
     /// A card is a *recess* in the plate, not something raised on top of it.
     ///
     /// `Color.primary` is white in the dark, so tinting with it lightened the
-    /// card toward the shelf until the two matched exactly — measured at 40
+    /// card toward the shelf until the two matched exactly - measured at 40
     /// against a plate of 40, which is why the cards did not read as cards.
     /// Dockset holds a card at roughly 0.85x the plate's luminance; a black
     /// tint reproduces that ratio against any backdrop the glass samples.
@@ -119,8 +119,8 @@ public struct WidgetSurface<Content: View>: View {
 public extension View {
     /// Rolls a changing number instead of hard-cutting it.
     ///
-    /// Every widget on the shelf redraws its value on a tick — clock digits,
-    /// battery percentage, CPU and memory, prices — and each one swapped its
+    /// Every widget on the shelf redraws its value on a tick - clock digits,
+    /// battery percentage, CPU and memory, prices - and each one swapped its
     /// text instantly, which is what made the widgets look inert next to the
     /// rest of the shelf. `numericText` is Apple's own transition for exactly
     /// this, and it is the difference between a readout and a live one.
@@ -137,7 +137,7 @@ public extension View {
 /// the app wires it once at launch, widgets call it, and the change lands in
 /// the profile and is persisted like any other edit.
 ///
-/// Without it a widget can only ever be a readout — which is what every tile
+/// Without it a widget can only ever be a readout - which is what every tile
 /// but Now Playing was. A stopwatch you cannot start is a picture of one.
 @MainActor
 public enum WidgetWriter {

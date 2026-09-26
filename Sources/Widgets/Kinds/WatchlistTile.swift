@@ -2,13 +2,13 @@ import SwiftUI
 
 /// Several symbols at a glance, no charts (276×62 wide).
 ///
-/// Wide, each symbol is its own centred column — ticker, price, signed
-/// percentage — sharing the tile equally. In a 76pt column there is only room
+/// Wide, each symbol is its own centred column - ticker, price, signed
+/// percentage - sharing the tile equally. In a 76pt column there is only room
 /// for one line of figures per symbol, so each becomes a compact two-line row
 /// with the ticker and the percentage on top and the price under them.
 ///
 /// Click to open the panel, which lists every configured symbol with room for
-/// the figures the tile has to crop — the tile itself is a readout.
+/// the figures the tile has to crop - the tile itself is a readout.
 struct WatchlistTile: View {
     var instance: WidgetInstance
     var context: WidgetContext
@@ -56,7 +56,7 @@ struct WatchlistTile: View {
                     Text(symbol)
                         .font(WidgetStyle.label(11))
                         .foregroundStyle(WidgetStyle.primary)
-                    Text(quote?.priceText ?? "—")
+                    Text(quote?.priceText ?? "-")
                         .font(WidgetStyle.value(18))
                         .foregroundStyle(WidgetStyle.primary)
                         .monospacedDigit()
@@ -89,7 +89,7 @@ struct WatchlistTile: View {
                             .foregroundStyle(accent(quote))
                             .monospacedDigit()
                     }
-                    Text(quote?.priceText ?? "—")
+                    Text(quote?.priceText ?? "-")
                         .font(WidgetStyle.value(13))
                         .foregroundStyle(WidgetStyle.primary)
                         .monospacedDigit()

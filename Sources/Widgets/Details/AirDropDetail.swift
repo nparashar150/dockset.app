@@ -4,7 +4,7 @@ import SwiftUI
 /// The one thing about AirDrop a glyph cannot say: whether anybody can
 /// actually see this Mac.
 ///
-/// The tile is a launcher and nothing more — it draws the same blue square
+/// The tile is a launcher and nothing more - it draws the same blue square
 /// whether AirDrop is set to Everyone or switched off entirely, which is the
 /// state where the tile is quietly a lie. So the panel reports the setting and
 /// then gets out of the way with the two doors worth having: the Finder window
@@ -13,12 +13,12 @@ import SwiftUI
 /// What is deliberately absent: nearby devices, transfer history, and a mode
 /// picker. `sharingd` discovers peers over AWDL for its own UI and publishes
 /// none of it to unprivileged apps, and `DiscoverableMode` is readable but not
-/// ours to write — a toggle here would either do nothing or need a scripted
+/// ours to write - a toggle here would either do nothing or need a scripted
 /// click on somebody else's window. The footnote says so plainly rather than
 /// leaving the omission to look like an oversight.
 ///
 /// The mode is read once, when the panel opens. It changes only when the user
-/// goes and changes it — in Control Centre, in Finder, or in Settings — and
+/// goes and changes it - in Control Centre, in Finder, or in Settings - and
 /// all three mean leaving this panel, which dismisses it. Polling for a value
 /// that cannot move while it is on screen would be a timer spent on nothing.
 struct AirDropDetail: View {
@@ -112,7 +112,7 @@ struct AirDropDetail: View {
         // `sharingd` owns this preference and writes it whenever the user
         // flips the mode somewhere else entirely; cfprefsd keeps handing us a
         // cached copy until it is told to look again, which is all the
-        // synchronise does. Public domain, undocumented schema — same footing
+        // synchronise does. Public domain, undocumented schema - same footing
         // as the Dock's own preferences, so the read is a lenient match rather
         // than a switch over exact strings.
         _ = CFPreferencesAppSynchronize(Self.domain as CFString)
@@ -125,7 +125,7 @@ struct AirDropDetail: View {
 
     // MARK: Actions
 
-    /// Finder's own AirDrop window — the only place peers are ever listed.
+    /// Finder's own AirDrop window - the only place peers are ever listed.
     private func openWindow() {
         guard !context.isPreview, let url = URL(string: "nwnode://domain-AirDrop") else { return }
         NSWorkspace.shared.open(url)

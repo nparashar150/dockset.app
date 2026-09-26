@@ -4,13 +4,13 @@ import Foundation
 ///
 /// Deliberately **not** built on `withTaskGroup`. A group awaits all of its
 /// children when the scope ends, and cancelling does not interrupt a child
-/// blocked inside a synchronous C call — so racing a sleep against a hung
+/// blocked inside a synchronous C call - so racing a sleep against a hung
 /// Apple Event never actually returned. That is exactly how a single blocked
 /// script left `polling` stuck true for the life of the process and the
 /// Now Playing widget frozen on its empty state.
 ///
 /// Here the continuation is resumed by whichever side finishes first, so the
-/// caller is freed on time. The hung work is abandoned rather than awaited —
+/// caller is freed on time. The hung work is abandoned rather than awaited -
 /// it strands a thread, which is why every caller must stop polling once this
 /// returns nil instead of launching another.
 func withTimeout<T: Sendable>(

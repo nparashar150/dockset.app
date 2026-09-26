@@ -15,7 +15,7 @@ public final class AppState {
     }
 
     /// Ticks once a second. Widgets read this rather than each starting a
-    /// timer of their own — one timer for the whole shelf.
+    /// timer of their own - one timer for the whole shelf.
     public private(set) var now: Date = .now
 
     /// Set when applying a macOS Dock layout fails, for the menu bar to surface.
@@ -53,7 +53,7 @@ public final class AppState {
         saveTask?.cancel()
         // Snapshotted *after* the wait, not before it. Copying the whole model
         // up front costs a deep copy of every profile, item and config on each
-        // mutation — and a grip drag mutates dozens of times a second, so the
+        // mutation - and a grip drag mutates dozens of times a second, so the
         // resize paid for a full copy per event and dropped frames for it.
         saveTask = Task { [store, weak self] in
             try? await Task.sleep(for: .milliseconds(400))
@@ -105,7 +105,7 @@ public final class AppState {
         state.profiles.append(copy)
     }
 
-    /// Selecting a Custom Dock profile adopts its scale — size travels with
+    /// Selecting a Custom Dock profile adopts its scale - size travels with
     /// the profile, which is what makes a "big shelf for work, small for
     /// everything else" setup possible.
     public func select(_ profile: DockProfile) {
@@ -127,7 +127,7 @@ public final class AppState {
     /// Editing the list takes ownership of it first.
     ///
     /// While mirroring, `effectiveItems` drops every app the profile holds and
-    /// substitutes the real Dock's — so appending an app to the profile was
+    /// substitutes the real Dock's - so appending an app to the profile was
     /// filtered straight back out and removing one touched an array the shelf
     /// was not reading. Both looked like the buttons did nothing.
     public func addItem(_ item: DockItem, to profileID: UUID? = nil) {
@@ -225,7 +225,7 @@ public final class AppState {
     ///
     /// While following, it takes a *free* edge rather than the Dock's own.
     /// Two shelves on one edge share a reveal trigger and an auto-hide timer,
-    /// so they uncover each other and stack — the shelf is far more useful
+    /// so they uncover each other and stack - the shelf is far more useful
     /// beside the Dock than on top of it. Everything else about the look
     /// (size, magnification, material, apps) is still mirrored.
     public var effectivePosition: DockPosition {
@@ -259,9 +259,9 @@ public final class AppState {
     /// What the shelf actually shows.
     ///
     /// While following, the apps come straight from the real Dock and the
-    /// profile contributes everything the Dock cannot hold — widgets, folders,
+    /// profile contributes everything the Dock cannot hold - widgets, folders,
     /// files and links. That way the shelf is the user's Dock *plus* the
-    /// things they came to Plinth for, with nothing to keep in sync by hand.
+    /// things they came to Docket for, with nothing to keep in sync by hand.
     public var effectiveItems: [DockItem] {
         guard mirroringApps, let profile = customProfile else {
             return customProfile?.items ?? []
@@ -273,7 +273,7 @@ public final class AppState {
 
     /// Whether the shelf holds any widget.
     ///
-    /// Asked once per tile per render, through `iconGeometry` — so it must not
+    /// Asked once per tile per render, through `iconGeometry` - so it must not
     /// build `effectiveItems`, which allocates two fresh arrays every call and
     /// turned the layout solve into O(n²) on every pointer move. Widgets only
     /// ever come from the profile; the mirrored list is apps by construction.
@@ -315,8 +315,8 @@ public final class AppState {
     /// Writes through to the active profile so the size sticks to it, not to
     /// the app.
     public func setScale(_ scale: Double) {
-        // An override of the size alone. Everything else — edge, hiding,
-        // magnification — keeps following the real Dock.
+        // An override of the size alone. Everything else - edge, hiding,
+        // magnification - keeps following the real Dock.
         state.customDock.scaleOverridden = true
         let clamped = Geometry.clamp(scale, Geometry.scaleRange)
         state.customDock.scale = clamped
@@ -333,7 +333,7 @@ public final class AppState {
         do {
             let tiles = try await nativeDock.capture()
             // Remember the very first capture as the user's original layout,
-            // so there is always a way back to what they had before Plinth.
+            // so there is always a way back to what they had before Docket.
             if state.originalMacOSDock == nil { state.originalMacOSDock = tiles }
             var profile = DockProfile(kind: .macOSDock, name: name)
             profile.items = tiles.compactMap(Self.item(from:))
@@ -360,7 +360,7 @@ public final class AppState {
         }
     }
 
-    /// Puts back whatever the user had before Plinth first wrote to the Dock.
+    /// Puts back whatever the user had before Docket first wrote to the Dock.
     public func restoreOriginalDock() async {
         guard let original = state.originalMacOSDock else { return }
         isApplying = true

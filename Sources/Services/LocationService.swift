@@ -6,7 +6,7 @@ import Observation
 /// Where the user actually is, for the weather widget.
 ///
 /// The widget previously took a city typed into its config, defaulting to the
-/// reference shelf's "Oslo". Guessing from the system time zone is no better —
+/// reference shelf's "Oslo". Guessing from the system time zone is no better -
 /// `Asia/Kolkata` covers the whole country, so it names a city most of its
 /// users do not live in.
 ///
@@ -23,7 +23,7 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
     private(set) var coordinate: CLLocationCoordinate2D?
     /// True once the user has said no, so nothing asks again.
     private(set) var denied = false
-    /// True when no answer arrived at all — see `start()`.
+    /// True when no answer arrived at all - see `start()`.
     private(set) var unavailable = false
 
     @ObservationIgnored private let manager = CLLocationManager()
@@ -47,8 +47,8 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
             manager.requestWhenInUseAuthorization()
             // Measured on this machine: the request returns with the status
             // still `notDetermined` and no prompt on screen, and promoting the
-            // app to `.regular` first — which is what makes the automation
-            // consent appear — does not change that. So the widget must not
+            // app to `.regular` first - which is what makes the automation
+            // consent appear - does not change that. So the widget must not
             // wait on an answer that may never come: after a few seconds it
             // says so, and offers the city field instead.
             Task { @MainActor in

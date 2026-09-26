@@ -37,7 +37,7 @@ public struct NowPlaying: @unchecked Sendable, Equatable {
     public var artwork: NSImage?
     public var source: MusicSource
 
-    /// 0…1, and never NaN — a live stream reports a zero duration.
+    /// 0…1, and never NaN - a live stream reports a zero duration.
     public var progress: Double {
         guard duration > 0 else { return 0 }
         return min(1, max(0, elapsed / duration))
@@ -52,7 +52,7 @@ public struct NowPlaying: @unchecked Sendable, Equatable {
 /// Deliberately not MediaRemote: that framework has been entitlement-gated
 /// since macOS 15.4 and silently returns nothing to unsigned callers.
 ///
-/// Nothing here ever launches a player — an app that is not already running is
+/// Nothing here ever launches a player - an app that is not already running is
 /// skipped, so the shelf cannot boot iTunes to ask what is playing.
 @MainActor @Observable
 public final class MusicService {
@@ -157,7 +157,7 @@ public final class MusicService {
     /// Slowness is not refusal.
     ///
     /// One slow probe used to block the service for the life of the process,
-    /// but a player busy with a large library recovers on its own — only a
+    /// but a player busy with a large library recovers on its own - only a
     /// player that never answers is actually refusing. Mirrors the browser
     /// side's three-strike backoff.
     private func stall() {
@@ -197,7 +197,7 @@ public final class MusicService {
 
         let key = track.trackKey
         // Budgeted. `apply` clears `polling` with a defer, which never runs if
-        // the function never returns — and this await had no bound at all: an
+        // the function never returns - and this await had no bound at all: an
         // Apple Music artwork event can hang indefinitely, and a URL fetch
         // only stops at URLSession's 60s default. Either wedged the service
         // exactly the way arming the flag too early used to.
@@ -271,7 +271,7 @@ public final class MusicService {
         polling = false
         // The strike count too. You only reach Connect *because* three probes
         // timed out, so leaving the counter at three meant the very next
-        // timeout hit four and re-blocked instantly — Connect became a
+        // timeout hit four and re-blocked instantly - Connect became a
         // one-shot that flickered straight back.
         timeouts = 0
         lastProbe = .distantPast
@@ -318,7 +318,7 @@ enum Bridge {
     /// Consent is judged from the result of the actual Apple Event, never
     /// from a pre-flight check.
     ///
-    /// `AEDeterminePermissionToAutomateTarget` blocks — on a background queue
+    /// `AEDeterminePermissionToAutomateTarget` blocks - on a background queue
     /// it wedged this service permanently (one hung probe, and `polling` never
     /// cleared, so the widget sat on "Not playing" forever); moved to the main
     /// actor it froze the whole app and the shelf never appeared at all.
@@ -408,7 +408,7 @@ enum Bridge {
         !NSRunningApplication.runningApplications(withBundleIdentifier: source.bundleID).isEmpty
     }
 
-    /// `askUserIfNeeded: false` unless the user explicitly asked to connect —
+    /// `askUserIfNeeded: false` unless the user explicitly asked to connect -
     /// otherwise every launch throws a consent sheet at them.
     static func permitted(_ source: MusicSource, ask: Bool) -> Bool {
         guard let target = NSAppleEventDescriptor(bundleIdentifier: source.bundleID).aeDesc else { return false }
@@ -424,7 +424,7 @@ enum Bridge {
 
     /// Compiled scripts, keyed by source.
     ///
-    /// Confined to the serial `music` queue — every call reaches here through
+    /// Confined to the serial `music` queue - every call reaches here through
     /// `offMain`, so no locking is needed. Recompiling on each poll was the
     /// single biggest cost in a profile of the running app.
     nonisolated(unsafe) private static var compiled: [String: NSAppleScript] = [:]

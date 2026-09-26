@@ -82,8 +82,8 @@ struct SystemActivityDetail: View {
 
     /// Small enough to be a reading rather than a poster.
     ///
-    /// These were sized to fill the panel's width — 93pt across for three
-    /// metrics — which put a 24pt figure inside each and left the gauges
+    /// These were sized to fill the panel's width - 93pt across for three
+    /// metrics - which put a 24pt figure inside each and left the gauges
     /// occupying most of the panel while saying one number each. A gauge is
     /// worth its space at the size the eye can take in at a glance; the width
     /// it gives back is what lets the figures and the graph below it fit.
@@ -156,7 +156,7 @@ struct SystemActivityDetail: View {
     /// The one fact each gauge leaves out.
     ///
     /// The sampler publishes fractions, so memory is the only one that can be
-    /// restated in bytes — its fraction is measured against
+    /// restated in bytes - its fraction is measured against
     /// `physicalMemory`, which makes the multiplication the reading itself
     /// rather than a guess. The others say what they are a fraction *of*, or
     /// what the number cannot show, instead of inventing an absolute figure.
@@ -168,7 +168,7 @@ struct SystemActivityDetail: View {
             // span it actually has, which is shorter than a minute until the
             // history fills.
             let series = context.isPreview ? [] : SystemMetrics.shared.cpuHistory
-            guard !series.isEmpty else { return ("Average CPU", "—") }
+            guard !series.isEmpty else { return ("Average CPU", "-") }
             let average = series.reduce(0, +) / Double(series.count)
             return ("Average CPU", "\(whole(average))%")
         case .memory:
@@ -181,7 +181,7 @@ struct SystemActivityDetail: View {
             // actually act on, off the same sample.
             let free = Double(SystemMetrics.shared.diskFree)
             let total = Double(SystemMetrics.shared.diskTotal)
-            guard !context.isPreview, total > 0 else { return ("Startup volume", "—") }
+            guard !context.isPreview, total > 0 else { return ("Startup volume", "-") }
             let gib = 1024.0 * 1024 * 1024
             return ("Startup volume free",
                     String(format: "%.0f / %.0f GiB", free / gib, total / gib))
@@ -220,7 +220,7 @@ struct SystemActivityDetail: View {
     }
 
     /// The tile's metric list, which is nested and private to it. Same raw
-    /// values because both sides read the same config key — a metric added
+    /// values because both sides read the same config key - a metric added
     /// there has to be added here too, or the panel drops it silently.
     private enum Metric: String {
         case cpu, memory, disk, battery

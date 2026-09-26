@@ -4,7 +4,7 @@ import SwiftUI
 /// Owns the floating shelf window: where it sits, what level it floats at, and
 /// hiding it against the screen edge.
 ///
-/// An `NSPanel` rather than an `NSWindow` so it never takes key status —
+/// An `NSPanel` rather than an `NSWindow` so it never takes key status -
 /// clicking the shelf must not deactivate whatever the user was working in.
 @MainActor
 final class DockPanelController: NSObject, NSWindowDelegate {
@@ -17,7 +17,7 @@ final class DockPanelController: NSObject, NSWindowDelegate {
     /// True while any menu of ours is open.
     ///
     /// A context menu draws *above* the shelf, so reaching for an item takes
-    /// the pointer outside the shelf's own frame — which is exactly what the
+    /// the pointer outside the shelf's own frame - which is exactly what the
     /// hide timer watches for. The shelf then slid away and took the menu
     /// with it, which reads as a menu that will not let you pick anything.
     private var menuIsOpen = false
@@ -198,7 +198,7 @@ final class DockPanelController: NSObject, NSWindowDelegate {
     /// in one move.
     ///
     /// The hosting view used to set the window's size itself, which kept the
-    /// old origin — so the shelf stretched out of one corner, and only then
+    /// old origin - so the shelf stretched out of one corner, and only then
     /// did `windowDidResize` snap it back to centre. Two instant steps, and
     /// the jump between them is what made resizing look broken.
     func resize(to size: CGSize) {
@@ -208,12 +208,12 @@ final class DockPanelController: NSObject, NSWindowDelegate {
         guard panel.frame != frame else { return }
 
         // The very first layout has nothing to animate from, and a grip drag
-        // must not be eased at all — see ShelfResize.
+        // must not be eased at all - see ShelfResize.
         guard panel.frame.width > 1, panel.frame.height > 1,
               !ShelfResize.isDragging else {
             // `display: false`. Forcing a synchronous redraw on every event of
-            // a grip drag is the largest single cost in the resize — measured
-            // heavier than the layout solve it triggers — and it buys nothing:
+            // a grip drag is the largest single cost in the resize - measured
+            // heavier than the layout solve it triggers - and it buys nothing:
             // the content changed, so the window redraws on the next cycle
             // regardless. The same mistake the hover label made.
             return panel.setFrame(frame, display: false)
@@ -230,7 +230,7 @@ final class DockPanelController: NSObject, NSWindowDelegate {
     /// Polls the pointer rather than installing a global event monitor.
     ///
     /// While hidden the shelf is off-screen, so its own tracking area can never
-    /// fire — something has to watch the screen edge. `NSEvent.mouseLocation`
+    /// fire - something has to watch the screen edge. `NSEvent.mouseLocation`
     /// is a plain static read needing no permission, and 30Hz of that is far
     /// cheaper than a global event tap (which users would have to approve).
     private func startPolling() {
@@ -256,7 +256,7 @@ final class DockPanelController: NSObject, NSWindowDelegate {
         guard panel != nil else { return }
         let mouse = NSEvent.mouseLocation
 
-        // Never while a menu of ours is up — see `menuIsOpen`.
+        // Never while a menu of ours is up - see `menuIsOpen`.
         if menuIsOpen {
             hideWorkItem?.cancel()
             hideWorkItem = nil
@@ -265,14 +265,14 @@ final class DockPanelController: NSObject, NSWindowDelegate {
 
         // An opened group pins the shelf. The sheet is anchored to one of the
         // tiles, so sliding the shelf out from under it would leave it
-        // floating over the desktop — and the group is exactly when the user
+        // floating over the desktop - and the group is exactly when the user
         // is *using* the shelf. It closes on its own once the pointer has
         // left both, and hiding resumes from the next tick.
         // An open detail panel pins the shelf for the same reason an open
         // group does: the panel is anchored to a tile, and it is precisely
         // when the user is using the shelf.
         // The panel closes itself on a click outside, on Escape and on
-        // Command-W — it does not close because the pointer wandered off, any
+        // Command-W - it does not close because the pointer wandered off, any
         // more than a popover does. So there is nothing to schedule here; the
         // shelf just stays put while the panel is up.
         if WidgetDetailWindow.shared.isOpen {
@@ -367,8 +367,8 @@ final class DockPanelController: NSObject, NSWindowDelegate {
     private func setRevealed(_ value: Bool) {
         guard revealed != value else { return }
         // Everything anchored to a tile has to go with it. Hiding is a window
-        // *move*, not an orderOut — the shelf slides to `hiddenOrigin` and its
-        // view never disappears — so nothing here tears itself down on its
+        // *move*, not an orderOut - the shelf slides to `hiddenOrigin` and its
+        // view never disappears - so nothing here tears itself down on its
         // own. The hover label is the one that showed it: the tracking area
         // only reports an exit when the pointer leaves, and when the shelf
         // slides out from under a pointer that never moved, it does not. The

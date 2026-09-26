@@ -12,8 +12,8 @@ final class TimerStateProvider {
 
 /// A click anywhere on the card opens the timer's panel, so the card belongs
 /// to the shelf. Starting and pausing stays on the tile as a glyph the size of
-/// itself — a session begun in one click, without anything opening, is worth
-/// the room — while resetting is the panel's alone: it throws a session away
+/// itself - a session begun in one click, without anything opening, is worth
+/// the room - while resetting is the panel's alone: it throws a session away
 /// and does not want to be a stray click on a card.
 ///
 /// The glyph drives the shared state rather than this widget's config, so both
@@ -38,7 +38,7 @@ struct FocusTimerTile: View {
                 VStack(spacing: 5) {
                     ZStack {
                         ring(fraction: remaining / total, tint: tint, diameter: 44, width: 6)
-                        Text(plinthClockString(remaining))
+                        Text(docketClockString(remaining))
                             .font(WidgetStyle.label(13))
                             .monospacedDigit()
                             .foregroundStyle(WidgetStyle.primary)
@@ -60,7 +60,7 @@ struct FocusTimerTile: View {
                 HStack(spacing: 12) {
                     ring(fraction: remaining / total, tint: tint, diameter: 32, width: 7)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(plinthClockString(remaining))
+                        Text(docketClockString(remaining))
                             .font(WidgetStyle.value(23))
                             .monospacedDigit()
                             .foregroundStyle(WidgetStyle.primary)
@@ -82,7 +82,7 @@ struct FocusTimerTile: View {
                 // squeezing a glyph in beside a clock that can read 1:00:00.
                 VStack(spacing: 3) {
                     ring(fraction: remaining / total, tint: tint, diameter: 24, width: 5)
-                    Text(plinthClockString(remaining))
+                    Text(docketClockString(remaining))
                         .font(WidgetStyle.label(13))
                         .monospacedDigit()
                         .foregroundStyle(WidgetStyle.primary)
@@ -93,7 +93,7 @@ struct FocusTimerTile: View {
 
     /// Only ever as big as itself: the card's own click has to reach the shelf,
     /// which is what opens the panel, so nothing here may spread to fill it.
-    /// `TileGlyph` is the shelf-wide treatment for exactly that — see
+    /// `TileGlyph` is the shelf-wide treatment for exactly that - see
     /// StopwatchTile.
     ///
     /// The disc stays neutral rather than taking the session's colour: the
@@ -163,7 +163,7 @@ struct FocusTimerTile: View {
 
 /// `m:ss`, widening to `h:mm:ss` past an hour so a long timer is not shown as
 /// a bare minute count.
-func plinthClockString(_ seconds: TimeInterval) -> String {
+func docketClockString(_ seconds: TimeInterval) -> String {
     let total = Int(seconds.rounded(.up))
     let (h, m, s) = (total / 3600, (total % 3600) / 60, total % 60)
     return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%d:%02d", m, s)

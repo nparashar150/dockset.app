@@ -9,7 +9,7 @@ private struct LibraryCard: Identifiable {
     var kind: WidgetKind
     /// Variant title, or the catalog name when the kind has no variants.
     var title: String
-    /// Catalog name — searched even when a variant supplies the title.
+    /// Catalog name - searched even when a variant supplies the title.
     var name: String
     var category: WidgetCategory
     var overrides: [String: WidgetConfig.Value]
@@ -184,7 +184,7 @@ struct WidgetLibraryView: View {
     private var browser: some View {
         VStack(spacing: 0) {
             // The panel carries no system title bar, so this header is the
-            // only chrome — it has to hold the title and the way out.
+            // only chrome - it has to hold the title and the way out.
             HStack(spacing: 8) {
                 Image(systemName: "square.grid.2x2")
                     .font(.system(size: 13, weight: .medium))
@@ -313,7 +313,7 @@ struct WidgetLibraryView: View {
         }
     }
 
-    /// Visible cards in reading order — the basis for arrow-key navigation.
+    /// Visible cards in reading order - the basis for arrow-key navigation.
     private var flatCards: [LibraryCard] { sections.flatMap(\.cards) }
 
     // ponytail: arrow keys walk the flat list, so a vertical hop across a
