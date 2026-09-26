@@ -82,6 +82,16 @@ final class PersistenceTests: XCTestCase {
     /// Note the limit this documents: leniency covers keys that are absent,
     /// not values that are wrong. An unrecognised enum anywhere in the file
     /// still rejects all of it, which is its own open issue.
+    /// Removing a setting must not cost anyone their file. Every state file
+    /// written before now still carries `showAppBadges`, and the decoder has
+    /// to ignore it rather than throw.
+    func testAStateFileCarryingARemovedKeyStillLoads() throws {
+        try write(#"{"version": 1, "customDock": {"showAppBadges": true, "position": "right"}}"#)
+        let state = store().load()
+        XCTAssertEqual(state.customDock.position, .right)
+        XCTAssertTrue(try quarantinedFiles().isEmpty, "a key we dropped is not a corrupt file")
+    }
+
     func testProfilesSurviveAMissingSettingsBlock() throws {
         let id = UUID()
         try write("""
