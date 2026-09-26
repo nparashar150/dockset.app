@@ -369,4 +369,37 @@ final class InteractionTests: XCTestCase {
         XCTAssertEqual(tally.inner, 1, "released inside, so it should return")
         XCTAssertEqual(tally.outer, 0)
     }
+
+    // MARK: Notifications from other processes
+
+    /// A distributed notification does not reach the ordinary centre.
+    ///
+    /// The shelf followed Apple's Dock by observing `com.apple.dock.prefchanged`
+    /// on `NotificationCenter.default`. The Dock is another process, so it
+    /// posts that distributed, and the observer could never fire. Nothing
+    /// re-placed or re-hid the shelf when the Dock's settings changed, and
+    /// "Match the macOS Dock" only matched it at launch.
+    ///
+    /// The shape of the bug is what makes it worth a test: the code reads
+    /// correctly, registers without error, and is simply never called.
+    func testADistributedNotificationSkipsTheOrdinaryCentre() {
+        let name = Notification.Name("docket.tests.distributed")
+        let local = expectation(description: "local centre")
+        local.isInverted = true
+        let distributed = expectation(description: "distributed centre")
+
+        let a = NotificationCenter.default.addObserver(
+            forName: name, object: nil, queue: .main) { _ in local.fulfill() }
+        let b = DistributedNotificationCenter.default().addObserver(
+            forName: name, object: nil, queue: .main) { _ in distributed.fulfill() }
+        defer {
+            NotificationCenter.default.removeObserver(a)
+            DistributedNotificationCenter.default().removeObserver(b)
+        }
+
+        DistributedNotificationCenter.default()
+            .postNotificationName(name, object: nil, deliverImmediately: true)
+
+        wait(for: [distributed, local], timeout: 2)
+    }
 }
